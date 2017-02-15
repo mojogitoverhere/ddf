@@ -1,0 +1,257 @@
+/**
+ * Copyright (c) Codice Foundation
+ * <p/>
+ * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ * <p/>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
+ * is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ */
+package org.codice.ddf.commands.catalog;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Option;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.codice.ddf.catalog.transformer.zip.ZipValidator;
+import org.codice.ddf.commands.util.CatalogCommandRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.io.ByteSource;
+
+import ddf.catalog.content.StorageProvider;
+import ddf.catalog.content.data.ContentItem;
+import ddf.catalog.content.data.impl.ContentItemImpl;
+import ddf.catalog.content.operation.impl.CreateStorageRequestImpl;
+import ddf.catalog.data.Metacard;
+import ddf.catalog.operation.impl.CreateRequestImpl;
+import ddf.catalog.transform.CatalogTransformerException;
+import ddf.catalog.transform.InputTransformer;
+import ddf.security.common.audit.SecurityLogger;
+
+@Service
+@Command(scope = CatalogCommands.NAMESPACE, name = "import", description = "Imports Metacards and history into the current Catalog")
+public class ImportCommand extends CatalogCommands {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportCommand.class);
+
+    private static final int ID = 2;
+
+    private static final int TYPE = 3;
+
+    private static final int NAME = 4;
+
+    private static final int DERIVED_NAME = 5;
+
+    @Reference
+    private StorageProvider storageProvider;
+
+    @Argument(name = "Import File", description = "The file to import", index = 0, multiValued = false, required = true)
+    String importFile;
+
+    @Option(name = "--skip-signature-verification", required = false, multiValued = false, description =
+            "Exports the data but does NOT sign the resulting zip file. "
+                    + "This file will not be able to be verified on import for integrity and authenticity.")
+    boolean unsafe = false;
+
+    @Override
+    protected Object executeWithSubject() throws Exception {
+        int metacards = 0;
+        int content = 0;
+        int derivedContent = 0;
+        ZipValidator zipValidator = initZipValidator();
+        File file = initImportFile(importFile);
+        InputTransformer transformer = getServiceByFilter(InputTransformer.class,
+                String.format("(%s=%s)",
+                        "id",
+                        DEFAULT_TRANSFORMER_ID)).orElseThrow(() -> new CatalogCommandRuntimeException(
+                "Could not get " + DEFAULT_TRANSFORMER_ID + " input transformer"));
+
+        if (unsafe) {
+            SecurityLogger.audit("Skipping validation check of imported data. There are no "
+                    + "guarantees of integrity or authenticity of the imported data");
+        } else {
+            if (!zipValidator.validateZipFile(importFile)) {
+                throw new CatalogCommandRuntimeException("Signature on zip file is not valid");
+            }
+        }
+        SecurityLogger.audit("Called catalog:import command on the file: {}", importFile);
+
+        console.println("Importing file");
+        Instant start = Instant.now();
+        try (InputStream fis = new FileInputStream(file);
+                ZipInputStream zipInputStream = new ZipInputStream(fis)) {
+            ZipEntry entry = zipInputStream.getNextEntry();
+
+            while (entry != null) {
+                String filename = entry.getName();
+
+                if (filename.startsWith("META-INF")) {
+                    entry = zipInputStream.getNextEntry();
+                    continue;
+                }
+
+                String[] pathParts = filename.split("\\" + File.separator);
+                String id = pathParts[ID];
+                String type = pathParts[TYPE];
+
+                switch (type) {
+                case "metacard": {
+                    metacards++;
+                    String metacardName = pathParts[NAME];
+                    Metacard metacard = null;
+                    try {
+                        metacard = transformer.transform(new UncloseableBufferedInputStreamWrapper(
+                                zipInputStream), id);
+                    } catch (IOException | CatalogTransformerException e) {
+                        LOGGER.debug("Could not transform metacard: {}", id);
+                    }
+                    catalogProvider.create(new CreateRequestImpl(metacard));
+                    break;
+                }
+                case "content": {
+                    content++;
+                    String contentFilename = pathParts[NAME];
+                    ContentItem contentItem = new ContentItemImpl(id,
+                            new ZipEntryByteSource(new UncloseableBufferedInputStreamWrapper(
+                                    zipInputStream)),
+                            null,
+                            contentFilename,
+                            entry.getSize(),
+                            null);
+                    CreateStorageRequestImpl createStorageRequest = new CreateStorageRequestImpl(
+                            Collections.singletonList(contentItem),
+                            id,
+                            new HashMap<>());
+                    storageProvider.create(createStorageRequest);
+                    storageProvider.commit(createStorageRequest);
+                    break;
+                }
+                case "derived": {
+                    derivedContent++;
+                    String qualifier = pathParts[NAME];
+                    String derivedContentName = pathParts[DERIVED_NAME];
+                    ContentItem contentItem = new ContentItemImpl(id,
+                            qualifier,
+                            new ZipEntryByteSource(new UncloseableBufferedInputStreamWrapper(
+                                    zipInputStream)),
+                            null,
+                            derivedContentName,
+                            entry.getSize(),
+                            null);
+                    CreateStorageRequestImpl createStorageRequest = new CreateStorageRequestImpl(
+                            Collections.singletonList(contentItem),
+                            id,
+                            new HashMap<>());
+                    storageProvider.create(createStorageRequest);
+                    storageProvider.commit(createStorageRequest);
+                    break;
+                }
+                default: {
+                    LOGGER.debug("Cannot interpret type of {}", type);
+                }
+                }
+
+                entry = zipInputStream.getNextEntry();
+            }
+        }
+        console.println("File imported successfully. Imported in: " + Duration.between(start,
+                Instant.now())
+                .toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase());
+        console.println("Number of metacards imported: " + metacards);
+        console.println("Number of content imported: " + content);
+        console.println("Number of derived content imported: " + derivedContent);
+        return null;
+    }
+
+    private File initImportFile(String importFile) {
+        File file = new File(importFile);
+
+        if (!file.exists()) {
+            throw new CatalogCommandRuntimeException("File does not exist: " + importFile);
+        }
+
+        if (!FilenameUtils.isExtension(importFile, "zip")) {
+            throw new CatalogCommandRuntimeException("File must be a zip file: " + importFile);
+        }
+
+        return file;
+    }
+
+    private ZipValidator initZipValidator() {
+        ZipValidator zipValidator = new ZipValidator();
+        zipValidator.setSignaturePropertiesPath(Paths.get(System.getProperty("ddf.home"),
+                "/etc/ws-security/server/signature.properties")
+                .toString());
+        zipValidator.init();
+        return zipValidator;
+    }
+
+    private static class ZipEntryByteSource extends ByteSource {
+        private InputStream input;
+
+        private ZipEntryByteSource(InputStream input) {
+            this.input = input;
+        }
+
+        @Override
+        public InputStream openStream() throws IOException {
+            return input;
+        }
+    }
+
+    /**
+     * Identical to BufferedInputStream with the exception that it does not close the underlying
+     * resource stream when the close() method is called. The buffer is still emptied when closed.
+     * <br/>
+     * This is useful for cases when the inputstream being consumed belongs to something that
+     * should not be closed.
+     */
+    private static class UncloseableBufferedInputStreamWrapper extends BufferedInputStream {
+        private static final AtomicReferenceFieldUpdater<BufferedInputStream, byte[]> BUF_UPDATER =
+                AtomicReferenceFieldUpdater.newUpdater(BufferedInputStream.class,
+                        byte[].class,
+                        "buf");
+
+        public UncloseableBufferedInputStreamWrapper(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public void close() throws IOException {
+            byte[] buffer;
+            while ((buffer = buf) != null) {
+                if (BUF_UPDATER.compareAndSet(this, buffer, null)) {
+                    InputStream input = in;
+                    in = null;
+                    // Purposely do not close `input`
+                    return;
+                }
+                // Else retry in case a new buf was CASed in fill()
+            }
+        }
+    }
+}
