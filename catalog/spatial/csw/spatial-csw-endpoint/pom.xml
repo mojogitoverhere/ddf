@@ -140,6 +140,11 @@
             <artifactId>catalog-core-attributeregistry</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.codice.ddf</groupId>
+            <artifactId>geospatial</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -177,6 +182,7 @@
                             platform-util,
                             security-rest-cxfwrapper,
                             ddf-security-common,
+                            geospatial,
                             platform-util,
                             platform-util-unavailableurls,
                             commons-lang3,
