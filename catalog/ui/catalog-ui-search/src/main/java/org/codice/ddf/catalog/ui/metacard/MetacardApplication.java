@@ -433,11 +433,16 @@ public class MetacardApplication implements SparkApplication {
     }
 
     private void revertMetacard(Metacard versionMetacard, String id)
-            throws SourceUnavailableException, IngestException {
+            throws SourceUnavailableException, IngestException, FederationException,
+            UnsupportedQueryException {
         LOGGER.trace("Reverting metacard [{}] to version [{}]", id, versionMetacard.getId());
         Metacard revertMetacard = MetacardVersionImpl.toMetacard(versionMetacard, types);
         Action action = Action.fromKey((String) versionMetacard.getAttribute(MetacardVersion.ACTION)
                 .getValue());
+
+        if (DELETE_ACTIONS.contains(action)) {
+            attemptDeleteDeletedMetacard(id);
+        }
 
         // Only deleted; deleted_content will have already made metacard so we just want to update
         if (action.equals(Action.DELETED)) {
@@ -481,7 +486,6 @@ public class MetacardApplication implements SparkApplication {
         Action action = Action.fromKey((String) versionMetacard.getAttribute(MetacardVersion.ACTION)
                 .getValue());
         if (DELETE_ACTIONS.contains(action)) {
-            attemptDeleteDeletedMetacard(id);
             catalogFramework.create(new CreateStorageRequestImpl(Collections.singletonList(
                     contentItem), id, new HashMap<>()));
         } else {
