@@ -216,6 +216,11 @@
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-commons</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ddf.platform.email</groupId>
+            <artifactId>platform-email-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
