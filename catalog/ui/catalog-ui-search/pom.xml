@@ -201,7 +201,6 @@
             <groupId>org.geotools</groupId>
             <artifactId>gt-main</artifactId>
             <version>14.4</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>
@@ -212,6 +211,10 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlets</artifactId>
             <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-commons</artifactId>
         </dependency>
     </dependencies>
 
