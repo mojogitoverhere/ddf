@@ -70,6 +70,8 @@ import ddf.catalog.content.data.ContentItem;
 import ddf.catalog.content.operation.impl.DeleteStorageRequestImpl;
 import ddf.catalog.data.Attribute;
 import ddf.catalog.data.AttributeDescriptor;
+import ddf.catalog.core.versioning.DeletedMetacard;
+import ddf.catalog.core.versioning.MetacardVersion;
 import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.MetacardType;
@@ -607,12 +609,12 @@ public class ExportCommand extends CqlCommands {
                 .getMetacardType()
                 .getName();
         switch (typeName) {
-        case "deleted":
+        case DeletedMetacard.PREFIX:
             id = String.valueOf(result.getMetacard()
                     .getAttribute("metacard.deleted.id")
                     .getValue());
             break;
-        case "revision":
+        case MetacardVersion.PREFIX:
             return null;
         default:
             id = result.getMetacard()

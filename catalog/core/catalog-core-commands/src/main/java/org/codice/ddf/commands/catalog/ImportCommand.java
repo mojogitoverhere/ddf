@@ -174,6 +174,9 @@ public class ImportCommand extends CatalogCommands {
 
                 entry = zipInputStream.getNextEntry();
             }
+        } catch (Exception e) {
+            LOGGER.error("Exception while importing metacards", e);
+            throw e;
         }
         console.println("File imported successfully. Imported in: " + Duration.between(start,
                 Instant.now())
