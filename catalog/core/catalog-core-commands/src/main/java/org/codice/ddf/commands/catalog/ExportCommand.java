@@ -68,6 +68,8 @@ import ddf.catalog.content.StorageException;
 import ddf.catalog.content.StorageProvider;
 import ddf.catalog.content.data.ContentItem;
 import ddf.catalog.content.operation.impl.DeleteStorageRequestImpl;
+import ddf.catalog.core.versioning.DeletedMetacard;
+import ddf.catalog.core.versioning.MetacardVersion;
 import ddf.catalog.data.Attribute;
 import ddf.catalog.data.AttributeDescriptor;
 import ddf.catalog.data.BinaryContent;
@@ -248,7 +250,7 @@ public class ExportCommand extends CqlCommands {
             console.println();
             console.println("Uploading tombstone metacard to catalog");
             ArrayList<String> tombstoneData = exportedItems.stream()
-                        .filter(ei -> !"revision".equals(ei.getMetacardTag()))
+                    .filter(ei -> !"revision".equals(ei.getMetacardTag()))
                     .map(ExportItem::tombstoneString)
                     .collect(Collectors.toCollection(ArrayList::new));
             ExportedMetacard tombstone = new ExportedMetacard(tombstoneData,
@@ -428,7 +430,8 @@ public class ExportCommand extends CqlCommands {
             }
             writeToZip(zipFile, contentItem, resource);
             exportedContentItems.add(contentItem);
-            if (!contentItem.getMetacardTag().equals("revision")) {
+            if (!contentItem.getMetacardTag()
+                    .equals("revision")) {
                 for (String derivedUri : contentItem.getDerivedUris()) {
                     URI uri;
                     try {
@@ -442,8 +445,9 @@ public class ExportCommand extends CqlCommands {
 
                     ResourceResponse derivedResource;
                     try {
-                        derivedResource = catalogFramework.getLocalResource(new ResourceRequestByProductUri(
-                                uri));
+                        derivedResource =
+                                catalogFramework.getLocalResource(new ResourceRequestByProductUri(
+                                        uri));
                     } catch (IOException e) {
                         throw new CatalogCommandRuntimeException(
                                 "Unable to retrieve resource for " + contentItem.getId(), e);
@@ -607,12 +611,12 @@ public class ExportCommand extends CqlCommands {
                 .getMetacardType()
                 .getName();
         switch (typeName) {
-        case "deleted":
+        case DeletedMetacard.PREFIX:
             id = String.valueOf(result.getMetacard()
                     .getAttribute("metacard.deleted.id")
                     .getValue());
             break;
-        case "revision":
+        case MetacardVersion.PREFIX:
             return null;
         default:
             id = result.getMetacard()
