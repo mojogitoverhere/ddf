@@ -22,12 +22,15 @@ define([
         'terraformer-wkt-parser',
         'js/CQLUtils',
         '@turf/turf',
+        '@turf/meta',
+        'wkx',
         'moment',
+        'properties',
         'backboneassociations',
         'backbone.paginator'
     ],
     function (Backbone, _, $, wreqr, metacardDefinitions, Sources, Terraformer, TerraformerWKTParser, CQLUtils,
-              Turf, moment) {
+              Turf, TurfMeta, wkx, moment, properties) {
         "use strict";
 
         var blacklist = [];
@@ -262,11 +265,8 @@ define([
                         }).filter(function (property) {
                             return Boolean(metacardTypes[property]) && (metacardTypes[property].type === 'GEOMETRY');
                         }).map(function (property) {
-                            return new Terraformer.Primitive(metacard.properties[property]);
+                            return new Terraformer.Primitive(wkx.Geometry.parse(metacard.properties[property]).toGeoJSON());
                         });
-                        if (metacard.geometry) {
-                            valuesToCheck.push(new Terraformer.Primitive(metacard.geometry));
-                        }
                         break;
                     default:
                         var valueToCheck = metacard.properties[filter.property.replace(/['"]+/g, '')];
@@ -277,7 +277,7 @@ define([
                 }
 
                 if (valuesToCheck.length === 0) {
-                    return false;
+                    return filter.value === "";  // aligns with how querying works on the server
                 }
 
                 valuesToCheck = flattenMultivalueProperties(valuesToCheck);
@@ -357,21 +357,36 @@ define([
         }
 
         function matchesFilters(metacard, resultFilter, metacardTypes) {
+            var i;
             switch (resultFilter.type) {
                 case 'AND':
-                    for (var i = 0; i <= resultFilter.filters.length - 1; i++) {
+                    for (i = 0; i <= resultFilter.filters.length - 1; i++) {
                         if (!matchesFilter(metacard, resultFilter.filters[i], metacardTypes)) {
                             return false;
                         }
                     }
                     return true;
-                case 'OR':
-                    for (var j = 0; j <= resultFilter.filters.length - 1; j++) {
-                        if (matchesFilter(metacard, resultFilter.filters[j], metacardTypes)) {
+                case 'NOT AND':
+                    for (i = 0; i <= resultFilter.filters.length - 1; i++) {
+                        if (!matchesFilter(metacard, resultFilter.filters[i], metacardTypes)) {
                             return true;
                         }
                     }
-                    break;
+                    return false;
+                case 'OR':
+                    for (i = 0; i <= resultFilter.filters.length - 1; i++) {
+                        if (matchesFilter(metacard, resultFilter.filters[i], metacardTypes)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                case 'NOT OR':
+                    for (i = 0; i <= resultFilter.filters.length - 1; i++) {
+                        if (matchesFilter(metacard, resultFilter.filters[i], metacardTypes)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 default:
                     return matchesFilter(metacard, resultFilter, metacardTypes);
             }
@@ -431,167 +446,32 @@ define([
 
         var MetaCard = {};
 
-        MetaCard.Geometry = Backbone.AssociatedModel.extend({
-
-            isPoint: function () {
-                return this.get('type') === 'Point';
-            },
-
-            getPoint: function () {
-                return _.object(['longitude', 'latitude'], this.getAllPoints()[0]);
-            },
-
-            getAllPoints: function () {
-                var coordinates = this.get('coordinates');
-
-                if (this.isPoint()) {
-                    return [coordinates];
-                }
-
-                if (this.isMultiPoint() || this.isLineString()) {
-                    return coordinates;
-                }
-
-                if (this.isMultiLineString()) {
-                    return _.flatten(coordinates, true);
-                }
-
-                if (this.isPolygon()) {
-                    return coordinates[0];
-                }
-
-                if (this.isMultiPolygon()) {
-                    return _.flatten(_.map(coordinates, function (instance) {
-                        return instance[0];
-                    }), true);
-                }
-
-                if (this.isGeometryCollection()) {
-                    var geometries = this.get('geometries');
-                    return _.flatten(_.map(geometries, function (geometry) {
-                        var geoModel = new MetaCard.Geometry(geometry);
-                        return geoModel.getAllPoints();
-                    }), true);
-                }
-            },
-
-            convertPointCoordinate: function (coordinate) {
-                return {
-                    latitude: coordinate[1],
-                    longitude: coordinate[0],
-                    altitude: coordinate[2]
-                };
-            },
-
-            isPolygon: function () {
-                return this.get('type') === 'Polygon';
-            },
-            getPolygon: function () {
-                if (!this.isPolygon()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a polygon!! ', this);
-                    }
-                    return;
-                }
-                var coordinates = this.get('coordinates')[0];
-                return _.map(coordinates, this.convertPointCoordinate);
-            },
-
-            isLineString: function () {
-                return this.get('type') === 'LineString';
-            },
-            getLineString: function () {
-                if (!this.isLineString()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a LineString!! ', this);
-                    }
-                    return;
-                }
-                var coordinates = this.get('coordinates');
-                return _.map(coordinates, this.convertPointCoordinate);
-            },
-
-            isMultiLineString: function () {
-                return this.get('type') === 'MultiLineString';
-            },
-
-            getMultiLineString: function () {
-                if (!this.isMultiLineString()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a MultiLineString!! ', this);
-                    }
-                    return;
-                }
-
-                var coordinates = this.get('coordinates');
-                var model = this;
-                return _.map(coordinates, function (instance) {
-                    return _.map(instance, model.convertPointCoordinate);
-                });
-            },
-
-            isMultiPoint: function () {
-                return this.get('type') === 'MultiPoint';
-            },
-
-            getMultiPoint: function () {
-                if (!this.isMultiPoint()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a MultiPoint!! ', this);
-                    }
-                    return;
-                }
-
-                var coordinates = this.get('coordinates');
-                return _.map(coordinates, this.convertPointCoordinate);
-            },
-
-            isMultiPolygon: function () {
-                return this.get('type') === 'MultiPolygon';
-            },
-
-            getMultiPolygon: function () {
-                if (!this.isMultiPolygon()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a MultiPolygon!! ', this);
-                    }
-                    return;
-                }
-
-                var coordinates = this.get('coordinates');
-                var model = this;
-                return _.map(coordinates, function (instance) {
-                    return _.map(instance[0], model.convertPointCoordinate);
-                });
-            },
-
-            isGeometryCollection: function () {
-                return this.get('type') === 'GeometryCollection';
-            },
-
-            getGeometryCollection: function () {
-                if (!this.isGeometryCollection()) {
-                    if (typeof console !== 'undefined') {
-                        console.log('This is not a GeometryCollection!! ', this);
-                    }
-                    return;
-                }
-
-                var geometries = this.get('geometries');
-
-                return _.map(geometries, function (geometry) {
-                    return new MetaCard.Geometry(geometry);
-                });
-            }
-
-        });
-
         MetaCard.Properties = Backbone.AssociatedModel.extend({
-            defaults: function() {
+            defaults: function () {
                 return {
                     'metacard-tags': ['resource']
-               }
-           }
+                }
+            },
+            hasGeometry: function (attribute) {
+                return _.filter(this.toJSON(), function (value, key) {
+                    return (attribute === undefined || attribute === key) && metacardDefinitions.metacardTypes[key] &&
+                        metacardDefinitions.metacardTypes[key].type === "GEOMETRY";
+                }).length > 0;
+            },
+            getCombinedGeoJSON: function () {
+                return;
+            },
+            getPoints: function (attribute) {
+                return this.getGeometries(attribute).reduce(function (pointArray, wkt) {
+                    return pointArray.concat(TurfMeta.coordAll(wkx.Geometry.parse(wkt).toGeoJSON()));
+                }, []);
+            },
+            getGeometries: function (attribute) {
+                return _.filter(this.toJSON(), function (value, key) {
+                    return !properties.isHidden(key) && (attribute === undefined || attribute === key) && metacardDefinitions.metacardTypes[key] &&
+                        metacardDefinitions.metacardTypes[key].type === "GEOMETRY";
+                });
+            }
         });
 
         MetaCard.Action = Backbone.AssociatedModel.extend({
@@ -612,13 +492,17 @@ define([
                     this.set('context', true);
                 }
             },
+            hasGeometry: function(attribute){
+                return this.get('properties').hasGeometry(attribute);
+            },
+            getPoints: function(attribute){
+                return this.get('properties').getPoints(attribute);
+            },
+            getGeometries: function(attribute){
+                return this.get('properties').getGeometries(attribute);
+            },
 
             relations: [
-                {
-                    type: Backbone.One,
-                    key: 'geometry',
-                    relatedModel: MetaCard.Geometry
-                },
                 {
                     type: Backbone.One,
                     key: 'properties',
@@ -665,6 +549,15 @@ define([
             },
             isRemote: function(){
                 return this.get('metacard').get('properties').get('source-id') !== Sources.localCatalog;
+            },
+            hasGeometry: function(attribute){
+                return this.get('metacard').hasGeometry(attribute);
+            },
+            getPoints: function(attribute){
+                return this.get('metacard').getPoints(attribute);
+            },
+            getGeometries: function(attribute){
+                return this.get('metacard').getGeometries(attribute);
             },
             refreshData: function(){
                 //let solr flush
@@ -722,7 +615,7 @@ define([
 
         MetaCard.Results = Backbone.PageableCollection.extend({
             state: {
-              pageSize: 25
+              pageSize: properties.getPageSize()
             },
             model: MetaCard.MetacardResult,
             mode: "client",
@@ -730,17 +623,8 @@ define([
             generateFilteredVersion: function(filter){
                 var filteredCollection = new this.constructor();
                 filteredCollection.set(this.updateFilteredVersion(filter));
-                filteredCollection.listenToOriginalCollection(this, filter);
                 filteredCollection.amountFiltered = this.amountFiltered;
                 return filteredCollection;
-            },
-            listenToOriginalCollection: function(originalCollection, filter){
-                var debouncedUpdate = _.debounce(function(){
-                    this.reset(originalCollection.updateFilteredVersion(filter));
-                }.bind(this), 200);
-                this.listenTo(originalCollection, 'add', debouncedUpdate);
-                this.listenTo(originalCollection, 'remove',debouncedUpdate);
-                this.listenTo(originalCollection, 'update', debouncedUpdate);
             },
             updateFilteredVersion: function(filter){
                 this.amountFiltered = 0;

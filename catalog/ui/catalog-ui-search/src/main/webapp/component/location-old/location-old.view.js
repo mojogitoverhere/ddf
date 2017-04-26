@@ -23,8 +23,7 @@ define([
     'js/store',
     'js/CustomElements',
     './location-old',
-    'js/CQLUtils',
-    'bootstrapselect'
+    'js/CQLUtils'
 ], function ($, Backbone, Marionette, _, properties, MetaCard, wreqr, template, maptype,
              store, CustomElements, LocationOldModel, CQLUtils) {
 
@@ -265,7 +264,7 @@ define([
                     var retVal = '[';
                     for (var i = 0; i < value.length; i++) {
                         var point = value[i];
-                        retVal += '[' + point[0].toFixed(6) + ', ' + point[1].toFixed(6) + ']';
+                        retVal += '[' + point[0] + ', ' + point[1] + ']';
                         if (i < value.length - 1) {
                             retVal += ', ';
                         }

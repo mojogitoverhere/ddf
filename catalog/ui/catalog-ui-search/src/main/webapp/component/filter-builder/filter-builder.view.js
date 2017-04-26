@@ -53,11 +53,17 @@ define([
         onBeforeShow: function(){
             this.filterOperator.show(DropdownView.createSimpleDropdown({
                 list: [{
-                    label: 'AND',
+                    label: 'All of these',
                     value: 'AND'
                 }, {
-                    label: 'OR',
+                    label: 'Any of these',
                     value: 'OR'
+                }, {
+                    label: 'Not all of these',
+                    value: 'NOT AND'
+                }, {
+                    label: 'Not any of these',
+                    value: 'NOT OR'
                 }],
                 defaultSelection: ['AND']
             }));
@@ -135,7 +141,7 @@ define([
                     filters: this.filterContents.currentView.children.map(function(childView){
                         return childView.getFilters();
                     }).filter(function(filter){
-                       return filter && filter.value !== "";
+                       return filter;
                     })
                 }
             }

@@ -96,6 +96,8 @@ public class ConfigurationApplication implements SparkApplication {
 
     private Integer resultCount = 250;
 
+    private Integer resultPageSize = 25;
+
     private String projection = "EPSG:4326";
 
     private String bingKey = "";
@@ -121,6 +123,14 @@ public class ConfigurationApplication implements SparkApplication {
     public List<String> getReadOnly() {
         return readOnly;
     }
+
+    private boolean queryFeedbackEnabled = false;
+
+    private String queryFeedbackEmailSubjectTemplate;
+
+    private String queryFeedbackEmailBodyTemplate;
+
+    private String queryFeedbackEmailDestination;
 
     public List<String> getAttributeAliases() {
         return attributeAliases.entrySet()
@@ -225,6 +235,7 @@ public class ConfigurationApplication implements SparkApplication {
         config.put("format", format);
         config.put("timeout", timeout);
         config.put("resultCount", resultCount);
+        config.put("resultPageSize", resultPageSize);
         config.put("typeNameMapping", typeNameMapping);
         config.put("terrainProvider", proxiedTerrainProvider);
         config.put("imageryProviders", getConfigImageryProviders());
@@ -242,6 +253,10 @@ public class ConfigurationApplication implements SparkApplication {
         config.put("scheduleFrequencyList", scheduleFrequencyList);
         config.put("isEditingAllowed", isEditingAllowed);
         config.put("isCacheDisabled", isCacheDisabled);
+        config.put("queryFeedbackEnabled", queryFeedbackEnabled);
+        config.put("queryFeedbackEmailSubjectTemplate", queryFeedbackEmailSubjectTemplate);
+        config.put("queryFeedbackEmailBodyTemplate", queryFeedbackEmailBodyTemplate);
+        config.put("queryFeedbackEmailDestination", queryFeedbackEmailDestination);
 
         return config;
     }
@@ -472,6 +487,14 @@ public class ConfigurationApplication implements SparkApplication {
         this.resultCount = resultCount;
     }
 
+    public Integer getResultPageSize() {
+        return resultPageSize;
+    }
+
+    public void setResultPageSize(Integer resultPageSize){
+        this.resultPageSize = resultPageSize;
+    }
+
     public Boolean getSignIn() {
         return isSignIn;
     }
@@ -577,5 +600,33 @@ public class ConfigurationApplication implements SparkApplication {
 
     public void setExternalAuthentication(Boolean isExternalAuthentication) {
         this.isExternalAuthentication = isExternalAuthentication;
+    }
+
+    public void setQueryFeedbackEnabled(boolean queryFeedbackEnabled) {
+        this.queryFeedbackEnabled = queryFeedbackEnabled;
+    }
+
+    public String getQueryFeedbackEmailSubjectTemplate() {
+        return queryFeedbackEmailSubjectTemplate;
+    }
+
+    public void setQueryFeedbackEmailSubjectTemplate(String queryFeedbackEmailSubjectTemplate) {
+        this.queryFeedbackEmailSubjectTemplate = queryFeedbackEmailSubjectTemplate;
+    }
+
+    public String getQueryFeedbackEmailBodyTemplate() {
+        return queryFeedbackEmailBodyTemplate;
+    }
+
+    public void setQueryFeedbackEmailBodyTemplate(String queryFeedbackEmailBodyTemplate) {
+        this.queryFeedbackEmailBodyTemplate = queryFeedbackEmailBodyTemplate;
+    }
+
+    public String getQueryFeedbackEmailDestination() {
+        return queryFeedbackEmailDestination;
+    }
+
+    public void setQueryFeedbackEmailDestination(String queryFeedbackEmailDestination) {
+        this.queryFeedbackEmailDestination = queryFeedbackEmailDestination;
     }
 }

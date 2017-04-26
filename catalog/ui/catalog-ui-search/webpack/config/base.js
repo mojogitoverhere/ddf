@@ -1,5 +1,8 @@
 var path = require('path');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var LessPluginCleanCSS = require('less-plugin-clean-css');
 
 var resolve = function (place) {
   return path.resolve(__dirname, '../../', place)
@@ -13,7 +16,14 @@ module.exports = {
     ],
     output: {
         path: resolve('./target/webapp'),
-        filename: 'bundle.js'
+        filename: 'bundle.[hash].js'
+    },
+    lessLoader: {
+        lessPlugins: [
+            new LessPluginCleanCSS({
+                advanced: true
+            })
+        ]
     },
     plugins: [
         new CopyWebpackPlugin([
@@ -23,18 +33,25 @@ module.exports = {
                 force: true
             },
             {
-                from: resolve('node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css'),
-                to: resolve('target/webapp/lib/eonasdan-bootstrap-datetimepicker/css/bootstrap-datetimepicker.css'),
+                from: resolve('node_modules/bootstrap/fonts'),
+                to: resolve('target/webapp/fonts'),
+                force: true
+            },
+            {
+                from: resolve('node_modules/font-awesome/fonts'),
+                to: resolve('target/webapp/fonts'),
                 force: true
             }
-        ])
+        ]),
+        new HtmlWebpackPlugin({
+            title: 'My App',
+            filename: 'index.html',
+            template: 'index.html'
+        }),
+        new ExtractTextPlugin("css/styles.[contenthash].css")
     ],
     module: {
         loaders: [
-            {
-                test: /\.css$/,
-                loader: 'css'
-            },
             {
                 test: /\.(png|gif|jpg|jpeg)$/,
                 loader: 'file'
@@ -63,17 +80,17 @@ module.exports = {
             {
                 test: /\.(hbs|handlebars)$/,
                 loader: 'handlebars'
+            },
+            {
+                 test: /\.(css|less)$/,
+                loader: ExtractTextPlugin.extract("style", "css?url=false&sourceMap!less?sourceMap")
             }
         ]
     },
     resolve: {
         extensions: ['', '.js', '.jsx'],
         alias: {
-            bootstrap: 'bootstrap/dist/js/bootstrap.min',
-            bootstrapselect: 'bootstrap-select/dist/js/bootstrap-select.min',
             bootstrapDatepicker: 'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
-            spin: 'spin.js/spin',
-            q: 'q/q',
             strapdown: 'strapdown/v/0.2',
             // backbone
             backboneassociations: 'backbone-associations',
@@ -104,13 +121,11 @@ module.exports = {
             multiselect$: 'jquery-ui-multiselect-widget/src/jquery.multiselect',
             multiselectfilter: 'jquery-ui-multiselect-widget/src/jquery.multiselect.filter',
             'jquery.ui.widget': 'jquery-ui/widget',
-            fileupload: 'jquery-file-upload/js/jquery.fileupload',
             jquerySortable: 'jquery-ui/sortable',
             // map
             //openlayers$: 'openlayers/dist/ol-debug.js',  // useful for debugging openlayers
             //cesium$: 'cesium/Build/CesiumUnminified/Cesium.js',  //useful for debuggin cesium
             cesium$: 'cesium/Build/Cesium/Cesium.js',
-            'cesium.css': 'cesium/Build/Cesium/Widgets/widgets.css',
             drawHelper: 'cesium-drawhelper/DrawHelper',
             usngs: 'usng.js/usng',
             wellknown: 'wellknown/wellknown'
@@ -121,6 +136,7 @@ module.exports = {
             './src/main/webapp/js',
             './src/main/webapp/lib/',
             './target/webapp/lib',
+            './target/META-INF/resources/webjars/',
         ].map(resolve)
     }
 };

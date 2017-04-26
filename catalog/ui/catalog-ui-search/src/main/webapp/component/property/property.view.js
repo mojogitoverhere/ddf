@@ -39,6 +39,7 @@ define([
             'change': 'handleRevert'
         },
         modelEvents: {
+            'change:hasChanged': 'handleRevert',
             'change:isEditing': 'handleEdit'
         },
         regions: {
@@ -82,8 +83,8 @@ define([
             this.$el.addClass('has-limited-width');
         },
         revert: function(){
+            this.model.revert();
             this.onBeforeShow();
-            this.$el.trigger('change');
         },
         save: function(){
             var value = this.$el.find('input').val();
@@ -98,14 +99,11 @@ define([
             if (this.hasChanged()){
                 return {
                     attribute: this.model.getId(),
-                    values: this.getCurrentValue()
+                    values: this.model.getValue()
                 };
             } else {
                 return undefined;
             }
-        },
-        getCurrentValue: function(){
-            return this.propertyValue.currentView.getCurrentValue();
         },
         focus: function(){
             setTimeout(function() {
@@ -113,11 +111,7 @@ define([
             }.bind(this), 0);
         },
         hasChanged: function(){
-            if (this.propertyValue.currentView){
-                return this.propertyValue.currentView.hasChanged();
-            } else {
-                return false;
-            }
+            return this.model.get('hasChanged');
         },
         handleRevert: function(){
             if (this.hasChanged()){

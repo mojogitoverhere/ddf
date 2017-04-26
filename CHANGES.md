@@ -39,9 +39,13 @@ _This is a preview of a pending release and subject to change._
 
 <h3>Story</h3>
 <ul>
-	<li><a href='https://codice.atlassian.net/browse/DDF-1765'>DDF-1765</a> - As a user, I want to add a layer to the Search UI map from a KML file so that I can visualize my KML data
+    <li><a href='https://codice.atlassian.net/browse/DDF-1765'>DDF-1765</a> - As a user, I want to add a layer to the Search UI map from a KML file so that I can visualize my KML data
+    </li>
+    <li><a href='https://codice.atlassian.net/browse/DDF-2039'>DDF-2039</a> - As an integrator, I want to make a single request to the catalog framework to get back both the metacard and the resource.
+    </li>
+	<li><a href='https://codice.atlassian.net/browse/DDF-2820'>DDF-2820</a> - As a user, I would like the ability to provide feedback on DDF.
 	</li>
-	<li><a href='https://codice.atlassian.net/browse/DDF-2039'>DDF-2039</a> - As an integrator, I want to make a single request to the catalog framework to get back both the metacard and the resource.
+
 </ul>
 
 <h3>Task</h3>

@@ -10,6 +10,8 @@
  *
  **/
 /*global define*/
+var DEFAULT_PAGE_SIZE = 25;
+
 define(function (require) {
     'use strict';
     var $ = require('jquery');
@@ -82,11 +84,15 @@ define(function (require) {
             });
 
             this.handleEditing();
+            this.handleFeedback();
 
             return props;
         },
         handleEditing: function(){
             $('html').toggleClass('is-editing-restricted', this.isEditingRestricted());
+        },
+        handleFeedback: function(){
+            $('html').toggleClass('is-feedback-restricted', this.isFeedbackRestricted());
         },
         isHidden: function(attribute){
           return match(this.hiddenAttributes, attribute);
@@ -96,6 +102,12 @@ define(function (require) {
         },
         isEditingRestricted: function(){
             return !this.isEditingAllowed;
+        },
+        getPageSize: function(){
+            return this.resultPageSize || DEFAULT_PAGE_SIZE;
+        },
+        isFeedbackRestricted: function(){
+            return !this.queryFeedbackEnabled;
         }
     };
 
