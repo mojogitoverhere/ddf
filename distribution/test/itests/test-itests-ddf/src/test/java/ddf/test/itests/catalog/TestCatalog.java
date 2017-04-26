@@ -171,6 +171,7 @@ public class TestCatalog extends AbstractIntegrationTest {
             console = new KarafConsole(getServiceManager().getBundleContext(),
                     features,
                     sessionFactory);
+
         } catch (Exception e) {
             LoggingUtils.failWithThrowableStacktrace(e, "Failed in @BeforeExam: ");
         }
@@ -486,6 +487,26 @@ public class TestCatalog extends AbstractIntegrationTest {
             fail("Could not retrieve the ingested record's ID from the response.");
         }
 
+    }
+
+    @Test
+    public void testCswUtmQuery() {
+        Response response = ingestXmlViaCsw();
+        response.then();
+
+        given().header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .body(getFileContent(CSW_REQUEST_RESOURCE_PATH + "/CswQueryWithUtmIntersect"))
+                .post(CSW_PATH.getUrl())
+                .then()
+                .assertThat()
+                .statusCode(equalTo(200))
+                .body(hasXPath("/GetRecordsResponse/SearchResults[@numberOfRecordsReturned]"), not("0"));
+
+        try {
+            CatalogTestCommons.deleteMetacardUsingCswResponseId(response);
+        } catch (IOException | XPathExpressionException e) {
+            fail("Could not retrieve the ingested record's ID from the response.");
+        }
     }
 
     @Test
@@ -3005,8 +3026,7 @@ public class TestCatalog extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testCreateStorageCannotOverrideResourceUri()
-            throws IOException {
+    public void testCreateStorageCannotOverrideResourceUri() throws IOException {
         String fileName = testName.getMethodName() + ".jpg";
         String overrideResourceUri = "content:abc123";
         String overrideTitle = "overrideTitle";
@@ -3042,8 +3062,7 @@ public class TestCatalog extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUpdateStorageCannotOverrideResourceUri()
-            throws IOException {
+    public void testUpdateStorageCannotOverrideResourceUri() throws IOException {
         String fileName = testName.getMethodName() + ".jpg";
         String overrideResourceUri = "content:abc123";
         String overrideTitle = "overrideTitle";

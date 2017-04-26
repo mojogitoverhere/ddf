@@ -187,6 +187,11 @@
             <artifactId>security-core-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.codice.ddf</groupId>
+            <artifactId>geospatial</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -231,6 +236,7 @@
                             platform-util-unavailableurls,
                             jaxb2-basics-runtime,
                             commons-lang3,
+                            geospatial,
                             security-core-impl
                         </Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>

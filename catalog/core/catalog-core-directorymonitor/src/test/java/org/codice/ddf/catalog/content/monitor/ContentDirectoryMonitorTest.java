@@ -42,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import ddf.catalog.Constants;
+
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
@@ -52,7 +53,8 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
     private static final String DUMMY_DATA = "Dummy data in a text file. ";
 
     private static final String[] ATTRIBUTE_OVERRIDES =
-            new String[] {"test1=someParameter1", "test1=someParameter0", "test2=(some,parameter,with,commas)"};
+            new String[] {"test1=someParameter1", "test1=someParameter0",
+                    "test2=(some,parameter,with,commas)"};
 
     private static final int MAX_SECONDS_FOR_FILE_COPY = 5;
 
@@ -89,6 +91,25 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
     public void destroy() throws Exception {
         monitor.destroy(0);
         camelContext.stop();
+    }
+
+    @Test
+    public void testUpdateCallbackNullProperties() {
+        assertThat(monitor.getNumThreads(), is(1));
+        assertThat(monitor.getReadLockIntervalMilliseconds(), is(1000));
+        monitor.updateCallback(null);
+        assertThat(monitor.getNumThreads(), is(1));
+        assertThat(monitor.getReadLockIntervalMilliseconds(), is(1000));
+    }
+
+    @Test
+    public void testUpdateCallback() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("numThreads", 2);
+        properties.put("readLockIntervalMilliseconds", 2000);
+        monitor.updateCallback(properties);
+        assertThat(monitor.getNumThreads(), is(2));
+        assertThat(monitor.getReadLockIntervalMilliseconds(), is(2000));
     }
 
     @Test
@@ -130,6 +151,42 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
 
     @Test
     public void testMoveFile() throws Exception {
+        submitConfigOptions(monitor, monitoredDirectoryPath, ContentDirectoryMonitor.MOVE);
+        doAndVerifyFileMove(monitoredDirectory, monitoredDirectory, "input1.txt");
+    }
+
+    @Test
+    public void testBlackListedFileExtension() throws Exception {
+        System.setProperty("bad.file.extensions", ".txt");
+        monitor = createContentDirectoryMonitor();
+        submitConfigOptions(monitor, monitoredDirectoryPath, ContentDirectoryMonitor.MOVE);
+        doAndVerifyFileDidNotMove(monitoredDirectory, monitoredDirectory, "input1.txt");
+        System.setProperty("bad.file.extensions", "");
+    }
+
+    @Test
+    public void testBlackListedFile() throws Exception {
+        System.setProperty("bad.files", "input1.txt");
+        monitor = createContentDirectoryMonitor();
+        submitConfigOptions(monitor, monitoredDirectoryPath, ContentDirectoryMonitor.MOVE);
+        doAndVerifyFileDidNotMove(monitoredDirectory, monitoredDirectory, "input1.txt");
+        System.setProperty("bad.files", "");
+    }
+
+    @Test
+    public void testBlackListedFileExtensions() throws Exception {
+        System.setProperty("bad.file.extensions", ".txt,.bin");
+        monitor = createContentDirectoryMonitor();
+        submitConfigOptions(monitor, monitoredDirectoryPath, ContentDirectoryMonitor.MOVE);
+        doAndVerifyFileDidNotMove(monitoredDirectory, monitoredDirectory, "input1.txt");
+        doAndVerifyFileDidNotMove(monitoredDirectory, monitoredDirectory, "input1.bin");
+        System.setProperty("bad.file.extensions", "");
+    }
+
+    @Test
+    public void testBlackListedEmptyFileExtensions() throws Exception {
+        System.setProperty("bad.file.extensions", "");
+        monitor = createContentDirectoryMonitor();
         submitConfigOptions(monitor, monitoredDirectoryPath, ContentDirectoryMonitor.MOVE);
         doAndVerifyFileMove(monitoredDirectory, monitoredDirectory, "input1.txt");
     }
@@ -182,8 +239,8 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
                 1000);
         RouteDefinition routeDefinition = camelContext.getRouteDefinitions()
                 .get(0);
-        assertThat(routeDefinition.toString(),
-                containsString("SetHeader[" + Constants.ATTRIBUTE_OVERRIDES_KEY
+        assertThat(routeDefinition.toString(), containsString(
+                "SetHeader[" + Constants.ATTRIBUTE_OVERRIDES_KEY
                         + ", {{test2=[(some,parameter,with,commas)], test1=[someParameter1, someParameter0]}}"));
     }
 
@@ -281,7 +338,7 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
                 .getUri();
 
         String expectedUri = "file:" + monitoredDirectory
-                + "?readLockMinLength=1&recursive=true&moveFailed=.errors&readLock=changed&readLockTimeout=2000&readLockCheckInterval=1000";
+                + "?recursive=true&moveFailed=.errors&readLockMinLength=1&readLock=changed&readLockTimeout=2000&readLockCheckInterval=1000";
         if (ContentDirectoryMonitor.DELETE.equals(processingMechanism)) {
             expectedUri += "&delete=true";
         } else if (ContentDirectoryMonitor.MOVE.equals(processingMechanism)) {
