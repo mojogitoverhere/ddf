@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +49,11 @@ import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.InputTransformer;
 import ddf.security.common.audit.SecurityLogger;
 
+/**
+ * Imports Metacards, History, and their content from a zip file into the catalog.
+ * <b> This code is experimental. While this interface is functional and tested, it may change or be
+ * removed in a future version of the library. </b>
+ */
 @Service
 @Command(scope = CatalogCommands.NAMESPACE, name = "import", description = "Imports Metacards and history into the current Catalog")
 public class ImportCommand extends CatalogCommands {
@@ -74,6 +78,10 @@ public class ImportCommand extends CatalogCommands {
                     + "This file will not be able to be verified on import for integrity and authenticity.")
     boolean unsafe = false;
 
+    @Option(name = "--force", required = false, aliases = {
+            "-f"}, multiValued = false, description = "Do not prompt")
+    boolean force = false;
+
     @Override
     protected Object executeWithSubject() throws Exception {
         int metacards = 0;
@@ -88,15 +96,24 @@ public class ImportCommand extends CatalogCommands {
                 "Could not get " + DEFAULT_TRANSFORMER_ID + " input transformer"));
 
         if (unsafe) {
+            if (!force) {
+                console.println(
+                        "This will import data with no check to see if data is modified/corrupt. Do you wish to continue?");
+                String input = getUserInputModifiable().toString();
+                if (!input.matches("^[yY][eE]?[sS]?$")) {
+                    console.println("ABORTED IMPORT.");
+                    return null;
+                }
+            }
             SecurityLogger.audit("Skipping validation check of imported data. There are no "
-                    + "guarantees of integrity or authenticity of the imported data");
+                    + "guarantees of integrity or authenticity of the imported data."
+                    + "File being imported: {}", importFile);
         } else {
             if (!zipValidator.validateZipFile(importFile)) {
                 throw new CatalogCommandRuntimeException("Signature on zip file is not valid");
             }
         }
         SecurityLogger.audit("Called catalog:import command on the file: {}", importFile);
-
         console.println("Importing file");
         Instant start = Instant.now();
         try (InputStream fis = new FileInputStream(file);
@@ -112,6 +129,11 @@ public class ImportCommand extends CatalogCommands {
                 }
 
                 String[] pathParts = filename.split("\\" + File.separator);
+                if (pathParts.length < 5) {
+                    console.println("Entry is not valid! " + filename);
+                    entry = zipInputStream.getNextEntry();
+                    continue;
+                }
                 String id = pathParts[ID];
                 String type = pathParts[TYPE];
 
@@ -175,15 +197,11 @@ public class ImportCommand extends CatalogCommands {
                 entry = zipInputStream.getNextEntry();
             }
         } catch (Exception e) {
-            LOGGER.error("Exception while importing metacards", e);
+            printErrorMessage(String.format("Exception while importing metacards (%s)%nFor more information set the log level to INFO (log:set INFO org.codice.ddf.commands.catalog) ", e.getMessage()));
+            LOGGER.info("Exception while importing metacards", e);
             throw e;
         }
-        console.println("File imported successfully. Imported in: " + Duration.between(start,
-                Instant.now())
-                .toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase());
+        console.println("File imported successfully. Imported in: " + getFormattedDuration(start));
         console.println("Number of metacards imported: " + metacards);
         console.println("Number of content imported: " + content);
         console.println("Number of derived content imported: " + derivedContent);

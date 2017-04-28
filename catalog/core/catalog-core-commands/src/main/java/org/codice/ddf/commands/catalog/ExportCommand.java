@@ -200,11 +200,8 @@ public class ExportCommand extends CqlCommands {
         console.println("Starting metacard export...");
         Instant start = Instant.now();
         List<ExportItem> exportedItems = doMetacardExport(zipFile, filter);
-        console.println("Metacards exported in: " + Duration.between(start, Instant.now())
-                .toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase());
+        console.println("Metacards exported in: " + getFormattedDuration(start));
+
         console.println("Number of metacards exported: " + exportedItems.size());
         console.println();
 
@@ -217,11 +214,7 @@ public class ExportCommand extends CqlCommands {
         console.println("Starting content export...");
         start = Instant.now();
         List<ExportItem> exportedContentItems = doContentExport(zipFile, exportedItems);
-        console.println("Content exported in: " + Duration.between(start, Instant.now())
-                .toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase());
+        console.println("Content exported in: " + getFormattedDuration(start));
         console.println("Number of content exported: " + exportedContentItems.size());
 
         console.println();
@@ -241,11 +234,7 @@ public class ExportCommand extends CqlCommands {
                     System.getProperty("javax.net.ssl.keyStorePassword"),
                     System.getProperty("javax.net.ssl.keyStore"),
                     System.getProperty("javax.net.ssl.keyStorePassword"));
-            console.println("zip file signed in: " + Duration.between(start, Instant.now())
-                    .toString()
-                    .substring(2)
-                    .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                    .toLowerCase());
+            console.println("zip file signed in: " + getFormattedDuration(start));
 
             console.println();
             console.println("Uploading tombstone metacard to catalog");
@@ -265,29 +254,6 @@ public class ExportCommand extends CqlCommands {
         console.println("Exported to: " + zipFile.getFile()
                 .getCanonicalPath());
         return null;
-    }
-
-    private StringBuilder getUserInputModifiable() throws IOException {
-        int in;
-        StringBuilder builder = new StringBuilder();
-        while ((in = session.getKeyboard()
-                .read()) != '\r') {
-            if (in == 127) {
-                if (builder.length() > 0) {
-                    builder.deleteCharAt(builder.length() - 1);
-                }
-                console.print((char) 8);
-                console.print(' ');
-                console.print((char) 8);
-
-            } else {
-                builder.append((char) in);
-                console.print((char) in);
-            }
-            console.flush();
-        }
-        console.println();
-        return builder;
     }
 
     private File initOutputFile(String output) {
@@ -497,8 +463,7 @@ public class ExportCommand extends CqlCommands {
             }
         }
 
-        console.println(
-                "Metacards and Content deleted in: " + Duration.between(start, Instant.now()));
+        console.println("Metacards and Content deleted in: " + getFormattedDuration(start));
         console.println("Number of metacards deleted: " + exportedItems.size());
         console.println("Number of content deleted: " + exportedContentItems.size());
     }
