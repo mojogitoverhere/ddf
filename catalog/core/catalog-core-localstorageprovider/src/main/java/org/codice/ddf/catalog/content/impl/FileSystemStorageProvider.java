@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Codice Foundation
- * <p/>
+ * <p>
  * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
  * General Public License as published by the Free Software Foundation, either version 3 of the
  * License, or any later version.
- * <p/>
+ * <p>
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
  * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
@@ -62,6 +62,7 @@ import ddf.catalog.content.operation.impl.UpdateStorageResponseImpl;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.AttributeImpl;
 import ddf.mime.MimeTypeMapper;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -369,12 +370,14 @@ public class FileSystemStorageProvider implements StorageProvider {
                     try {
                         Path createdTarget = Files.createDirectories(target);
                         List<Path> files = listPaths(contentIdDir);
-                        Files.copy(files.get(0),
-                                Paths.get(createdTarget.toAbsolutePath()
-                                                .toString(),
-                                        files.get(0)
-                                                .getFileName()
-                                                .toString()));
+                        for (Path path : files) {
+                            Path newTarget = Paths.get(createdTarget.toAbsolutePath()
+                                    .toString(),
+                                    path.getFileName()
+                                            .toString());
+                            Path source = path;
+                            Files.copy(source, newTarget);
+                        }
                     } catch (IOException e1) {
                         throw new StorageException(
                                 "Unable to commit changes for request: " + request.getId(), e1);
@@ -573,7 +576,8 @@ public class FileSystemStorageProvider implements StorageProvider {
 
             if (copy != item.getSize()) {
                 LOGGER.warn("Created content item {} size {} does not match expected size {}"
-                                + System.lineSeparator() + "Verify filesystem and/or network integrity.",
+                                + System.lineSeparator()
+                                + "Verify filesystem and/or network integrity.",
                         item.getId(),
                         copy,
                         item.getSize());
