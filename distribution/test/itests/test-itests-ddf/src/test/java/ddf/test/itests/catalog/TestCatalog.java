@@ -1012,7 +1012,7 @@ public class TestCatalog extends AbstractIntegrationTest {
         deleteMetacard(metacardId);
     }
 
-    @Test
+    @Test @Ignore
     public void testUpdateContentResourceUri() throws IOException {
         String fileName = testName.getMethodName() + ".txt";
         String metacardId = ingestXmlWithProduct(fileName);
@@ -3059,7 +3059,7 @@ public class TestCatalog extends AbstractIntegrationTest {
         deleteMetacard(id);
     }
 
-    @Test
+    @Test @Ignore
     public void testUpdateStorageCannotOverrideResourceUri() throws IOException {
         String fileName = testName.getMethodName() + ".jpg";
         String overrideResourceUri = "content:abc123";
