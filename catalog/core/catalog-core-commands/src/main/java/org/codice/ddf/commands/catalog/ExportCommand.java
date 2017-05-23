@@ -220,6 +220,7 @@ public class ExportCommand extends CqlCommands {
 
         if (delete) {
             doDelete(exportedItems, exportedContentItems);
+
         }
 
         if (!unsafe) {
@@ -455,6 +456,7 @@ public class ExportCommand extends CqlCommands {
                 printErrorMessage(
                         "Could not delete content for metacard: " + exportedContentItem.toString());
             }
+
         }
         for (ExportItem exported : exportedItems) {
             try {
@@ -462,6 +464,18 @@ public class ExportCommand extends CqlCommands {
             } catch (IngestException e) {
                 printErrorMessage("Could not delete metacard: " + exported.toString());
             }
+        }
+
+        // delete items from cache
+        try {
+            getCacheProxy().removeById(exportedItems.stream()
+                    .map(ExportItem::getId)
+                    .collect(Collectors.toList())
+                    .toArray(new String[exportedItems.size()]));
+        } catch (Exception e) {
+            LOGGER.warn(
+                    "Could not delete all exported items from cache (Results will eventually expire)",
+                    e);
         }
 
         console.println("Metacards and Content deleted in: " + getFormattedDuration(start));
