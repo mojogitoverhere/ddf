@@ -567,21 +567,21 @@ define([
             getGeometries: function(attribute){
                 return this.get('metacard').getGeometries(attribute);
             },
-            refreshData: function (){
+            refreshData: function(){
                 //let solr flush
-                setTimeout(function (){
+                setTimeout(function() {
                     var metacard = this.get('metacard');
                     var req = {
                         count: 1,
                         cql: CQLUtils.transformFilterToCQL({
-                            type: 'AND',
+                            type: 'AND', 
                             filters: [
                                 {
                                     type: 'OR',
                                     filters: [
                                         {
-                                            type: '=',
-                                            property: '"id"',
+                                    type: '=', 
+                                    property: '"id"', 
                                             value: metacard['metacard.deleted.id'] || metacard.id
                                         }, {
                                             type: '=',
@@ -591,8 +591,8 @@ define([
                                     ]
                                 },
                                 {
-                                    type: 'ILIKE',
-                                    property: '"metacard-tags"',
+                                    type: 'ILIKE', 
+                                    property: '"metacard-tags"', 
                                     value: '*'
                                 }
                             ]
@@ -849,7 +849,7 @@ define([
                 return {
                     queuedResults: resp.results,
                     results: [],
-                    status: resp.status
+                    status: resp.status   
                 };
             },
             allowAutoMerge: function(){

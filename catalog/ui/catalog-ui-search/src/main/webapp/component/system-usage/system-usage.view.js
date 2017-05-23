@@ -12,7 +12,7 @@
  * <http://www.gnu.org/licenses/lgpl.html>.
  *
  **/
-/*global require*/
+/*global require, document*/
 var Marionette = require('marionette');
 var template = require('./system-usage.hbs');
 var CustomElements = require('js/CustomElements');
@@ -23,7 +23,7 @@ var $ = require('jquery');
 
 function getSrc() {
     return '<html class="is-iframe" style="font-size: '+preferences.get('fontSize')+'px">' +
-    '<link href="css/index.css" rel="stylesheet">' +
+    '<link href="css/styles.' + document.querySelector('link[href*="css/styles."]').href.split('css/styles.')[1] + '" rel="stylesheet">' +
     properties.ui.systemUsageMessage +
     '</html>';
 }
