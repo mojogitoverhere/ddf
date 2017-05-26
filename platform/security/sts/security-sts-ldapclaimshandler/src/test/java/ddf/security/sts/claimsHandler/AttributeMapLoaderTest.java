@@ -103,27 +103,17 @@ public class AttributeMapLoaderTest {
     public void testGetBaseDnX500() {
         Principal principal = new X500Principal(X500_DN);
 
-        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN, false);
+        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN);
 
         String[] split = baseDN.replaceAll("\\s", "").split(",");
         assertArrayEquals(X500_BASE_DN_ARR, split);
     }
 
     @Test
-    public void testGetBaseDnX500Override() {
-        Principal principal = new X500Principal(X500_DN);
-
-        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN, true);
-
-        String[] split = baseDN.replaceAll("\\s", "").split(",");
-        assertArrayEquals(X500_DEFAULT_BASE_DN_ARR, split);
-    }
-
-    @Test
     public void testGetBaseDnX500EmptyDN() {
         Principal principal = new X500Principal("CN=FOOBAR");
 
-        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN, false);
+        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN);
 
         String[] split = baseDN.replaceAll("\\s", "").split(",");
         assertArrayEquals(X500_DEFAULT_BASE_DN_ARR, split);
@@ -133,7 +123,7 @@ public class AttributeMapLoaderTest {
     public void testGetBaseDnNonX500() {
         Principal principal = new KerberosPrincipal(KERBEROS_PRINCIPAL);
 
-        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN, false);
+        String baseDN = AttributeMapLoader.getBaseDN(principal, DEFAULT_BASE_DN);
 
         String[] split = baseDN.replaceAll("\\s", "").split(",");
         assertArrayEquals(X500_DEFAULT_BASE_DN_ARR, split);

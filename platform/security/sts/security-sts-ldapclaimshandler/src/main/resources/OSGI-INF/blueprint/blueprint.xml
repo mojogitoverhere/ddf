@@ -52,15 +52,12 @@
             <property name="startTls" value="false"/>
             <property name="ldapBindUserDn" value="cn=admin"/>
             <property name="password" value="secret"/>
-            <property name="membershipUserAttribute" value="uid"/>
-            <property name="loginUserAttribute" value="uid" />
+            <property name="userNameAttribute" value="uid"/>
             <property name="userBaseDn" value="ou=users,dc=example,dc=com"/>
             <property name="objectClass" value="groupOfNames"/>
             <property name="memberNameAttribute" value="member"/>
             <property name="groupBaseDn" value="ou=groups,dc=example,dc=com"/>
             <property name="propertyFileLocation" value="${ddf.home}/etc/ws-security/attributeMap.properties"/>
-            <property name="overrideCertDn" value="false" />
-            <property name="bindMethod" value="Simple" />
             <cm:managed-properties persistent-id=""
                                    update-strategy="component-managed" update-method="update"/>
         </cm:managed-component>
