@@ -111,7 +111,13 @@
 |readOnly
 |String
 |List of metacard attributes that are read-only. NOTE: the provided values will be evaluated as JavaScript regular expressions when matched against metacard attributes.
-|^checksum$,^checksum-algorithm$,^id$,^metadata$,^metacard-type$,^source-id$,^metacard\\.,^version\\.,^validation\\.
+|^checksum$,^checksum-algorithm$,^id$,^resource-download-url$,
+^resource-uri$,
+^resource.derived-uri$,
+^resource.derived-download-url$,
+^modified$,
+^metacard-tags$,
+^metadata$,^metacard-type$,^source-id$,^metacard\\.,^version\\.,^validation\\.
 |false
 
 |Summary Metacard Attributes
