@@ -243,11 +243,11 @@ public class RoleClaimsHandler implements ClaimsHandler {
                 }
             }
         } catch (LdapException e) {
-            LOGGER.info("Cannot connect to server, therefore unable to set role claims. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information.");
-            LOGGER.debug("Cannot connect to server, therefore unable to set role claims.", e);
+            LOGGER.warn("Cannot connect to server, therefore unable to set role claims. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information.");
+            LOGGER.warn("Cannot connect to server, therefore unable to set role claims.", e);
         } catch (SearchResultReferenceIOException e) {
-            LOGGER.info("Unable to set role claims. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information.");
-            LOGGER.debug("Unable to set role claims.", e);
+            LOGGER.warn("Unable to set role claims. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information.");
+            LOGGER.warn("Unable to set role claims.", e);
         } finally {
             if (connection != null) {
                 connection.close();

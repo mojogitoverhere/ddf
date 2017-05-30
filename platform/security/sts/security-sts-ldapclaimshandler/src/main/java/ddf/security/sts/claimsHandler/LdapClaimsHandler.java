@@ -169,12 +169,12 @@ public class LdapClaimsHandler extends org.apache.cxf.sts.claims.LdapClaimsHandl
 
             }
         } catch (LdapException e) {
-            LOGGER.info(
+            LOGGER.warn(
                     "Cannot connect to server, therefore unable to set user attributes. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information");
-            LOGGER.debug("Cannot connect to server, therefore unable to set user attributes.", e);
+            LOGGER.warn("Cannot connect to server, therefore unable to set user attributes.", e);
         } catch (SearchResultReferenceIOException e) {
-            LOGGER.info("Unable to set user attributes. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information");
-            LOGGER.debug("Unable to set user attributes.", e);
+            LOGGER.warn("Unable to set user attributes. Set log level for \"ddf.security.sts.claimsHandler\" to DEBUG for more information");
+            LOGGER.warn("Unable to set user attributes.", e);
         } finally {
             if (connection != null) {
                 connection.close();
