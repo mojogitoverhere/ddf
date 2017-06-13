@@ -370,12 +370,12 @@
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.18</minimum>
+                                            <minimum>0.12</minimum>
                                         </limit>
                                         <limit>
                                             <counter>COMPLEXITY</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.19</minimum>
+                                            <minimum>0.16</minimum>
                                         </limit>
                                         <limit>
                                             <counter>LINE</counter>
