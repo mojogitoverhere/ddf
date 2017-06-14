@@ -185,6 +185,10 @@
         <reference-listener bind-method="bindPlugin" unbind-method="unbindPlugin" ref="catalogStoreSortedList"/>
     </reference-list>
 
+    <reference id="csvQueryResponseTransformer" interface="ddf.catalog.transform.QueryResponseTransformer" filter="(id=csv)"/>
+
+    <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry" />
+
     <bean id="metacardApplication" class="org.codice.ddf.catalog.ui.metacard.MetacardApplication">
         <argument ref="catalogFramework"/>
         <argument ref="filterBuilder"/>
@@ -198,6 +202,8 @@
         </argument>
         <argument ref="associated"/>
         <argument ref="catalogStoreSortedList"/>
+        <argument ref="csvQueryResponseTransformer" />
+        <argument ref="attributeRegistry" />
     </bean>
 
     <bean id="queryApplication" class="org.codice.ddf.catalog.ui.query.QueryApplication">
