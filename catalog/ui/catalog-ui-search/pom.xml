@@ -29,6 +29,7 @@
         <dependency>
             <groupId>org.apache.karaf.webconsole</groupId>
             <artifactId>org.apache.karaf.webconsole.console</artifactId>
+            <version>${karaf.version}</version>
         </dependency>
         <dependency>
             <groupId>ddf.distribution</groupId>
@@ -370,12 +371,12 @@
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.12</minimum>
+                                            <minimum>0.11</minimum>
                                         </limit>
                                         <limit>
                                             <counter>COMPLEXITY</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.16</minimum>
+                                            <minimum>0.15</minimum>
                                         </limit>
                                         <limit>
                                             <counter>LINE</counter>

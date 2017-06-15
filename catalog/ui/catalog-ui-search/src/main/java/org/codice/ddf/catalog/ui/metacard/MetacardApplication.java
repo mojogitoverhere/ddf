@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 
@@ -59,6 +60,7 @@ import org.boon.json.JsonFactory;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializerFactory;
 import org.boon.json.ObjectMapper;
+import org.codice.ddf.catalog.ui.config.ConfigurationApplication;
 import org.codice.ddf.catalog.ui.metacard.associations.Associated;
 import org.codice.ddf.catalog.ui.metacard.edit.AttributeChange;
 import org.codice.ddf.catalog.ui.metacard.edit.MetacardChanges;
@@ -78,6 +80,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteSource;
 
 import ddf.catalog.CatalogFramework;
@@ -120,7 +123,6 @@ import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.QueryResponseTransformer;
 import ddf.security.Subject;
 import ddf.security.SubjectUtils;
-
 import spark.servlet.SparkApplication;
 
 public class MetacardApplication implements SparkApplication {
@@ -168,14 +170,15 @@ public class MetacardApplication implements SparkApplication {
 
     private final AttributeRegistry attributeRegistry;
 
+    private final ConfigurationApplication configuration;
+
     public MetacardApplication(CatalogFramework catalogFramework, FilterBuilder filterBuilder,
             EndpointUtil endpointUtil, Validator validator, WorkspaceTransformer transformer,
             ExperimentalEnumerationExtractor enumExtractor,
             SubscriptionsPersistentStore subscriptions, List<MetacardType> types,
-            Associated associated,
-            List<CatalogStore> catalogStores,
+            Associated associated, List<CatalogStore> catalogStores,
             QueryResponseTransformer csvQueryResponseTransformer,
-            AttributeRegistry attributeRegistry) {
+            AttributeRegistry attributeRegistry, ConfigurationApplication configuration) {
         this.catalogFramework = catalogFramework;
         this.filterBuilder = filterBuilder;
         this.util = endpointUtil;
@@ -188,6 +191,7 @@ public class MetacardApplication implements SparkApplication {
         this.catalogStores = catalogStores;
         this.csvQueryResponseTransformer = csvQueryResponseTransformer;
         this.attributeRegistry = attributeRegistry;
+        this.configuration = configuration;
     }
 
     private String getSubjectEmail() {
@@ -324,7 +328,8 @@ public class MetacardApplication implements SparkApplication {
 
         get("/associations/:id", (req, res) -> {
             String id = req.params(":id");
-            Collection<Associated.Edge> associations = associated.getAssociations(getWritableSources(), id);
+            Collection<Associated.Edge> associations =
+                    associated.getAssociations(getWritableSources(), id);
             return util.getJson(associations);
         });
 
@@ -344,8 +349,8 @@ public class MetacardApplication implements SparkApplication {
             }
             String id = req.params(":id");
             subscriptions.addEmail(id, email);
-            return ImmutableMap.of("message", String.format("Successfully subscribed to id = %s.",
-                    id));
+            return ImmutableMap.of("message",
+                    String.format("Successfully subscribed to id = %s.", id));
         }, util::getJson);
 
         post("/unsubscribe/:id", (req, res) -> {
@@ -446,7 +451,8 @@ public class MetacardApplication implements SparkApplication {
             return util.getJson(enumExtractor.getAttributeEnumerations(req.params(":attribute")));
         });
 
-        get("/localcatalogid", (req, res) -> String.format("{\"%s\":\"%s\"}",
+        get("/localcatalogid",
+                (req, res) -> String.format("{\"%s\":\"%s\"}",
                         "local-catalog-id",
                         catalogFramework.getId()));
 
@@ -464,13 +470,19 @@ public class MetacardApplication implements SparkApplication {
                     .map(ResultImpl::new)
                     .collect(Collectors.toList());
 
+            Set<String> matchedHiddenFields = Collections.emptySet();
+            if (queryTransform.isApplyGlobalHidden()) {
+                matchedHiddenFields = getHiddenFields(metacards);
+            }
+
             SourceResponseImpl response = new SourceResponseImpl(null,
                     metacards,
                     Long.valueOf(metacards.size()));
 
             Map<String, Serializable> arguments = ImmutableMap.<String, Serializable>builder().put(
                     "hiddenFields",
-                    new HashSet<>(queryTransform.getHiddenFields()))
+                    new HashSet<>(Sets.union(matchedHiddenFields,
+                            queryTransform.getHiddenFields())))
                     .put("columnOrder", new ArrayList<>(queryTransform.getColumnOrder()))
                     .put("aliases", new HashMap<>(queryTransform.getColumnAliasMap()))
                     .build();
@@ -507,7 +519,7 @@ public class MetacardApplication implements SparkApplication {
                     IOUtils.copy(resultStream, servletOutputStream);
                 }
             }
-            return null;
+            return "";
         });
 
         after((req, res) -> {
@@ -545,6 +557,25 @@ public class MetacardApplication implements SparkApplication {
 
     private String getJsonWritableSources() {
         return util.getJson(getWritableSources());
+    }
+
+    private Set<String> getHiddenFields(List<Result> metacards) {
+        Set<String> matchedHiddenFields;
+        List<Pattern> hiddenFieldPatterns = configuration.getHiddenAttributes()
+                .stream()
+                .map(Pattern::compile)
+                .collect(Collectors.toList());
+        matchedHiddenFields = metacards.stream()
+                .map(Result::getMetacard)
+                .map(Metacard::getMetacardType)
+                .map(MetacardType::getAttributeDescriptors)
+                .flatMap(Collection::stream)
+                .map(AttributeDescriptor::getName)
+                .filter(attr -> hiddenFieldPatterns.stream()
+                        .map(Pattern::asPredicate)
+                        .anyMatch(pattern -> pattern.test(attr)))
+                .collect(Collectors.toSet());
+        return matchedHiddenFields;
     }
 
     private void revertMetacard(Metacard versionMetacard, String id, boolean alreadyCreated)
@@ -724,7 +755,9 @@ public class MetacardApplication implements SparkApplication {
 
                     Result result = results.get(id);
                     if (result == null) {
-                        throw new IngestException(String.format("Metacard with id %s not found in result set", id));
+                        throw new IngestException(String.format(
+                                "Metacard with id %s not found in result set",
+                                id));
                     }
 
                     Metacard metacard = result.getMetacard();
@@ -796,7 +829,9 @@ public class MetacardApplication implements SparkApplication {
     }
 
     private List<String> getWritableSources() {
-        List<String> stringList = catalogStores.stream().map(CatalogStore::getId).collect(Collectors.toList());
+        List<String> stringList = catalogStores.stream()
+                .map(CatalogStore::getId)
+                .collect(Collectors.toList());
         stringList.add(catalogFramework.getId());
         return stringList;
     }
