@@ -26,9 +26,12 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Sets;
 
+import ddf.catalog.data.AttributeInjector;
+import ddf.catalog.data.Metacard;
 import ddf.catalog.data.MetacardType;
 import ddf.catalog.data.impl.AttributeImpl;
 import ddf.catalog.data.impl.BasicTypes;
+import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.validation.AttributeValidatorRegistry;
 import ddf.catalog.validation.violation.ValidationViolation;
 
@@ -40,10 +43,14 @@ public class ExperimentalEnumerationExtractor {
 
     private final List<MetacardType> metacardTypes;
 
+    private final List<AttributeInjector> attributeInjectors;
+
     public ExperimentalEnumerationExtractor(AttributeValidatorRegistry attributeValidatorRegistry,
-            List<MetacardType> metacardTypes) {
+            List<MetacardType> metacardTypes,
+            List<AttributeInjector> attributeInjectors) {
         this.attributeValidatorRegistry = attributeValidatorRegistry;
         this.metacardTypes = metacardTypes;
+        this.attributeInjectors = attributeInjectors;
     }
 
     public Map<String, Set<String>> getAttributeEnumerations(String attribute) {
@@ -78,6 +85,8 @@ public class ExperimentalEnumerationExtractor {
             return new HashMap<>();
         }
 
+        type = applyInjectors(type, attributeInjectors);
+
         return type.getAttributeDescriptors()
                 .stream()
                 .flatMap(ad -> attributeValidatorRegistry.getValidators(ad.getName())
@@ -109,5 +118,13 @@ public class ExperimentalEnumerationExtractor {
                         .equals(metacardType))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private MetacardType applyInjectors(MetacardType original, List<AttributeInjector> injectors) {
+        Metacard metacard = new MetacardImpl(original);
+        for (AttributeInjector injector : injectors) {
+            metacard = injector.injectAttributes(metacard);
+        }
+        return metacard.getMetacardType();
     }
 }

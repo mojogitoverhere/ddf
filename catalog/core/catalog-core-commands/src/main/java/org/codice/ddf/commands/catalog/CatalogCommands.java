@@ -119,15 +119,14 @@ public abstract class CatalogCommands extends SubjectCommands {
         int in;
         StringBuilder builder = new StringBuilder();
         while ((in = session.getKeyboard()
-                .read()) != '\r') {
-            if (in == 127) {
+                .read()) != '\r' && in != '\n') {
+            if (in == 127 || in == 8) {
                 if (builder.length() > 0) {
                     builder.deleteCharAt(builder.length() - 1);
+                    console.print((char) 8);
+                    console.print(' ');
+                    console.print((char) 8);
                 }
-                console.print((char) 8);
-                console.print(' ');
-                console.print((char) 8);
-
             } else {
                 builder.append((char) in);
                 console.print((char) in);

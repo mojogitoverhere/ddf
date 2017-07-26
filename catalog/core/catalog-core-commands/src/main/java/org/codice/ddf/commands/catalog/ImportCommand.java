@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -43,6 +44,7 @@ import ddf.catalog.content.StorageProvider;
 import ddf.catalog.content.data.ContentItem;
 import ddf.catalog.content.data.impl.ContentItemImpl;
 import ddf.catalog.content.operation.impl.CreateStorageRequestImpl;
+import ddf.catalog.data.AttributeInjector;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.operation.impl.CreateRequestImpl;
 import ddf.catalog.transform.CatalogTransformerException;
@@ -66,6 +68,9 @@ public class ImportCommand extends CatalogCommands {
     private static final int NAME = 4;
 
     private static final int DERIVED_NAME = 5;
+
+    @Reference
+    private List<AttributeInjector> attributeInjectors;
 
     @Reference
     private StorageProvider storageProvider;
@@ -148,6 +153,7 @@ public class ImportCommand extends CatalogCommands {
                     } catch (IOException | CatalogTransformerException e) {
                         LOGGER.debug("Could not transform metacard: {}", id);
                     }
+                    metacard = applyInjectors(metacard, attributeInjectors);
                     catalogProvider.create(new CreateRequestImpl(metacard));
                     break;
                 }
@@ -231,6 +237,14 @@ public class ImportCommand extends CatalogCommands {
                 .toString());
         zipValidator.init();
         return zipValidator;
+    }
+
+    private Metacard applyInjectors(Metacard original, List<AttributeInjector> injectors) {
+        Metacard metacard = original;
+        for (AttributeInjector injector : injectors) {
+            metacard = injector.injectAttributes(metacard);
+        }
+        return metacard;
     }
 
     private static class ZipEntryByteSource extends ByteSource {

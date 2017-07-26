@@ -171,6 +171,10 @@
         <argument>
             <reference-list interface="ddf.catalog.data.MetacardType"/>
         </argument>
+        <argument>
+            <reference-list interface="ddf.catalog.data.AttributeInjector"
+                            availability="optional"/>
+        </argument>
     </bean>
 
     <bean id="associated" class="org.codice.ddf.catalog.ui.metacard.associations.Associated">
@@ -182,12 +186,14 @@
     <bean id="catalogStoreSortedList" class="ddf.catalog.util.impl.SortedServiceList"/>
     <reference-list id="catalogStores" interface="ddf.catalog.source.CatalogStore"
                     availability="optional">
-        <reference-listener bind-method="bindPlugin" unbind-method="unbindPlugin" ref="catalogStoreSortedList"/>
+        <reference-listener bind-method="bindPlugin" unbind-method="unbindPlugin"
+                            ref="catalogStoreSortedList"/>
     </reference-list>
 
-    <reference id="csvQueryResponseTransformer" interface="ddf.catalog.transform.QueryResponseTransformer" filter="(id=csv)"/>
+    <reference id="csvQueryResponseTransformer"
+               interface="ddf.catalog.transform.QueryResponseTransformer" filter="(id=csv)"/>
 
-    <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry" />
+    <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry"/>
 
     <bean id="metacardApplication" class="org.codice.ddf.catalog.ui.metacard.MetacardApplication">
         <argument ref="catalogFramework"/>
@@ -202,9 +208,9 @@
         </argument>
         <argument ref="associated"/>
         <argument ref="catalogStoreSortedList"/>
-        <argument ref="csvQueryResponseTransformer" />
-        <argument ref="attributeRegistry" />
-        <argument ref="configurationApplication" />
+        <argument ref="csvQueryResponseTransformer"/>
+        <argument ref="attributeRegistry"/>
+        <argument ref="configurationApplication"/>
     </bean>
 
     <bean id="queryApplication" class="org.codice.ddf.catalog.ui.query.QueryApplication">

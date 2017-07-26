@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,6 +59,9 @@ import org.fusesource.jansi.Ansi;
 import org.geotools.filter.text.cql2.CQLException;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +92,7 @@ import ddf.catalog.operation.impl.ResourceRequestByProductUri;
 import ddf.catalog.resource.ResourceNotFoundException;
 import ddf.catalog.resource.ResourceNotSupportedException;
 import ddf.catalog.source.IngestException;
+import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.MetacardTransformer;
 import ddf.security.common.audit.SecurityLogger;
@@ -147,6 +152,9 @@ public class ExportCommand extends CqlCommands {
 
     @Option(name = "--skip-signature-verification", required = false, multiValued = false, description = "Produces the export zip but does NOT sign the resulting zip file. This file will not be able to be verified on import for integrity and security.")
     boolean unsafe = false;
+
+    @Option(name = "--skip-tombstone-creation", required = false, multiValued = false, description = "Produces the Export zip but does NOT upload a tombstone metacard.")
+    boolean skipTombstoneCreation = false;
 
     @Override
     protected Object executeWithSubject() throws Exception {
@@ -235,21 +243,34 @@ public class ExportCommand extends CqlCommands {
                     System.getProperty("javax.net.ssl.keyStore"),
                     System.getProperty("javax.net.ssl.keyStorePassword"));
             console.println("zip file signed in: " + getFormattedDuration(start));
+        }
 
+        if (!skipTombstoneCreation) {
             console.println();
             console.println("Uploading tombstone metacard to catalog");
             ArrayList<String> tombstoneData = exportedItems.stream()
                     .filter(ei -> !"revision".equals(ei.getMetacardTag()))
                     .map(ExportItem::tombstoneString)
                     .collect(Collectors.toCollection(ArrayList::new));
-            ExportedMetacard tombstone = new ExportedMetacard(tombstoneData,
-                    location,
-                    Instant.now());
+            ExportedMetacard tombstone = new ExportedMetacard(tombstoneData, location, Instant.now());
             tombstone.setTitle(zipFile.getFile()
                     .getName());
-            catalogFramework.create(new CreateRequestImpl(tombstone));
-            console.println();
+            try {
+                catalogFramework.create(new CreateRequestImpl(tombstone));
+            } catch (IngestException | SourceUnavailableException e) {
+                String msg = "Could not create the tombstone metacard";
+                LOGGER.error(msg, e);
+                printErrorMessage(msg);
+                console.println();
+                console.println("PARTIAL Export complete. [Tombstone metacard not created]");
+                console.println(
+                        "Configuration may be preventing the current user from metacard creation. Please ensure all permissions are correct.");
+                console.println("Exported to: " + zipFile.getFile()
+                        .getCanonicalPath());
+                return null;
+            }
         }
+        console.println();
         console.println("Export complete.");
         console.println("Exported to: " + zipFile.getFile()
                 .getCanonicalPath());
@@ -664,6 +685,16 @@ public class ExportCommand extends CqlCommands {
         static final MetacardType METACARD_TYPE = new MetacardTypeImpl("exported.metacards",
                 BasicTypes.BASIC_METACARD,
                 ATTRIBUTE_DESCRIPTORS);
+
+        static {
+            Bundle bundle = FrameworkUtil.getBundle(ExportCommand.class);
+            BundleContext context = bundle == null ? null : bundle.getBundleContext();
+            if (bundle == null || context == null) {
+                LOGGER.error("Could not get bundle to register ExportMetacard types!");
+            } else {
+                context.registerService(MetacardType.class, METACARD_TYPE, new Hashtable<>());
+            }
+        }
 
         <T extends Serializable> ExportedMetacard(T data, String location, Instant time) {
             super(METACARD_TYPE);

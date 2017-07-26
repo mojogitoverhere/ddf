@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -42,6 +43,8 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 
 import ddf.catalog.core.versioning.MetacardVersion;
@@ -69,6 +72,10 @@ public class MetacardVersionImpl extends MetacardImpl implements MetacardVersion
 
     private static final Set<AttributeDescriptor> VERSION_DESCRIPTORS =
             new HashSet<>(BasicTypes.BASIC_METACARD.getAttributeDescriptors());
+
+    private static final Cache<Integer, byte[]> METACARD_TYPE_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(256)
+            .build();
 
     static {
         VERSION_DESCRIPTORS.add(new AttributeDescriptorImpl(ACTION,
@@ -160,17 +167,9 @@ public class MetacardVersionImpl extends MetacardImpl implements MetacardVersion
         this.setVersionOfId(sourceMetacard.getId());
         this.setVersionTags(sourceMetacard.getTags());
 
-        Optional<MetacardType> type = types.stream()
-                .filter(mt -> sourceMetacard.getMetacardType()
-                        .getName()
-                        .equals(mt.getName()))
-                .findFirst();
-
         this.setVersionType(sourceMetacard.getMetacardType()
                 .getName());
-        if (!type.isPresent()) {
-            this.setVersionTypeBinary(getVersionType(sourceMetacard));
-        }
+        this.setVersionTypeBinary(getVersionType(sourceMetacard));
 
         String editedBy = SubjectUtils.getEmailAddress(subject);
         if (isNullOrEmpty(editedBy)) {
@@ -186,27 +185,68 @@ public class MetacardVersionImpl extends MetacardImpl implements MetacardVersion
         this.setTags(Collections.singleton(VERSION_TAG));
     }
 
+    //@formatter:off
     private byte[] getVersionType(Metacard sourceMetacard) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(sourceMetacard.getMetacardType());
-            return baos.toByteArray();
-        } catch (IOException e) {
+        try {
+            return METACARD_TYPE_CACHE.get(sourceMetacard.getMetacardType()
+                    .hashCode(), () -> {
+                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                        oos.writeObject(sourceMetacard.getMetacardType());
+                        METACARD_TYPE_CACHE.put(sourceMetacard.getMetacardType()
+                                .hashCode(), baos.toByteArray());
+                        return baos.toByteArray();
+                    }
+                });
+        } catch (ExecutionException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Could not serialize metacard type for metacard {}",
+                        sourceMetacard,
+                        e);
+            }
             throw new RuntimeException("Could not serialize MetacardType", e);
         }
+    }
+    //@formatter:on
+
+    /**
+     * Reverts the {@link MetacardVersionImpl} to the original {@link Metacard}
+     *
+     * @return the original metacard this version represents
+     * @deprecated The metacard types passed in are no longer used
+     */
+    public Metacard getMetacard(List<MetacardType> types) {
+        return this.getMetacard();
     }
 
     /**
      * Reverts the {@link MetacardVersionImpl} to the original {@link Metacard}
      *
-     * @return The converted metacard
-     * @throws IllegalStateException
+     * @return The original metacard this version represents
      */
-    public Metacard getMetacard(List<MetacardType> types) {
-        return toMetacard(this, types);
+    public Metacard getMetacard() {
+        return toMetacard(this);
     }
 
+    /**
+     * Reverts the passed in {@link Metacard} to the original {@link Metacard} IF
+     * it is a version metacard.
+     *
+     * @return The original metacard this version represents
+     * @deprecated The metacard types passed in are no longer used
+     */
     public static Metacard toMetacard(Metacard source, List<MetacardType> types) {
+        return toMetacard(source);
+    }
+
+    /**
+     * Reverts the passed in {@link Metacard} to the original {@link Metacard} IF
+     * it is a version metacard.
+     *
+     * @param source The metacard to revert
+     * @return The original metacard this version represents
+     */
+    public static Metacard toMetacard(Metacard source) {
         String id = (String) source.getAttribute(MetacardVersion.VERSION_OF_ID)
                 .getValue();
         if (isNullOrEmpty(id)) {
@@ -214,16 +254,8 @@ public class MetacardVersionImpl extends MetacardImpl implements MetacardVersion
                     "Cannot convert history metacard without the original metacard id");
         }
 
-        String typeString = (String) source.getAttribute(VERSION_TYPE)
-                .getValue();
-        Optional<MetacardType> typeFromExisting = types.stream()
-                .filter(mt -> mt.getName()
-                        .equals(typeString))
-                .findFirst();
-
         MetacardImpl result = new MetacardImpl(source,
-                typeFromExisting.orElseGet(() -> getMetacardTypeBinary(source).orElseThrow(
-                        cannotDeserializeException)));
+                getMetacardTypeBinary(source).orElseThrow(cannotDeserializeException));
         result.setId(id);
         result.setTags(getVersionTags(source));
         try {
