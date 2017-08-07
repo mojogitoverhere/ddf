@@ -220,6 +220,7 @@ public class Historian {
                     + updateStorageResponse.getUpdatedContentItems()
                     .stream()
                     .map(ContentItem::getMetacard)
+                    .filter(Objects::nonNull)
                     .map(Metacard::getId)
                     .collect(TO_A_STRING));
             return updateStorageResponse;
