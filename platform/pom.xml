@@ -373,9 +373,10 @@
         <module>admin</module>
         <module>landing-page</module>
         <module>country-converter</module>
-        <module>platform-app</module>
         <module>platform-filter-clientinfo</module>
         <module>platform-filter-response</module>
         <module>email</module>
+        <module>platform-crypto-provider</module>
+        <module>platform-app</module>
     </modules>
 </project>

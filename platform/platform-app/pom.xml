@@ -305,6 +305,11 @@
             <artifactId>platform-email-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.codice.ddf.platform.crypto</groupId>
+            <artifactId>platform-crypto-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <properties>
         <!-- CXF Properties used in used in platform-app's features.xml
