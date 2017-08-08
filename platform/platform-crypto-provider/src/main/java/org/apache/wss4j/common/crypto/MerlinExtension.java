@@ -48,8 +48,7 @@ import org.apache.wss4j.common.ext.WSSecurityException;
  * updated, this can be removed from the baseline.
  */
 public class MerlinExtension extends Merlin {
-    private static final org.slf4j.Logger LOG =
-            org.slf4j.LoggerFactory.getLogger(Merlin.class);
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Merlin.class);
 
     public MerlinExtension() {
         super();
@@ -59,30 +58,27 @@ public class MerlinExtension extends Merlin {
         super(loadCACerts, cacertsPasswd);
     }
 
-    public MerlinExtension(Properties properties, ClassLoader loader, PasswordEncryptor passwordEncryptor)
-            throws WSSecurityException, IOException {
+    public MerlinExtension(Properties properties, ClassLoader loader,
+            PasswordEncryptor passwordEncryptor) throws WSSecurityException, IOException {
         super(properties, loader, passwordEncryptor);
     }
 
     /**
      * Evaluate whether a given certificate chain should be trusted.
      *
-     * @param certs Certificate chain to validate
-     * @param enableRevocation whether to enable CRL verification or not
+     * @param certs                  Certificate chain to validate
+     * @param enableRevocation       whether to enable CRL verification or not
      * @param subjectCertConstraints A set of constraints on the Subject DN of the certificates
-     *
      * @throws WSSecurityException if the certificate chain is invalid
      */
-    public void verifyTrust(
-            X509Certificate[] certs,
-            boolean enableRevocation,
-            Collection<Pattern> subjectCertConstraints
-    ) throws WSSecurityException {
+    public void verifyTrust(X509Certificate[] certs, boolean enableRevocation,
+            Collection<Pattern> subjectCertConstraints) throws WSSecurityException {
         //
         // FIRST step - Search the keystore for the transmitted certificate
         //
         if (certs.length == 1 && !enableRevocation) {
-            String issuerString = certs[0].getIssuerX500Principal().getName();
+            String issuerString = certs[0].getIssuerX500Principal()
+                    .getName();
             BigInteger issuerSerial = certs[0].getSerialNumber();
 
             CryptoType cryptoType = new CryptoType(CryptoType.TYPE.ISSUER_SERIAL);
@@ -97,14 +93,14 @@ public class MerlinExtension extends Merlin {
                 try {
                     certs[0].checkValidity();
                 } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                    throw new WSSecurityException(
-                            WSSecurityException.ErrorCode.FAILED_CHECK, e, "invalidCert"
-                    );
+                    throw new WSSecurityException(WSSecurityException.ErrorCode.FAILED_CHECK,
+                            e,
+                            "invalidCert");
                 }
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(
-                            "Direct trust for certificate with " + certs[0].getSubjectX500Principal().getName()
-                    );
+                    LOG.debug("Direct trust for certificate with "
+                            + certs[0].getSubjectX500Principal()
+                            .getName());
                 }
                 return;
             }
@@ -115,7 +111,8 @@ public class MerlinExtension extends Merlin {
         // keystore or the truststore
         //
         List<Certificate[]> foundIssuingCertChains = null;
-        String issuerString = certs[0].getIssuerX500Principal().getName();
+        String issuerString = certs[0].getIssuerX500Principal()
+                .getName();
         if (certs.length == 1) {
 
             Object subject = convertSubjectToPrincipal(issuerString);
@@ -125,22 +122,22 @@ public class MerlinExtension extends Merlin {
             }
 
             //If we can't find the issuer in the keystore then look at the truststore
-            if ((foundIssuingCertChains == null || foundIssuingCertChains.isEmpty()) && truststore != null) {
+            if ((foundIssuingCertChains == null || foundIssuingCertChains.isEmpty())
+                    && truststore != null) {
                 foundIssuingCertChains = getCertificates(subject, truststore);
             }
 
             if (foundIssuingCertChains == null || foundIssuingCertChains.isEmpty()
                     || foundIssuingCertChains.get(0).length < 1) {
-                String subjectString = certs[0].getSubjectX500Principal().getName();
+                String subjectString = certs[0].getSubjectX500Principal()
+                        .getName();
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(
-                            "No certs found in keystore for issuer " + issuerString
-                                    + " of certificate for " + subjectString
-                    );
+                    LOG.debug("No certs found in keystore for issuer " + issuerString
+                            + " of certificate for " + subjectString);
                 }
-                throw new WSSecurityException(
-                        WSSecurityException.ErrorCode.FAILURE, "certpath", new Object[] {"No trusted certs found"}
-                );
+                throw new WSSecurityException(WSSecurityException.ErrorCode.FAILURE,
+                        "certpath",
+                        new Object[] {"No trusted certs found"});
             }
         }
 
@@ -149,9 +146,7 @@ public class MerlinExtension extends Merlin {
         // Check the certificate trust path for the issuer cert chain
         //
         if (LOG.isDebugEnabled()) {
-            LOG.debug(
-                    "Preparing to validate certificate path for issuer " + issuerString
-            );
+            LOG.debug("Preparing to validate certificate path for issuer " + issuerString);
         }
 
         try {
@@ -213,17 +208,12 @@ public class MerlinExtension extends Merlin {
 
                 validator.validate(path, param);
             }
-        } catch (NoSuchProviderException | NoSuchAlgorithmException
-                | CertificateException | InvalidAlgorithmParameterException
-                | java.security.cert.CertPathValidatorException
-                | KeyStoreException e) {
-            throw new WSSecurityException(
-                    WSSecurityException.ErrorCode.FAILURE, e, "certpath"
-            );
+        } catch (NoSuchProviderException | NoSuchAlgorithmException | CertificateException | InvalidAlgorithmParameterException | java.security.cert.CertPathValidatorException | KeyStoreException e) {
+            throw new WSSecurityException(WSSecurityException.ErrorCode.FAILURE, e, "certpath");
         }
 
         // Finally check Cert Constraints
-        if (!matchesSubjectDnPattern(certs[0], subjectCertConstraints)) {
+        if (!matches(certs[0], subjectCertConstraints)) {
             throw new WSSecurityException(WSSecurityException.ErrorCode.FAILED_AUTHENTICATION);
         }
     }
@@ -264,8 +254,9 @@ public class MerlinExtension extends Merlin {
     /**
      * Get an X509 Certificate (chain) of the X500Principal argument in the supplied KeyStore. If multiple
      * certs match the Subject DN, then multiple cert chains are returned.
+     *
      * @param subjectRDN either an X500Principal or a BouncyCastle X509Name instance.
-     * @param store The KeyStore
+     * @param store      The KeyStore
      * @return an X509 Certificate (chain)
      * @throws WSSecurityException
      */
@@ -281,11 +272,11 @@ public class MerlinExtension extends Merlin {
                     // no cert chain, so lets check if getCertificate gives us a result.
                     Certificate cert = store.getCertificate(alias);
                     if (cert != null) {
-                        certs = new Certificate[]{cert};
+                        certs = new Certificate[] {cert};
                     }
                 }
                 if (certs != null && certs.length > 0 && certs[0] instanceof X509Certificate) {
-                    X500Principal foundRDN = ((X509Certificate)certs[0]).getSubjectX500Principal();
+                    X500Principal foundRDN = ((X509Certificate) certs[0]).getSubjectX500Principal();
                     Object certName = createBCX509Name(foundRDN.getName());
 
                     if (subjectRDN.equals(certName)) {
@@ -295,9 +286,7 @@ public class MerlinExtension extends Merlin {
                 }
             }
         } catch (KeyStoreException e) {
-            throw new WSSecurityException(
-                    WSSecurityException.ErrorCode.FAILURE, e, "keystore"
-            );
+            throw new WSSecurityException(WSSecurityException.ErrorCode.FAILURE, e, "keystore");
         }
 
         if (foundCerts.isEmpty()) {
