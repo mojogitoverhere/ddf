@@ -67,6 +67,7 @@ define([
             this.listenTo(this.model, 'change:type', this.updateTypeDropdown);
             this.listenTo(this.model, 'change:type', this.determineInput);
             this.listenTo(this.model, 'change:value', this.determineInput);
+            this.listenTo(this.model, 'change:comparator', this.determineInput);
         },
         onBeforeShow: function(){
             this._filterDropdownModel = new DropdownModel({value: 'CONTAINS'});
@@ -135,11 +136,22 @@ define([
             }
         },
         determineInput: function(){
+            let value = this.model.get('value');
+            if (this.filterInput.currentView && this.filterInput.currentView.model.hasChanged()) {
+                value = this.filterInput.currentView.model.getValue();
+                this.model.set('value', value);
+            }
+            var currentComparator = this.model.get('comparator');
             var propertyJSON = _.extend({},
                 metacardDefinitions.metacardTypes[this.model.get('type')],
                 {
-                    value: this.model.get('value'),
-                    multivalued: false
+                    value: value,
+                    multivalued: false,
+                    enumFiltering: true,
+                    enumCustom: true,
+                    matchcase: ['MATCHCASE', '='].indexOf(currentComparator) !== -1 ? true : false,
+                    enum: metacardDefinitions.enums[this.model.get('type')],
+                    showValidationIssues: false
                 });
             if (propertyJSON.type === 'GEOMETRY'){
                 propertyJSON.type = 'LOCATION';
