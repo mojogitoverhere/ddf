@@ -144,17 +144,19 @@ public class ImportCommand extends CatalogCommands {
 
                 switch (type) {
                 case "metacard": {
-                    metacards++;
                     String metacardName = pathParts[NAME];
                     Metacard metacard = null;
                     try {
                         metacard = transformer.transform(new UncloseableBufferedInputStreamWrapper(
                                 zipInputStream), id);
                     } catch (IOException | CatalogTransformerException e) {
-                        LOGGER.debug("Could not transform metacard: {}", id);
+                        LOGGER.debug("Could not transform metacard: {}", id, e);
+                        entry = zipInputStream.getNextEntry();
+                        continue;
                     }
                     metacard = applyInjectors(metacard, attributeInjectors);
                     catalogProvider.create(new CreateRequestImpl(metacard));
+                    metacards++;
                     break;
                 }
                 case "content": {
