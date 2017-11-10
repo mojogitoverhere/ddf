@@ -114,6 +114,10 @@ public class TikaInputTransformer implements InputTransformer {
 
     private MetacardType fallbackPowerpointMetacardType = null;
 
+    private static final String VISIO_MIME_TYPE = "application/vnd.ms-visio.viewer";
+
+    private static final String VISIO_TEMPLATE_MIME_TYPE = "application/vnd.ms-visio.template";
+
     // commonTikaMetacardType represents the MetacardType to be used when an ingested product's mime
     // type does not match a mime type that is supported by the mimeTypeToMetacardTypeMap
     private MetacardType commonTikaMetacardType = null;
@@ -191,6 +195,14 @@ public class TikaInputTransformer implements InputTransformer {
                 fallbackPowerpointMetacardType);
         //.doc, .dot
         mimeTypeToMetacardTypeMap.put(com.google.common.net.MediaType.MICROSOFT_WORD.toString(), fallbackOfficeDocMetacardType);
+        //.vsdx
+        mimeTypeToMetacardTypeMap.put(
+                VISIO_MIME_TYPE,
+                fallbackOfficeDocMetacardType);
+        //.vstx
+        mimeTypeToMetacardTypeMap.put(
+                VISIO_TEMPLATE_MIME_TYPE,
+                fallbackOfficeDocMetacardType);
         //.docx
         mimeTypeToMetacardTypeMap.put(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -546,6 +558,8 @@ public class TikaInputTransformer implements InputTransformer {
         }
 
         mimeTypes.add("image/jp2");
+        mimeTypes.add(VISIO_MIME_TYPE);
+        mimeTypes.add(VISIO_TEMPLATE_MIME_TYPE);
 
         LOGGER.debug("supported mime types: {}", mimeTypes);
         return mimeTypes;
