@@ -399,6 +399,7 @@
                             ddf.mime,
                             ddf.security,
                             ddf.security.assertion,
+                            ddf.security.common.audit;version="2.0",
                             ddf.security.permission,
                             ddf.security.service,
                             javax.activation,
