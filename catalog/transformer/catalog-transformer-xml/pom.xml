@@ -84,6 +84,10 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -97,7 +101,8 @@
                             ogc-tools-gml-jts,
                             catalog-transformer-xml-binding,
                             jaxb2-basics-runtime,
-                            gml-v_3_1_1-schema;inline=true
+                            gml-v_3_1_1-schema;inline=true,
+                            commons-lang3
                         </Embed-Dependency>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.name}</Bundle-Name>
@@ -132,12 +137,12 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.53</minimum>
+                                            <minimum>0.51</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.47</minimum>
+                                            <minimum>0.43</minimum>
                                         </limit>
                                         <limit>
                                             <counter>COMPLEXITY</counter>
