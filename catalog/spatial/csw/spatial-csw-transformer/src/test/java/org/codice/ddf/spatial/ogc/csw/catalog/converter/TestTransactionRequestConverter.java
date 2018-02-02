@@ -39,11 +39,12 @@ import java.util.Arrays;
 import net.opengis.cat.csw.v_2_0_2.DeleteType;
 import net.opengis.cat.csw.v_2_0_2.QueryConstraintType;
 import org.apache.commons.io.IOUtils;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateActionImpl;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.custommonkey.xmlunit.exceptions.XpathException;
@@ -144,7 +145,7 @@ public class TestTransactionRequestConverter {
     MetacardImpl metacard = new MetacardImpl();
     metacard.setId(METACARD_ID);
     UpdateAction updateAction =
-        new UpdateAction(metacard, CswConstants.CSW_METACARD_TYPE_NAME, null);
+        new UpdateActionImpl(metacard, CswConstants.CSW_METACARD_TYPE_NAME, null);
     transactionRequest.getUpdateActions().add(updateAction);
     transactionRequest.setService(CswConstants.CSW);
     transactionRequest.setVerbose(true);
@@ -166,7 +167,7 @@ public class TestTransactionRequestConverter {
     QueryConstraintType queryConstraintType = new QueryConstraintType();
     queryConstraintType.setCqlText("identifier = " + METACARD_ID);
     deleteType.setConstraint(queryConstraintType);
-    DeleteAction deleteAction = new DeleteAction(deleteType, null);
+    DeleteActionImpl deleteAction = new DeleteActionImpl(deleteType, null);
     transactionRequest.getDeleteActions().add(deleteAction);
     transactionRequest.setService(CswConstants.CSW);
     transactionRequest.setVerbose(true);
@@ -192,13 +193,13 @@ public class TestTransactionRequestConverter {
         new InsertAction(CswConstants.CSW_METACARD_TYPE_NAME, null, Arrays.asList(metacard));
     transactionRequest.getInsertActions().add(insertAction);
     UpdateAction updateAction =
-        new UpdateAction(metacard, CswConstants.CSW_METACARD_TYPE_NAME, null);
+        new UpdateActionImpl(metacard, CswConstants.CSW_METACARD_TYPE_NAME, null);
     transactionRequest.getUpdateActions().add(updateAction);
     DeleteType deleteType = new DeleteType();
     QueryConstraintType queryConstraintType = new QueryConstraintType();
     queryConstraintType.setCqlText("identifier = " + METACARD_ID);
     deleteType.setConstraint(queryConstraintType);
-    DeleteAction deleteAction = new DeleteAction(deleteType, null);
+    DeleteActionImpl deleteAction = new DeleteActionImpl(deleteType, null);
     transactionRequest.getDeleteActions().add(deleteAction);
 
     String xml = xStream.toXML(transactionRequest);
@@ -212,7 +213,7 @@ public class TestTransactionRequestConverter {
         IOUtils.toString(
             TestTransactionRequestConverter.class.getResourceAsStream("/insertRequest.xml"));
     CswTransactionRequest request = (CswTransactionRequest) xStream.fromXML(insertRequest);
-    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteAction.class));
+    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteActionImpl.class));
     assertThat(request.getUpdateActions(), emptyCollectionOf(UpdateAction.class));
     assertThat(request.getInsertActions(), hasSize(1));
     InsertAction action = request.getInsertActions().get(0);
@@ -226,7 +227,7 @@ public class TestTransactionRequestConverter {
             TestTransactionRequestConverter.class.getResourceAsStream(
                 "/updateWholeRecordRequest.xml"));
     CswTransactionRequest request = (CswTransactionRequest) xStream.fromXML(updateRequest);
-    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteAction.class));
+    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteActionImpl.class));
     assertThat(request.getUpdateActions(), hasSize(1));
     assertThat(request.getInsertActions(), emptyCollectionOf(InsertAction.class));
     UpdateAction action = request.getUpdateActions().get(0);
@@ -240,7 +241,7 @@ public class TestTransactionRequestConverter {
             TestTransactionRequestConverter.class.getResourceAsStream(
                 "/updateByPropertyRequest.xml"));
     CswTransactionRequest request = (CswTransactionRequest) xStream.fromXML(updateRequest);
-    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteAction.class));
+    assertThat(request.getDeleteActions(), emptyCollectionOf(DeleteActionImpl.class));
     assertThat(request.getUpdateActions(), hasSize(1));
     assertThat(request.getInsertActions(), emptyCollectionOf(InsertAction.class));
     UpdateAction action = request.getUpdateActions().get(0);
@@ -266,7 +267,7 @@ public class TestTransactionRequestConverter {
     assertThat(request.getDeleteActions(), hasSize(1));
     assertThat(request.getUpdateActions(), emptyCollectionOf(UpdateAction.class));
     assertThat(request.getInsertActions(), emptyCollectionOf(InsertAction.class));
-    DeleteAction action = request.getDeleteActions().get(0);
+    DeleteActionImpl action = request.getDeleteActions().get(0);
     assertThat(action.getTypeName(), is(CswConstants.CSW_RECORD));
   }
 }

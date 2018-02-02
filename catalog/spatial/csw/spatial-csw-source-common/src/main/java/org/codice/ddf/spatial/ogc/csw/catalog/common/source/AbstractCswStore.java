@@ -68,9 +68,9 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswSourceConfiguration;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.TransformerManager;
 import org.opengis.filter.Filter;
 import org.osgi.framework.BundleContext;
@@ -210,7 +210,9 @@ public abstract class AbstractCswStore extends AbstractCswSource implements Cata
               .is()
               .equalTo()
               .text(update.getKey().toString()));
-      transactionRequest.getUpdateActions().add(new UpdateAction(metacard, insertTypeName, null));
+      transactionRequest
+          .getUpdateActions()
+          .add(new UpdateActionImpl(metacard, insertTypeName, null));
     }
     try {
       TransactionResponseType response = csw.transaction(transactionRequest);
@@ -273,8 +275,8 @@ public abstract class AbstractCswStore extends AbstractCswSource implements Cata
         queryConstraintType.setCqlText(CswCqlTextFilter.getInstance().getCqlText(filterType));
         deleteType.setConstraint(queryConstraintType);
 
-        DeleteAction deleteAction =
-            new DeleteAction(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
+        DeleteActionImpl deleteAction =
+            new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
         transactionRequest.getDeleteActions().add(deleteAction);
       } catch (UnsupportedQueryException e) {
         throw new IngestException("Unsupported Query.", e);

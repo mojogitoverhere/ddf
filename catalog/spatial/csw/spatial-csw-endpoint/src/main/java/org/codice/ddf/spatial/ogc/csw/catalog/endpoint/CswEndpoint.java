@@ -134,6 +134,8 @@ import net.opengis.ows.v_1_0_0.ServiceProvider;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.platform.util.XMLUtils;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.Csw;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
@@ -145,11 +147,10 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.GetRecordByIdRequest;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GetRecordsRequest;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GmdConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.CswActionTransformer;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.TransformerManager;
+import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformer;
+import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformerProvider;
 import org.geotools.filter.text.cql2.CQLException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -737,7 +738,7 @@ public class CswEndpoint implements Csw {
   private UpdateAction transformUpdateAction(UpdateAction updateAction, String typeName) {
     Optional<CswActionTransformer> op = cswActionTransformerProvider.getTransformer(typeName);
     if (op.isPresent()) {
-      CswActionTransformer tr = (CswActionTransformer) op.get();
+      CswActionTransformer tr = op.get();
       return tr.transform(updateAction);
     } else {
       return updateAction;

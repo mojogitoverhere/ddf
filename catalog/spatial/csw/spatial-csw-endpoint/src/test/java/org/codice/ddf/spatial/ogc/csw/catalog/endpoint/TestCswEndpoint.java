@@ -120,6 +120,7 @@ import net.opengis.ows.v_1_0_0.SectionsType;
 import net.opengis.ows.v_1_0_0.ServiceIdentification;
 import net.opengis.ows.v_1_0_0.ServiceProvider;
 import org.apache.commons.lang.StringUtils;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswRecordCollection;
@@ -131,11 +132,12 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.GetRecordsRequest;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GmdConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.CswActionTransformer;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.TransformerManager;
+import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformer;
+import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformerProvider;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.opengis.filter.sort.SortBy;
@@ -1670,8 +1672,8 @@ public class TestCswEndpoint {
     DeleteResponse[] delRest = delBatch.subList(1, delBatch.size()).toArray(new DeleteResponse[0]);
     when(catalogFramework.delete(any(DeleteRequest.class))).thenReturn(delBatch.get(0), delRest);
 
-    DeleteAction deleteAction =
-        new DeleteAction(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
+    DeleteActionImpl deleteAction =
+        new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
 
     CswTransactionRequest deleteRequest = new CswTransactionRequest();
     deleteRequest.getDeleteActions().add(deleteAction);
@@ -1720,8 +1722,8 @@ public class TestCswEndpoint {
     DeleteResponse[] delRest = delBatch.subList(1, delBatch.size()).toArray(new DeleteResponse[0]);
     when(catalogFramework.delete(any(DeleteRequest.class))).thenReturn(delBatch.get(0), delRest);
 
-    DeleteAction deleteAction =
-        new DeleteAction(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
+    DeleteActionImpl deleteAction =
+        new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
 
     CswTransactionRequest deleteRequest = new CswTransactionRequest();
     deleteRequest.getDeleteActions().add(deleteAction);
@@ -1744,7 +1746,8 @@ public class TestCswEndpoint {
 
     MetacardImpl updatedMetacard = new MetacardImpl();
     updatedMetacard.setId("123");
-    UpdateAction updateAction = new UpdateAction(updatedMetacard, CswConstants.CSW_RECORD, "");
+    UpdateAction updateAction =
+        new UpdateActionImpl(updatedMetacard, CswConstants.CSW_RECORD, "");
 
     CswTransactionRequest transactionRequest = new CswTransactionRequest();
     transactionRequest.getUpdateActions().add(updateAction);
@@ -1816,7 +1819,7 @@ public class TestCswEndpoint {
     constraint.setCqlText("title = 'fake'");
 
     UpdateAction updateAction =
-        new UpdateAction(
+        new UpdateActionImpl(
             recordProperties,
             CswConstants.CSW_RECORD,
             "",
@@ -1904,7 +1907,7 @@ public class TestCswEndpoint {
   //    constraint.setCqlText("title = 'fake'");
   //
   //    UpdateAction updateAction =
-  //        new UpdateAction(
+  //        new UpdateActionImpl(
   //            recordProperties,
   //            CswConstants.CSW_RECORD,
   //            "",

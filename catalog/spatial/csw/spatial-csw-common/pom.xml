@@ -80,6 +80,11 @@
             <artifactId>spatial-csw-schema-bindings</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.codice.ddf.spatial</groupId>
+            <artifactId>spatial-csw-action</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-api-impl</artifactId>
         </dependency>
@@ -189,6 +194,11 @@
             <artifactId>gt-referencing</artifactId>
             <version>${org.geotools.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.ogc</groupId>
+            <artifactId>csw-v_2_0_2-schema</artifactId>
+            <version>1.1.0</version>
         </dependency>
     </dependencies>
 </project>

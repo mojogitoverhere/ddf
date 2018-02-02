@@ -112,8 +112,7 @@
     </reference-list>
 
     <reference-list id="cswActionTransformers"
-      interface="org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.CswActionTransformer"
-      member-type="service-reference"
+      interface="org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformer"
       availability="optional">
         <reference-listener bind-method="bind"
           unbind-method="unbind"
@@ -121,7 +120,7 @@
     </reference-list>
 
     <bean id="cswActionTransformerProvider"
-      class="org.codice.ddf.spatial.ogc.csw.catalog.endpoint.CswActionTransformerProvider"/>
+      class="org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformerProvider"/>
 
     <bean id="cswExceptionMapperProvider"
           class="org.codice.ddf.spatial.ogc.csw.catalog.endpoint.CswExceptionMapper"/>

@@ -15,6 +15,7 @@ package org.codice.ddf.spatial.ogc.csw.catalog.common.transaction;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 
 /**
  * Represents a single CSW transaction request that can contain multiple insert, update, and delete
@@ -30,7 +31,7 @@ public class CswTransactionRequest {
 
   private final List<InsertAction> insertActions = new ArrayList<>();
 
-  private final List<DeleteAction> deleteActions = new ArrayList<>();
+  private final List<DeleteActionImpl> deleteActions = new ArrayList<>();
 
   private final List<UpdateAction> updateActions = new ArrayList<>();
 
@@ -62,7 +63,7 @@ public class CswTransactionRequest {
     return insertActions;
   }
 
-  public List<DeleteAction> getDeleteActions() {
+  public List<DeleteActionImpl> getDeleteActions() {
     return deleteActions;
   }
 
