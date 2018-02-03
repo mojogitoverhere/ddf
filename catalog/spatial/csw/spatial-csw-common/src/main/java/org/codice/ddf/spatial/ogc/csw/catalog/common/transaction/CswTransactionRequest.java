@@ -15,6 +15,8 @@ package org.codice.ddf.spatial.ogc.csw.catalog.common.transaction;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.InsertAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 
 /**
@@ -31,7 +33,7 @@ public class CswTransactionRequest {
 
   private final List<InsertAction> insertActions = new ArrayList<>();
 
-  private final List<DeleteActionImpl> deleteActions = new ArrayList<>();
+  private final List<DeleteAction> deleteActions = new ArrayList<>();
 
   private final List<UpdateAction> updateActions = new ArrayList<>();
 
@@ -63,7 +65,7 @@ public class CswTransactionRequest {
     return insertActions;
   }
 
-  public List<DeleteActionImpl> getDeleteActions() {
+  public List<DeleteAction> getDeleteActions() {
     return deleteActions;
   }
 

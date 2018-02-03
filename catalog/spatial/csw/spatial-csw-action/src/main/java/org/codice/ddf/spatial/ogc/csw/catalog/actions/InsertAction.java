@@ -11,23 +11,16 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer;
+package org.codice.ddf.spatial.ogc.csw.catalog.actions;
 
+import ddf.catalog.data.Metacard;
 import java.util.List;
-import javax.xml.namespace.QName;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 
-public interface CswActionTransformer {
+public interface InsertAction {
 
-  UpdateAction transform(UpdateAction updateAction);
+  List<Metacard> getRecords();
 
-  DeleteAction transform(DeleteAction deleteAction);
+  String getTypeName();
 
-  InsertAction transform(InsertAction insertAction);
-
-  List<String> getTypeNames();
-
-  List<QName> getQNames();
+  String getHandle();
 }

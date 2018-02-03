@@ -120,6 +120,7 @@ import net.opengis.ows.v_1_0_0.SectionsType;
 import net.opengis.ows.v_1_0_0.ServiceIdentification;
 import net.opengis.ows.v_1_0_0.ServiceProvider;
 import org.apache.commons.lang.StringUtils;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
@@ -133,10 +134,9 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.GmdConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteActionImpl;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.TransformerManager;
-import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformer;
 import org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer.CswActionTransformerProvider;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -236,14 +236,7 @@ public class TestCswEndpoint {
     when(mockBundleContext.getServiceReferences(QueryFilterTransformer.class, null))
         .thenReturn(Collections.singletonList(serviceReference));
 
-    CswActionTransformer cswActionTransformer = mock(CswActionTransformer.class);
-
-    when(mockCswActionTransformerProvider.getTransformer(
-            new QName(CswConstants.CSW_OUTPUT_SCHEMA, "Record")))
-        .thenReturn(Optional.of(cswActionTransformer));
-    when(mockCswActionTransformerProvider.getTransformer(anyString()))
-        .thenReturn(Optional.of(cswActionTransformer));
-
+    when(mockCswActionTransformerProvider.getTransformer(anyString())).thenReturn(Optional.empty());
     csw =
         new CswEndpointStub(
             catalogFramework,
@@ -1606,7 +1599,7 @@ public class TestCswEndpoint {
     CswTransactionRequest request = new CswTransactionRequest();
     request
         .getInsertActions()
-        .add(new InsertAction(CswConstants.CSW_TYPE, null, Arrays.asList(new MetacardImpl())));
+        .add(new InsertActionImpl(CswConstants.CSW_TYPE, null, Arrays.asList(new MetacardImpl())));
 
     TransactionResponseType response = csw.transaction(request);
     assertThat(response, notNullValue());
@@ -1629,7 +1622,7 @@ public class TestCswEndpoint {
     CswTransactionRequest request = new CswTransactionRequest();
     request
         .getInsertActions()
-        .add(new InsertAction(CswConstants.CSW_TYPE, null, Arrays.asList(new MetacardImpl())));
+        .add(new InsertActionImpl(CswConstants.CSW_TYPE, null, Arrays.asList(new MetacardImpl())));
     request.setVerbose(true);
 
     TransactionResponseType response = csw.transaction(request);
@@ -1672,7 +1665,7 @@ public class TestCswEndpoint {
     DeleteResponse[] delRest = delBatch.subList(1, delBatch.size()).toArray(new DeleteResponse[0]);
     when(catalogFramework.delete(any(DeleteRequest.class))).thenReturn(delBatch.get(0), delRest);
 
-    DeleteActionImpl deleteAction =
+    DeleteAction deleteAction =
         new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
 
     CswTransactionRequest deleteRequest = new CswTransactionRequest();
@@ -1722,7 +1715,7 @@ public class TestCswEndpoint {
     DeleteResponse[] delRest = delBatch.subList(1, delBatch.size()).toArray(new DeleteResponse[0]);
     when(catalogFramework.delete(any(DeleteRequest.class))).thenReturn(delBatch.get(0), delRest);
 
-    DeleteActionImpl deleteAction =
+    DeleteAction deleteAction =
         new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
 
     CswTransactionRequest deleteRequest = new CswTransactionRequest();
@@ -1746,8 +1739,7 @@ public class TestCswEndpoint {
 
     MetacardImpl updatedMetacard = new MetacardImpl();
     updatedMetacard.setId("123");
-    UpdateAction updateAction =
-        new UpdateActionImpl(updatedMetacard, CswConstants.CSW_RECORD, "");
+    UpdateAction updateAction = new UpdateActionImpl(updatedMetacard, CswConstants.CSW_RECORD, "");
 
     CswTransactionRequest transactionRequest = new CswTransactionRequest();
     transactionRequest.getUpdateActions().add(updateAction);

@@ -15,38 +15,134 @@
 package org.codice.ddf.spatial.ogc.csw.catalog.endpoint;
 
 import ddf.catalog.transform.QueryFilterTransformer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages a reference list of {@link QueryFilterTransformer}'s by mapping them to the {@link
  * QName}'s they apply to.
  */
 public class QueryFilterTransformerProvider {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(QueryFilterTransformerProvider.class);
 
-  private TransformerProvider<QueryFilterTransformer> transformerProvider =
-      new TransformerProvider<>();
+  private Map<QName, QueryFilterTransformer> queryFilterTransformerMap = new ConcurrentHashMap<>();
+
+  private final Map<String, QName> typeNameQNameMap = new HashMap<>();
 
   public synchronized void bind(ServiceReference<QueryFilterTransformer> reference) {
-    transformerProvider.bind(reference);
+    if (reference == null) {
+      return;
+    }
+
+    List<QName> namespaces = getNamespaces(reference);
+    QueryFilterTransformer transformer = getTransformer(reference);
+
+    for (QName namespace : namespaces) {
+      queryFilterTransformerMap.put(namespace, transformer);
+      List<String> typeNames = getTypeNames(reference);
+
+      for (String typeName : typeNames) {
+        typeNameQNameMap.put(typeName, namespace);
+      }
+    }
   }
 
   public synchronized void unbind(ServiceReference<QueryFilterTransformer> reference) {
-    transformerProvider.unbind(reference);
+    if (reference == null) {
+      return;
+    }
+    try {
+      List<QName> namespaces = getNamespaces(reference);
+      for (QName namespace : namespaces) {
+        queryFilterTransformerMap.remove(namespace);
+        List<String> typeNames = getTypeNames(reference);
+        for (String typeName : typeNames) {
+          typeNameQNameMap.remove(typeName, namespace);
+        }
+      }
+    } finally {
+      getBundleContext().ungetService(reference);
+    }
   }
 
   public synchronized Optional<QueryFilterTransformer> getTransformer(@Nullable String typeName) {
-    return transformerProvider.getTransformer(typeName);
+    if (StringUtils.isEmpty(typeName)) {
+      return Optional.empty();
+    }
+
+    QName qName = typeNameQNameMap.get(typeName);
+    if (qName == null) {
+      return Optional.empty();
+    }
+
+    return Optional.ofNullable(queryFilterTransformerMap.get(qName));
   }
 
   public synchronized Optional<QueryFilterTransformer> getTransformer(QName qName) {
-    return transformerProvider.getTransformer(qName);
+    if (qName == null) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(queryFilterTransformerMap.get(qName));
   }
 
-  public BundleContext getBundleContext() {
-    return transformerProvider.getBundleContext();
+  private List<String> getTypeNames(ServiceReference<QueryFilterTransformer> reference) {
+    Object typeNameObject =
+        reference.getProperty(CswEndpoint.QUERY_FILTER_TRANSFORMER_TYPE_NAMES_FIELD);
+    if (typeNameObject instanceof List) {
+      return (List<String>) typeNameObject;
+    }
+    return Collections.emptyList();
+  }
+
+  private List<QName> getNamespaces(ServiceReference<QueryFilterTransformer> reference) {
+    Object id = reference.getProperty("id");
+    List<QName> result = new ArrayList<>();
+    if (id instanceof List) {
+      List<String> namespaces = (List<String>) id;
+      for (String namespace : namespaces) {
+        result.add(QName.valueOf(namespace));
+      }
+    } else if (id instanceof String) {
+      result.add(QName.valueOf((String) id));
+    } else {
+      LOGGER.debug(
+          "QueryFilterTransformer reference has a bad ID property. Must be of type String or List<String>");
+      throw new IllegalArgumentException("id must be of type String or a list of Strings");
+    }
+
+    return result;
+  }
+
+  private QueryFilterTransformer getTransformer(
+      ServiceReference<QueryFilterTransformer> reference) {
+    BundleContext bundleContext = getBundleContext();
+
+    QueryFilterTransformer transformer = bundleContext.getService(reference);
+
+    if (transformer == null) {
+      LOGGER.debug("Failed to find a QueryFilterTransformer with service reference {}", reference);
+      throw new IllegalStateException(
+          "Attempted to retrieve an unregistered service: " + reference);
+    }
+
+    return transformer;
+  }
+
+  BundleContext getBundleContext() {
+    return FrameworkUtil.getBundle(this.getClass()).getBundleContext();
   }
 }

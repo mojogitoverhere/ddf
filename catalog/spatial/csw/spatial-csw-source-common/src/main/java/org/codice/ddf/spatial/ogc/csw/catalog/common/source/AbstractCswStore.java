@@ -62,6 +62,7 @@ import net.opengis.cat.csw.v_2_0_2.TransactionResponseType;
 import net.opengis.cat.csw.v_2_0_2.dc.elements.SimpleLiteral;
 import net.opengis.filter.v_1_1_0.FilterType;
 import org.codice.ddf.cxf.SecureCxfClientFactory;
+import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.Csw;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswException;
@@ -69,7 +70,7 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.CswSourceConfiguration;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.converter.DefaultCswRecordMap;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.CswTransactionRequest;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.DeleteActionImpl;
-import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertAction;
+import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.InsertActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transaction.UpdateActionImpl;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.transformer.TransformerManager;
 import org.opengis.filter.Filter;
@@ -129,7 +130,9 @@ public abstract class AbstractCswStore extends AbstractCswSource implements Cata
               + cswSourceConfiguration.getOutputSchema());
     }
 
-    transactionRequest.getInsertActions().add(new InsertAction(insertTypeName, null, metacards));
+    transactionRequest
+        .getInsertActions()
+        .add(new InsertActionImpl(insertTypeName, null, metacards));
     try {
       TransactionResponseType response = csw.transaction(transactionRequest);
       Set<String> processedIds = new HashSet<>();
@@ -275,7 +278,7 @@ public abstract class AbstractCswStore extends AbstractCswSource implements Cata
         queryConstraintType.setCqlText(CswCqlTextFilter.getInstance().getCqlText(filterType));
         deleteType.setConstraint(queryConstraintType);
 
-        DeleteActionImpl deleteAction =
+        DeleteAction deleteAction =
             new DeleteActionImpl(deleteType, DefaultCswRecordMap.getPrefixToUriMapping());
         transactionRequest.getDeleteActions().add(deleteAction);
       } catch (UnsupportedQueryException e) {

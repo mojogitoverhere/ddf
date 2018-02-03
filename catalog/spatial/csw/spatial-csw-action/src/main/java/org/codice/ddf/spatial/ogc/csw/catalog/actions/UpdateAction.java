@@ -11,23 +11,22 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.spatial.ogc.csw.catalog.endpoint.transformer;
+package org.codice.ddf.spatial.ogc.csw.catalog.actions;
 
-import java.util.List;
-import javax.xml.namespace.QName;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.DeleteAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.InsertAction;
-import org.codice.ddf.spatial.ogc.csw.catalog.actions.UpdateAction;
+import ddf.catalog.data.Metacard;
+import java.io.Serializable;
+import java.util.Map;
+import net.opengis.cat.csw.v_2_0_2.QueryConstraintType;
 
-public interface CswActionTransformer {
+public interface UpdateAction {
 
-  UpdateAction transform(UpdateAction updateAction);
+  Metacard getMetacard();
 
-  DeleteAction transform(DeleteAction deleteAction);
+  QueryConstraintType getConstraint();
 
-  InsertAction transform(InsertAction insertAction);
+  Map<String, Serializable> getRecordProperties();
 
-  List<String> getTypeNames();
+  String getTypeName();
 
-  List<QName> getQNames();
+  String getHandle();
 }
