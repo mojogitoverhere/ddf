@@ -53,7 +53,7 @@ define([
         return options;
     }, [{
         label: 'Never',
-        value: false
+        value: 0
     }]);
 
     return Marionette.LayoutView.extend({
@@ -81,7 +81,7 @@ define([
             this.propertyInterval.show(new PropertyView({
                 model: new Property({
                     enum: pollingFrequencyEnum,
-                    value: [this.model.get('polling') || false],
+                    value: [this.model.get('polling') || 0],
                     id: 'Frequency'
                 })
             }));

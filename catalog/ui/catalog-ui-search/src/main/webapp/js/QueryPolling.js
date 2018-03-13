@@ -194,7 +194,7 @@ define([
             query.listenTo(query, 'change:src', this.handleSrcUpdate.bind(this));
             query.listenTo(query, 'change:federation', this.handleSrcUpdate.bind(this));
             var polling = query.get('polling');
-            if (polling) {
+            if (polling > 0) {
                 var intervalId = setInterval(function() {
                     var timeRange = getTimeRange(polling);
                     startSearch(query, timeRange);
