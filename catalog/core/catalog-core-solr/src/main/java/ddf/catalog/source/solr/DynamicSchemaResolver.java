@@ -132,7 +132,8 @@ public class DynamicSchemaResolver {
                     Boolean.FALSE);
             XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
             XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
-            XML_INPUT_FACTORY.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE); // This disables DTDs entirely for that factory
+            XML_INPUT_FACTORY.setProperty(XMLInputFactory.SUPPORT_DTD,
+                    Boolean.FALSE); // This disables DTDs entirely for that factory
         } finally {
             Thread.currentThread()
                     .setContextClassLoader(tccl);
@@ -149,7 +150,7 @@ public class DynamicSchemaResolver {
             .maximumSize(4096)
             .initialCapacity(64)
             .build();
-    
+
     protected Cache<String, byte[]> metacardTypeNameToSerialCache = CacheBuilder.newBuilder()
             .maximumSize(4096)
             .initialCapacity(64)
@@ -273,7 +274,8 @@ public class DynamicSchemaResolver {
                                 out.reset();
                             }
                         } catch (IOException e) {
-                            throw new MetacardCreationException(COULD_NOT_SERIALIZE_OBJECT_MESSAGE, e);
+                            throw new MetacardCreationException(COULD_NOT_SERIALIZE_OBJECT_MESSAGE,
+                                    e);
                         }
 
                         attributeValues = byteArrays;
@@ -360,10 +362,32 @@ public class DynamicSchemaResolver {
 
             centerPoint = geoCollection.getCentroid();
         } else {
-            centerPoint = geometries.get(0).getCentroid();
+            centerPoint = geometries.get(0)
+                    .getCentroid();
         }
 
-        return centerPoint.getY() + "," + centerPoint.getX();
+        if (centerPoint == null) {
+            LOGGER.debug("Could not create center point for values {}",
+                    values.stream()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(",", "[", "]")));
+            return null;
+        }
+
+        try {
+            return centerPoint.getY() + "," + centerPoint.getX();
+        } catch (NullPointerException e) {
+            // TODO (RCZ) - this catch is not a good fix and could probably be removed as long as
+            // the null pointer referenced by TIB-669 is coming purely off of the center point being
+            // null and not from within the jts library
+
+            LOGGER.debug("Could not create center point for values {}",
+                    values.stream()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(",", "[", "]")),
+                    e);
+            return null;
+        }
     }
 
     private byte[] createTinyBinary(String xml) throws XMLStreamException, SaxonApiException {
