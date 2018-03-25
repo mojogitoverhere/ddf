@@ -162,7 +162,8 @@ public class CswQueryFactory {
     private CswRecordMapperFilterVisitor buildFilter(QueryConstraintType constraint)
             throws CswException {
         CswRecordMapperFilterVisitor visitor = new CswRecordMapperFilterVisitor(metacardType,
-                metacardTypes);
+                metacardTypes,
+                attributeRegistry);
         Filter filter = null;
         if (constraint != null) {
             if (constraint.isSetCqlText()) {
@@ -244,7 +245,6 @@ public class CswQueryFactory {
             LOGGER.debug("No property name in primary sort criteria");
             return null;
         }
-
 
         if (!attributeRegistry.lookup(sortBy.getPropertyName()
                 .getPropertyName())

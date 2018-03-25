@@ -19,11 +19,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.xml.namespace.QName;
 
@@ -68,6 +72,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
+import ddf.catalog.data.AttributeRegistry;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.MetacardType;
 import ddf.catalog.data.types.Core;
@@ -90,6 +95,8 @@ public class TestCswRecordMapperFilterVisitor {
 
     private static List<MetacardType> mockMetacardTypeList;
 
+    private static AttributeRegistry attributeRegistry;
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         factory = new FilterFactoryImpl();
@@ -107,13 +114,19 @@ public class TestCswRecordMapperFilterVisitor {
         mockMetacardTypeList = new ArrayList<>();
         mockMetacardTypeList.add(metacardType);
 
-        visitor = new CswRecordMapperFilterVisitor(metacardType, mockMetacardTypeList);
+        attributeRegistry = mock(AttributeRegistry.class);
+        when(attributeRegistry.lookup(anyString())).thenReturn(Optional.empty());
+
+        visitor = new CswRecordMapperFilterVisitor(metacardType,
+                mockMetacardTypeList,
+                attributeRegistry);
     }
 
     @Test
     public void testVisitWithUnmappedName() {
         CswRecordMapperFilterVisitor visitor = new CswRecordMapperFilterVisitor(metacardType,
-                mockMetacardTypeList);
+                mockMetacardTypeList,
+                attributeRegistry);
 
         PropertyName propertyName = (PropertyName) visitor.visit(attrExpr, null);
 
@@ -127,7 +140,8 @@ public class TestCswRecordMapperFilterVisitor {
                 CswConstants.OWS_BOUNDING_BOX,
                 CswConstants.DUBLIN_CORE_NAMESPACE_PREFIX)));
         CswRecordMapperFilterVisitor visitor = new CswRecordMapperFilterVisitor(metacardType,
-                mockMetacardTypeList);
+                mockMetacardTypeList,
+                attributeRegistry);
 
         PropertyName propertyName = (PropertyName) visitor.visit(propName, null);
 
@@ -142,7 +156,8 @@ public class TestCswRecordMapperFilterVisitor {
                 CswConstants.DUBLIN_CORE_NAMESPACE_PREFIX)));
 
         CswRecordMapperFilterVisitor visitor = new CswRecordMapperFilterVisitor(metacardType,
-                mockMetacardTypeList);
+                mockMetacardTypeList,
+                attributeRegistry);
 
         PropertyName propertyName = (PropertyName) visitor.visit(propName, null);
 
@@ -260,7 +275,9 @@ public class TestCswRecordMapperFilterVisitor {
 
     @Test
     public void testVisitPropertyIsFuzzy() {
-        visitor = new CswRecordMapperFilterVisitor(metacardType, mockMetacardTypeList);
+        visitor = new CswRecordMapperFilterVisitor(metacardType,
+                mockMetacardTypeList,
+                attributeRegistry);
         Expression val1 = factory.property("fooProperty");
         Expression val2 = factory.literal("fooLiteral");
 

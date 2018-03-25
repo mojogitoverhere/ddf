@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -224,8 +225,7 @@ public class CswQueryFactoryTest {
                 metacardTypeList);
 
         AttributeRegistry mockAttributeRegistry = mock(AttributeRegistry.class);
-        when(mockAttributeRegistry.lookup(TITLE_TEST_ATTRIBUTE)).thenReturn(Optional.of(mock(
-                AttributeDescriptor.class)));
+        when(mockAttributeRegistry.lookup(anyString())).thenReturn(Optional.empty());
         queryFactory.setAttributeRegistry(mockAttributeRegistry);
 
         polygon = new WKTReader().read(POLYGON_STR);
@@ -346,6 +346,11 @@ public class CswQueryFactoryTest {
     public void testPostGetRecordsValidSort()
             throws CswException, UnsupportedQueryException, SourceUnavailableException,
             FederationException {
+        AttributeRegistry mockAttributeRegistry = mock(AttributeRegistry.class);
+        when(mockAttributeRegistry.lookup(TITLE_TEST_ATTRIBUTE)).thenReturn(Optional.of(mock(
+                AttributeDescriptor.class)));
+        queryFactory.setAttributeRegistry(mockAttributeRegistry);
+
         GetRecordsType grr = createDefaultPostRecordsRequest();
 
         grr.setResultType(ResultType.RESULTS);
