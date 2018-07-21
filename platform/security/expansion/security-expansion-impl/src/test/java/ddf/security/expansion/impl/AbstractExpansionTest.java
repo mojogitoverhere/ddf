@@ -28,6 +28,8 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.io.Resources;
+
 /**
  * Test the methods of the abstract class here (using instances of StraightExpansionImpl.
  */
@@ -230,7 +232,7 @@ public class AbstractExpansionTest {
         Map<String, List<String[]>> map = new HashMap<String, List<String[]>>();
         StraightExpansionImpl exp = new StraightExpansionImpl();
 
-        URL testConfigFile = ClassLoader.getSystemResource("testExpansionConfig.cfg");
+        URL testConfigFile = Resources.getResource(getClass(), "/testExpansionConfig.cfg");
         if (null != testConfigFile) {
             String filename = testConfigFile.getFile();
             filename = new File(filename).getAbsolutePath();
