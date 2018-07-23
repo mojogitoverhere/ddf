@@ -25,8 +25,10 @@ define([
     'component/singletons/user-instance',
     'component/singletons/sources-instance',
     'decorator/menu-navigation.decorator',
-    'decorator/Decorators'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators) {
+    'decorator/Decorators',
+    'component/lightbox/lightbox.view.instance',
+    'component/metacard-archive/metacard-archive.view'
+], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -42,6 +44,8 @@ define([
             'click .interaction-expand': 'handleExpand',
             'click .interaction-share': 'handleShare',
             'click .interaction-download': 'handleDownload',
+            'click .interaction-archive': 'handleArchive',
+            'click .interaction-archive-restore': 'handleRestore',
             'click .metacard-interaction': 'handleClick'
         },
         ui: {
@@ -51,6 +55,7 @@ define([
             if (currentWorkspace) {
                 this.listenTo(currentWorkspace, 'change:metacards', this.checkIfSaved);
             }
+            this.listenTo(this.model, 'refreshdata', this.render)
             this.listenTo(user.get('user').get('preferences').get('resultBlacklist'), 
                 'add remove update reset', this.checkIfBlacklisted);
         },
@@ -117,6 +122,20 @@ define([
             this.model.forEach(function(result){
                 window.open(result.get('metacard').get('properties').get('resource-download-url'));
             });
+        },
+        handleArchive: function() {
+            lightboxInstance.model.updateTitle('Archive');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
+                model: this.model
+            }));
+        },
+        handleRestore: function() {
+            lightboxInstance.model.updateTitle('Restore');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
+                model: this.model
+            }));
         },
         handleClick: function(){
             this.$el.trigger('closeDropdown.'+CustomElements.getNamespace());

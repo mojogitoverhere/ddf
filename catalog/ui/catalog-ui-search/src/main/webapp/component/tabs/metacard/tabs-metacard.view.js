@@ -52,17 +52,17 @@ define([
         determineContentFromType: function(){
             var activeTabName = this.model.get('activeTab');
             var result = this.selectionInterface.getSelectedResults().first();
-            if (result.isRevision() && ['History', 'Actions', 'Overwrite', 'Archive'].indexOf(activeTabName) >= 0){
+            if (result.isRevision() && ['History', 'Actions', 'Overwrite'].indexOf(activeTabName) >= 0){
                 this.model.set('activeTab', 'Summary');
             } else if (result.isDeleted() && ['History', 'Actions', 'Overwrite'].indexOf(activeTabName) >= 0){
                 this.model.set('activeTab', 'Summary');
-            } else if (result.isWorkspace() && ['History', 'Actions', 'Overwrite', 'Archive'].indexOf(activeTabName) >= 0){
+            } else if (result.isWorkspace() && ['History', 'Actions', 'Overwrite'].indexOf(activeTabName) >= 0){
                 this.model.set('activeTab', 'Summary');
             }
-            if (result.isRemote() && ['History', 'Quality', 'Archive', 'Overwrite'].indexOf(activeTabName) >=0){
+            if (result.isRemote() && ['History', 'Quality', 'Overwrite'].indexOf(activeTabName) >=0){
                 this.model.set('activeTab', 'Summary');
             }
-            if (properties.isEditingRestricted() && ['Archive', 'Overwrite'].indexOf(activeTabName) >=0){
+            if (properties.isEditingRestricted() && ['Overwrite'].indexOf(activeTabName) >=0){
                 this.model.set('activeTab', 'Summary');
             }
             var activeTab = this.model.getActiveView();

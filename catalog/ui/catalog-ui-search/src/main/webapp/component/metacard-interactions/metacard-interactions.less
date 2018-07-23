@@ -92,3 +92,25 @@
     display: none;
   }
 }
+
+// restricted if revisions, remote items, or deleted items are in the list
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-remote,
+@{customElementNamespace}metacard-interactions.is-deleted {
+  .interaction-archive {
+    display: none;
+  }
+}
+
+// restricted if anything but deleted items are in the list
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-resource,
+@{customElementNamespace}metacard-interactions.is-workspace,
+@{customElementNamespace}metacard-interactions.is-mixed,
+@{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-remote {
+  .interaction-archive-restore {
+    display: none;
+  }
+}

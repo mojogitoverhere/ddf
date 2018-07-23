@@ -14,15 +14,13 @@ define([
     'underscore',
     '../tabs',
     'js/store',
-    'component/editor/metacards-basic/metacards-basic.view',
-    'component/metacard-archive/metacard-archive.view'
-], function (_, Tabs, store, MetacardsBasicView, MetacardArchiveView) {
+    'component/editor/metacards-basic/metacards-basic.view'
+], function (_, Tabs, store, MetacardsBasicView) {
 
     var MetacardsTabs = Tabs.extend({
         defaults: {
             tabs: {
-                'Details': MetacardsBasicView,
-                'Archive': MetacardArchiveView
+                'Details': MetacardsBasicView
             }
         }
     });
