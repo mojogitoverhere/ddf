@@ -100,7 +100,7 @@ pipeline {
             }
             steps {
                 withMaven(maven: 'M3', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'lte-global-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
-                    sh 'mvn deploy -B -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 $DISABLE_DOWNLOAD_PROGRESS_OPTS'
+                    sh 'mvn deploy -B -Djacoco.skip=true -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 $DISABLE_DOWNLOAD_PROGRESS_OPTS'
                 }
             }
         }
