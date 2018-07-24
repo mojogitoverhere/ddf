@@ -46,6 +46,7 @@ define([
             'click .interaction-download': 'handleDownload',
             'click .interaction-archive': 'handleArchive',
             'click .interaction-archive-restore': 'handleRestore',
+            'click .interaction-delete': 'handleDelete',
             'click .metacard-interaction': 'handleClick'
         },
         ui: {
@@ -128,6 +129,14 @@ define([
             lightboxInstance.model.open();
             lightboxInstance.lightboxContent.show(new MetacardArchiveView({
                 model: this.model
+            }));
+        },
+        handleDelete: function() {
+            lightboxInstance.model.updateTitle('Delete');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
+                model: this.model,
+                permanent: true
             }));
         },
         handleRestore: function() {

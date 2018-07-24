@@ -12,10 +12,29 @@
 /*global require*/
 var store = require('js/store');
 var alert = require('component/alert/alert');
+var metacard = require('component/metacard/metacard');
 var _ = require('underscore');
 var metacardDefinitions = require('component/singletons/metacard-definitions');
 
 module.exports = {
+    deleteResults: function(results) {
+        store.get('workspaces').forEach(function(workspace) {
+            workspace.get('queries').forEach(function(query) {
+                if (query.get('result')) {
+                    query.get('result').get('results').fullCollection.remove(results);
+                }
+            });
+        });
+        store.removeSelectedResult(results);
+        results.forEach(function(result) {
+            store.removeWorkspaceById(result.get('metacard').id);
+        });
+        alert.get('currentResult').get('results').fullCollection.remove(results);
+        alert.removeSelectedResult(results);
+        if (metacard.get('currentMetacard') && metacard.get('currentMetacard').id === results[0].id) {
+            metacard.set('currentMetacard', undefined);
+        }
+    },
     refreshResult: function(result) {
         var id = result.get('metacard').id;
         result.refreshData();

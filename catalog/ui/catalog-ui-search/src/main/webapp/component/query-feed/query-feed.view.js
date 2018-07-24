@@ -86,8 +86,7 @@ define([
             }
         },
         listenToStatus: function(model) {
-            this.listenTo(model.get('result>results'), 'reset', this.updateQuery);
-            this.listenTo(model.get('result>results'), 'add', this.updateQuery);
+            this.listenTo(model.get('result>results'), 'add reset remove', this.updateQuery);
             this.listenTo(model.get('result'), 'sync', this.updateQuery);
             this.listenTo(model.get('result>status'), 'change', this.updateQuery);
         },

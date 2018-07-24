@@ -17,8 +17,10 @@ define([
     'poller',
     'underscore',
     'js/model/Workspace',
-    'component/content/content'
-], function ($, Backbone, poller, _, Workspace, Content) {
+    'component/content/content',
+    'wreqr',
+    'component/router/router'
+], function ($, Backbone, poller, _, Workspace, Content, wreqr, router) {
 
     return new (Backbone.Model.extend({
         initialize: function () {
@@ -56,6 +58,17 @@ define([
                     workspaceModel.clearResults();
                 }
             });
+        },
+        removeWorkspaceById: function(id) {
+            if (router.get('name') === 'openWorkspace' && this.getCurrentWorkspace() && this.getCurrentWorkspace().id === id) {
+                wreqr.vent.trigger('router:navigate', {
+                    fragment: 'workspaces',
+                    options: {
+                        trigger: true
+                    }
+                });
+            }
+            this.get('workspaces').remove(id);
         },
         handleWorkspaceChange: function(){
             if (this.get('content').changedAttributes().currentWorkspace){

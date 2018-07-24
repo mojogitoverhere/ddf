@@ -114,3 +114,12 @@
     display: none;
   }
 }
+
+// restricted if revisions or remote items are in the list
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-remote {
+  .interaction-delete {
+    display: none;
+  }
+}

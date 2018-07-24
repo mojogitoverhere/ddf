@@ -23,9 +23,23 @@
   .is-archived {
     display: none;
   }
+
+  .is-permanent {
+    display: none;
+  }
 }
 
-@{customElementNamespace}metacard-archive.is-deleted {
+@{customElementNamespace}metacard-archive.is-permanent {
+  .is-not-archived {
+    display: none;
+  }
+
+  .is-permanent {
+    display: block;
+  }
+}
+
+@{customElementNamespace}metacard-archive.is-deleted:not(.is-permanent) {
 
   .is-not-archived {
     display: none;

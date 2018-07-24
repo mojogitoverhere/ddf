@@ -23,8 +23,9 @@ define([
     'component/loading/loading.view',
     'component/confirmation/confirmation.view',
     'js/ResultUtils',
+    'component/announcement',
     'js/jquery.whenAll'
-], function(Marionette, _, $, template, CustomElements, store, LoadingView, ConfirmationView, ResultUtils) {
+], function(Marionette, _, $, template, CustomElements, store, LoadingView, ConfirmationView, ResultUtils, announcement) {
 
     return Marionette.ItemView.extend({
         setDefaultModel: function() {
@@ -34,8 +35,10 @@ define([
         tagName: CustomElements.register('metacard-archive'),
         events: {
             'click button.archive': 'handleArchive',
+            'click button.delete': 'handleDelete',
             'click button.restore': 'handleRestore',
-            'click button.archive-confirm': 'triggerConfirmedArchive'
+            'click button.archive-confirm': 'triggerConfirmedArchive',
+            'click button.delete-confirm': 'triggerConfirmedDelete'
         },
         ui: {},
         orphans: [],
@@ -48,6 +51,10 @@ define([
             }
             this.listenTo(this.model, 'refreshdata', this.handleTypes);
             this.handleTypes();
+            this.handlePermanent();
+        },
+        handlePermanent: function() {
+            this.$el.toggleClass('is-permanent', this.options.permanent === true);
         },
         handleTypes: function() {
             var types = {};
@@ -73,6 +80,22 @@ define([
             this.$el.toggleClass('is-deleted', types.deleted !== undefined);
             this.$el.toggleClass('is-remote', types.remote !== undefined);
         },
+        handleDelete: function() {
+            var payload = JSON.stringify(this.model.map(function(result) {
+                return result.get('metacard').get('id');
+            }));
+            this.listenTo(ConfirmationView.generateConfirmation({
+                    prompt: 'Are you sure you want to delete?  Doing so will permanently remove the item(s).',
+                    no: 'Cancel',
+                    yes: 'Delete'
+                }),
+                'change:choice',
+                function(confirmation) {
+                    if (confirmation.get('choice')) {
+                        this.handleCheckBeforeDelete(payload);
+                    }
+                }.bind(this));
+        },
         handleArchive: function() {
             var payload = JSON.stringify(this.model.map(function(result) {
                 return result.get('metacard').get('id');
@@ -95,6 +118,33 @@ define([
             }));
             this.handleConfirmedArchive(payload);
         },
+        triggerConfirmedDelete: function() {
+            var payload = JSON.stringify(this.model.map(function(result) {
+                return result.get('metacard').get('id');
+            }));
+            this.handleConfirmedDelete(payload);
+        },
+        handleConfirmedDelete: function(payload) {
+            var loadingView = new LoadingView();
+            $.ajax({
+                url: '/search/catalog/internal/metacards/permanentlydelete',
+                type: 'DELETE',
+                data: payload,
+                contentType: 'application/json'
+            }).then(function(response){
+                this.deleteResults();
+                this.$el.trigger(CustomElements.getNamespace() + 'close-lightbox');
+                announcement.announce({
+                    title: 'Result(s) Deleted',
+                    message: 'The result(s) were successfully deleted.',
+                    type: 'success'
+                });
+            }.bind(this)).always(function(response) {
+                setTimeout(function() { //let solr flush
+                    loadingView.remove();
+                }, 2000);
+            }.bind(this));
+        },
         handleConfirmedArchive: function(payload) {
             var loadingView = new LoadingView();
             $.ajax({
@@ -115,7 +165,21 @@ define([
                 }, 2000);
             }.bind(this));
         },
-        handleOrphans: function(payload) {
+        handleOrphansForDelete: function(payload) {
+            this.render();
+            this.listenTo(ConfirmationView.generateConfirmation({
+                prompt: 'Some results have associations not found in the list you are deleting.  Continuing will cause those associations to be orphaned.  Are you sure you want to continue?',
+                no: 'Cancel',
+                yes: 'Delete'
+            }),
+            'change:choice',
+            function(confirmation) {
+                if (confirmation.get('choice')) {
+                    this.handleConfirmedDelete(payload);
+                }
+            }.bind(this));
+        },
+        handleOrphansForArchive: function(payload) {
             this.render();
             this.listenTo(ConfirmationView.generateConfirmation({
                 prompt: 'Some results have associations not found in the list you are deleting.  Continuing will cause those associations to be orphaned.  Are you sure you want to continue?',
@@ -129,6 +193,24 @@ define([
                 }
             }.bind(this));
         },
+        handleCheckBeforeDelete: function(payload) {
+            var loadingView = new LoadingView();
+            $.ajax({
+                url: '/search/catalog/internal/metacards/deletecheck',
+                type: 'POST',
+                data: payload,
+                contentType: 'application/json'
+            }).then(function(response){
+                this.orphans = response['broken-links'];
+                if (this.orphans.length !== 0) {
+                    this.handleOrphansForDelete(payload);
+                } else {
+                    this.handleConfirmedDelete(payload);
+                }
+            }.bind(this)).always(function(response) {
+                loadingView.remove();
+            }.bind(this));
+        },
         handleCheckBeforeArchive: function(payload) {
             var loadingView = new LoadingView();
             $.ajax({
@@ -139,7 +221,7 @@ define([
             }).then(function(response){
                 this.orphans = response['broken-links'];
                 if (this.orphans.length !== 0) {
-                    this.handleOrphans(payload);
+                    this.handleOrphansForArchive(payload);
                 } else {
                     this.handleConfirmedArchive(payload);
                 }
@@ -172,6 +254,9 @@ define([
                         });
                     }
                 }.bind(this));
+        },
+        deleteResults: function() {
+            ResultUtils.deleteResults(this.model.models);
         },
         refreshResults: function(){
             this.model.forEach(function(result){
