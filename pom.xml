@@ -53,7 +53,7 @@
         <reports.repository.url />
         <project.scm.id>github</project.scm.id>
         <!-- Must MANUALLY update this if the ddf/support project's version changes -->
-        <ddf.support.version>2.3.6</ddf.support.version>
+        <ddf.support.version>2.3.14</ddf.support.version>
         <!-- Do NOT set karaf.data or karaf.base -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -508,7 +508,7 @@
                             <executions>
                                 <execution>
                                     <id>checkstyle-check</id>
-                                    <phase>verify</phase>
+                                    <phase>validate</phase>
                                     <goals>
                                         <goal>check</goal>
                                     </goals>
@@ -516,8 +516,8 @@
                                         <!-- This configures the plugin for mvn install -->
                                         <configLocation>checkstyle-enforced.xml</configLocation>
                                         <headerLocation>lpgl-header-check.txt</headerLocation>
-                                        <sourceDirectory>${basedir}</sourceDirectory>
-                                        <includes>src/**/*.java</includes>
+                                        <!-- Exclude generated sources https://stackoverflow.com/a/30406454/4645795 -->
+                                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                                         <consoleOutput>true</consoleOutput>
                                         <failsOnError>true</failsOnError>
                                         <linkXRef>false</linkXRef>
@@ -526,7 +526,7 @@
                                 </execution>
                                 <execution>
                                     <id>checkstyle-check-xml</id>
-                                    <phase>verify</phase>
+                                    <phase>validate</phase>
                                     <goals>
                                         <goal>check</goal>
                                     </goals>
@@ -534,7 +534,6 @@
                                         <!-- This configures the plugin for mvn install -->
                                         <configLocation>checkstyle-enforced-xml.xml</configLocation>
                                         <headerLocation>lpgl-header-check-xml.txt</headerLocation>
-                                        <sourceDirectory>${basedir}</sourceDirectory>
                                         <includes>src/**/*.xml, pom.xml</includes>
                                         <consoleOutput>true</consoleOutput>
                                         <failsOnError>true</failsOnError>
@@ -547,12 +546,11 @@
                                 <!-- This configures the plugin for mvn checkstyle:checkstyle  -->
                                 <configLocation>checkstyle-enforced.xml</configLocation>
                                 <headerLocation>lpgl-header-check.txt</headerLocation>
-                                <sourceDirectory>${basedir}</sourceDirectory>
-                                <includes>src/**/*.java</includes>
                                 <consoleOutput>true</consoleOutput>
                                 <failsOnError>true</failsOnError>
                                 <linkXRef>false</linkXRef>
                                 <aggregate>true</aggregate>
+                                <includeTestSourceDirectory>true</includeTestSourceDirectory>
                             </configuration>
                         </plugin>
                         <plugin>
@@ -618,6 +616,19 @@
                     </plugins>
                 </pluginManagement>
                 <plugins>
+                    <plugin>
+                        <groupId>com.coveo</groupId>
+                        <artifactId>fmt-maven-plugin</artifactId>
+                        <version>1.8.0</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>

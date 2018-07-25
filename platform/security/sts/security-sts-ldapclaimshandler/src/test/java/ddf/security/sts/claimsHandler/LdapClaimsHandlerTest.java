@@ -1,17 +1,16 @@
 /**
  * Copyright (c) Codice Foundation
- * <p>
- * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
- * General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or any later version.
- * <p>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
- * is distributed along with this program and can be found at
+ *
+ * <p>This is free software: you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation, either version 3 of
+ * the License, or any later version.
+ *
+ * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details. A copy of the GNU Lesser General Public
+ * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-
 package ddf.security.sts.claimsHandler;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -41,42 +40,38 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(LDAPConnectionFactory.class)
-
 public class LdapClaimsHandlerTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LdapClaimsHandlerTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LdapClaimsHandlerTest.class);
 
-    @Test
-    public void testUnsuccessfulConnectionBind() {
-        LDAPConnectionFactory mockedConnectionFactory =
-                PowerMockito.mock(LDAPConnectionFactory.class);
-        BindResult mockedBindResult = mock(BindResult.class);
-        when(mockedBindResult.isSuccess()).thenReturn(false);
-        Connection mockedConnection = mock(Connection.class);
-        try {
-            when(mockedConnectionFactory.getConnection()).thenReturn(mockedConnection);
-            when(mockedConnection.bind(anyString(),
-                    any(char[].class))).thenReturn(mockedBindResult);
-        } catch (LdapException e) {
-            LOGGER.error("LDAP Exception", e);
-        }
-        LdapClaimsHandler ldapClaimsHandler = new LdapClaimsHandler();
-        ldapClaimsHandler.setLdapConnectionFactory(mockedConnectionFactory);
-
-        ProcessedClaimCollection testClaimCollection =
-                ldapClaimsHandler.retrieveClaimValues(new ClaimCollection(),
-                        new ClaimsParameters());
-        assertThat(testClaimCollection.isEmpty(), is(true));
+  @Test
+  public void testUnsuccessfulConnectionBind() {
+    LDAPConnectionFactory mockedConnectionFactory = PowerMockito.mock(LDAPConnectionFactory.class);
+    BindResult mockedBindResult = mock(BindResult.class);
+    when(mockedBindResult.isSuccess()).thenReturn(false);
+    Connection mockedConnection = mock(Connection.class);
+    try {
+      when(mockedConnectionFactory.getConnection()).thenReturn(mockedConnection);
+      when(mockedConnection.bind(anyString(), any(char[].class))).thenReturn(mockedBindResult);
+    } catch (LdapException e) {
+      LOGGER.error("LDAP Exception", e);
     }
+    LdapClaimsHandler ldapClaimsHandler = new LdapClaimsHandler();
+    ldapClaimsHandler.setLdapConnectionFactory(mockedConnectionFactory);
 
-    @Test
-    public void testRetrieveClaimsValuesNullPrincipal() {
-        LdapClaimsHandler claimsHandler = new LdapClaimsHandler();
-        ClaimsParameters claimsParameters = new ClaimsParameters();
-        ClaimCollection claimCollection = new ClaimCollection();
-        ProcessedClaimCollection processedClaims = claimsHandler.retrieveClaimValues(
-                claimCollection, claimsParameters);
+    ProcessedClaimCollection testClaimCollection =
+        ldapClaimsHandler.retrieveClaimValues(new ClaimCollection(), new ClaimsParameters());
+    assertThat(testClaimCollection.isEmpty(), is(true));
+  }
 
-        Assert.assertThat(processedClaims.size(), CoreMatchers.is(equalTo(0)));
-    }
+  @Test
+  public void testRetrieveClaimsValuesNullPrincipal() {
+    LdapClaimsHandler claimsHandler = new LdapClaimsHandler();
+    ClaimsParameters claimsParameters = new ClaimsParameters();
+    ClaimCollection claimCollection = new ClaimCollection();
+    ProcessedClaimCollection processedClaims =
+        claimsHandler.retrieveClaimValues(claimCollection, claimsParameters);
+
+    Assert.assertThat(processedClaims.size(), CoreMatchers.is(equalTo(0)));
+  }
 }

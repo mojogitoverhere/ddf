@@ -1,24 +1,24 @@
 /**
  * Copyright (c) Codice Foundation
- * <p/>
- * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
- * General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or any later version.
- * <p/>
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
- * is distributed along with this program and can be found at
+ *
+ * <p>This is free software: you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation, either version 3 of
+ * the License, or any later version.
+ *
+ * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details. A copy of the GNU Lesser General Public
+ * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
 package ddf.platform.scheduler;
 
+import ddf.security.Subject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-
 import org.apache.felix.gogo.runtime.CommandNotFoundException;
 import org.apache.karaf.shell.api.console.Session;
 import org.apache.karaf.shell.api.console.SessionFactory;
@@ -33,8 +33,6 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ddf.security.Subject;
-
 /**
  * Executes Felix/Karaf commands when called as a Quartz {@link Job}
  *
@@ -43,136 +41,135 @@ import ddf.security.Subject;
  */
 public class CommandJob implements Job {
 
-    public static final String COMMAND_KEY = "command";
+  public static final String COMMAND_KEY = "command";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommandJob.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CommandJob.class);
 
-    public Subject getSystemSubject() {
-        return Security.getInstance()
-                .getSystemSubject();
-    }
+  public Subject getSystemSubject() {
+    return Security.getInstance().getSystemSubject();
+  }
 
-    @Override
-    public void execute(final JobExecutionContext context) throws JobExecutionException {
+  @Override
+  public void execute(final JobExecutionContext context) throws JobExecutionException {
 
-        Security.runAsAdmin(() -> {
-            Subject subject = getSystemSubject();
+    Security.runAsAdmin(
+        () -> {
+          Subject subject = getSystemSubject();
 
-            if (subject != null) {
-                subject.execute(() -> {
-                    doExecute(context);
-                    return null;
+          if (subject != null) {
+            subject.execute(
+                () -> {
+                  doExecute(context);
+                  return null;
                 });
-            } else {
-                LOGGER.debug("Could not execute command. Could not get subject to run command");
-            }
+          } else {
+            LOGGER.debug("Could not execute command. Could not get subject to run command");
+          }
 
-            return null;
+          return null;
         });
+  }
+
+  private Bundle getBundle() {
+    return FrameworkUtil.getBundle(getClass());
+  }
+
+  protected SessionFactory getSessionFactory() {
+    BundleContext bundleContext = getBundle().getBundleContext();
+    if (bundleContext == null) {
+      return null;
+    }
+    return bundleContext.getService(bundleContext.getServiceReference(SessionFactory.class));
+  }
+
+  public void doExecute(JobExecutionContext context) throws JobExecutionException {
+
+    String commandInput;
+    try {
+      commandInput = checkInput(context);
+    } catch (CommandException e) {
+      LOGGER.debug("unable to get command from job execution context", e);
+      return;
     }
 
-    private Bundle getBundle() {
-        return FrameworkUtil.getBundle(getClass());
+    SessionFactory sessionFactory = getSessionFactory();
+
+    if (sessionFactory == null) {
+      LOGGER.debug("unable to create session factory: command=[{}]", commandInput);
+      return;
     }
 
-    protected SessionFactory getSessionFactory() {
-        BundleContext bundleContext = getBundle().getBundleContext();
-        if (bundleContext == null) {
-            return null;
-        }
-        return bundleContext.getService(bundleContext.getServiceReference(SessionFactory.class));
-    }
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    Session session = null;
 
-    public void doExecute(JobExecutionContext context) throws JobExecutionException {
+    try (PrintStream output = getPrintStream(byteArrayOutputStream)) {
 
-        String commandInput;
+      session = sessionFactory.create(null, output, output);
+
+      if (session == null) {
+        LOGGER.debug("unable to create session: command=[{}]", commandInput);
+        return;
+      }
+
+      if (commandInput != null) {
         try {
-            commandInput = checkInput(context);
-        } catch (CommandException e) {
-            LOGGER.debug("unable to get command from job execution context", e);
-            return;
+          LOGGER.trace("Executing command [{}]", commandInput);
+          session.execute(commandInput);
+          LOGGER.trace(
+              "Execution Output: {}",
+              byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
+        } catch (CommandNotFoundException e) {
+          LOGGER.info(
+              "Command could not be found. Make sure the command's library has been loaded and try again: {}",
+              e.getLocalizedMessage());
+          LOGGER.debug("Command not found.", e);
+        } catch (Exception e) {
+          LOGGER.info("Error with execution. ", e);
         }
+      }
+    } catch (UnsupportedEncodingException e) {
+      LOGGER.info("Unable to produce output", e);
+    } finally {
 
-        SessionFactory sessionFactory = getSessionFactory();
+      if (session != null) {
+        session.close();
+      }
+      try {
+        byteArrayOutputStream.close();
+      } catch (IOException e) {
+        LOGGER.debug("Could not close output stream", e);
+      }
+    }
+  }
 
-        if (sessionFactory == null) {
-            LOGGER.debug("unable to create session factory: command=[{}]", commandInput);
-            return;
-        }
+  private PrintStream getPrintStream(ByteArrayOutputStream byteArrayOutputStream)
+      throws UnsupportedEncodingException {
+    return new PrintStream(byteArrayOutputStream, false, StandardCharsets.UTF_8.name());
+  }
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        Session session = null;
+  private String checkInput(JobExecutionContext context) throws CommandException {
 
-        try (PrintStream output = getPrintStream(byteArrayOutputStream)) {
+    String command = null;
 
-            session = sessionFactory.create(null, output, output);
-
-            if (session == null) {
-                LOGGER.debug("unable to create session: command=[{}]", commandInput);
-                return;
-            }
-
-            if (commandInput != null) {
-                try {
-                    LOGGER.trace("Executing command [{}]", commandInput);
-                    session.execute(commandInput);
-                    LOGGER.trace("Execution Output: {}",
-                            byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
-                } catch (CommandNotFoundException e) {
-                    LOGGER.info(
-                            "Command could not be found. Make sure the command's library has been loaded and try again: {}",
-                            e.getLocalizedMessage());
-                    LOGGER.debug("Command not found.", e);
-                } catch (Exception e) {
-                    LOGGER.info("Error with execution. ", e);
-                }
-            }
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.info("Unable to produce output", e);
-        } finally {
-
-            if (session != null) {
-                session.close();
-            }
-            try {
-                byteArrayOutputStream.close();
-            } catch (IOException e) {
-                LOGGER.debug("Could not close output stream", e);
-            }
-        }
-
+    if (context == null) {
+      LOGGER.debug(
+          "No JobExecutionContext found. Could not fire {}", CommandJob.class.getSimpleName());
+      throw new CommandException();
     }
 
-    private PrintStream getPrintStream(ByteArrayOutputStream byteArrayOutputStream)
-            throws UnsupportedEncodingException {
-        return new PrintStream(byteArrayOutputStream, false, StandardCharsets.UTF_8.name());
+    JobDataMap mergedJobDataMap = context.getMergedJobDataMap();
+
+    if (mergedJobDataMap == null) {
+      LOGGER.debug("No input found. Could not fire {}", CommandJob.class.getSimpleName());
+      throw new CommandException();
     }
 
-    private String checkInput(JobExecutionContext context) throws CommandException {
-
-        String command = null;
-
-        if (context == null) {
-            LOGGER.debug("No JobExecutionContext found. Could not fire {}",
-                    CommandJob.class.getSimpleName());
-            throw new CommandException();
-        }
-
-        JobDataMap mergedJobDataMap = context.getMergedJobDataMap();
-
-        if (mergedJobDataMap == null) {
-            LOGGER.debug("No input found. Could not fire {}", CommandJob.class.getSimpleName());
-            throw new CommandException();
-        }
-
-        if (mergedJobDataMap.getString(COMMAND_KEY) != null) {
-            command = mergedJobDataMap.getString(COMMAND_KEY);
-        }
-
-        return command;
+    if (mergedJobDataMap.getString(COMMAND_KEY) != null) {
+      command = mergedJobDataMap.getString(COMMAND_KEY);
     }
 
-    private static class CommandException extends Exception {
+    return command;
+  }
 
-    }
+  private static class CommandException extends Exception {}
 }
