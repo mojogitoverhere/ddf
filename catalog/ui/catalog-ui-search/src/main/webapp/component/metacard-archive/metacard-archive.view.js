@@ -46,6 +46,7 @@ define([
             if (!options.model) {
                 this.setDefaultModel();
             }
+            this.listenTo(this.model, 'refreshdata', this.handleTypes);
             this.handleTypes();
         },
         handleTypes: function() {

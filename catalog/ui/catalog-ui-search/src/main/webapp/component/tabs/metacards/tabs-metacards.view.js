@@ -68,19 +68,6 @@ define([
             this.determineContent();
         },
         determineContentFromType: function(){
-            var activeTabName = this.model.get('activeTab');
-            var types = getTypes(this.selectionInterface.getSelectedResults());
-            if (types.indexOf('revision') >= 0 && ['Archive'].indexOf(activeTabName) >= 0){
-                this.model.set('activeTab', 'Details');
-            } else if (types.indexOf('deleted') >= 0 && types.length > 1 && ['Archive'].indexOf(activeTabName) >= 0){
-                this.model.set('activeTab', 'Details');
-            }
-            if (types.indexOf('remote') >= 0 && ['Archive'].indexOf(activeTabName) >= 0){
-                this.model.set('activeTab', 'Details');
-            }
-            if (properties.isEditingRestricted() && ['Archive'].indexOf(activeTabName) >=0){
-                this.model.set('activeTab', 'Details');
-            }
             var activeTab = this.model.getActiveView();
             this.tabsContent.show(new activeTab({
                 selectionInterface: this.selectionInterface
