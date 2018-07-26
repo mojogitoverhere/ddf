@@ -105,7 +105,7 @@ View, edit, and add searches from the *Searches* tab.
 * *Stop*: Stop this search.
 * *Delete*: Remove this search
 * *Duplicate*: Create a copy of this search as a starting point
-* *Search Archived*: Execute the search, but specifically for archived results.
+* *Search Deleted*: Execute the search, but specifically for deleted results.
 * *Search Historical*: Execute the search, but specifically for historical results.
 
 ===== Editing a Search
@@ -178,7 +178,7 @@ The *Details* tab provides a list of specific metadata.
 <<_editing_associations_on_a_record,Associations>>:: View or edit the relationship(s) between this resource and others in the catalog.
 <<_viewing_metadata_quality,Quality>>:: View the completeness and accuracy of the metadata for this resource.
 <<_exporting_a_record,Actions>>:: Export the metadata/resource to a specific format.
-<<_archiving_a_record,Archive>>:: Remove the selected record from standard search results.
+<<_deleting_a_record,Delete>>:: Remove the selected record from standard search results.
 <<_overwriting_a_record,Overwrite>>:: Overwrite a record.
 
 ==== Editing Records
@@ -236,25 +236,25 @@ Export and view a resource and/or its metadata into another format.
 . Available export formats are listed. Select desired format.
 . Export opens in a new browser tab. Save, if desired.
 
-==== Archiving a Record
+==== Deleting a Record
 
-To remove a record from active search results, archive it.
+To remove a record from active search results, delete it.
 
 . Select the desired record from the *Results* tab.
 . Select *More*.
-. Select *Archive*.
+. Select *Delete*.
 . Confirm archiving the record.
 
-==== Restoring Archived Records
+==== Restoring Deleted Records
 
-Restore an archived record to return it to active search results.
+Restore an deleted record to return it to active search results.
 
-. Select the *Search Archived* option from the query options menu.
+. Select the *Search Deleted* option from the query options menu.
 . Select the desired record from the *Results* tab.
-. Select *Archive*.
+. Select *Delete*.
 . Confirm restoring the record.
 
-Restore all archived records to active search results.
+Restore all deleted records to active search results.
 
 . Select *Settings* icon (image:gear-icon.png[settings]) on navigation bar.
 . Select *Hidden*.

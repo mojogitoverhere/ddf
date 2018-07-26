@@ -124,7 +124,7 @@ define([
             });
         },
         handleArchive: function() {
-            lightboxInstance.model.updateTitle('Archive');
+            lightboxInstance.model.updateTitle('Delete');
             lightboxInstance.model.open();
             lightboxInstance.lightboxContent.show(new MetacardArchiveView({
                 model: this.model

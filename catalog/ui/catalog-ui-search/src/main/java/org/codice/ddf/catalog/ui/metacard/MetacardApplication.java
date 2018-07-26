@@ -285,10 +285,10 @@ public class MetacardApplication implements SparkApplication {
           if (deleteResponse.getProcessingErrors() != null
               && !deleteResponse.getProcessingErrors().isEmpty()) {
             res.status(500);
-            return ImmutableMap.of("message", "Unable to archive metacards.");
+            return ImmutableMap.of("message", "Unable to delete metacards.");
           }
 
-          return ImmutableMap.of("message", "Successfully archived metacards.");
+          return ImmutableMap.of("message", "Successfully deleted metacards.");
         },
         util::getJson);
 

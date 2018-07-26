@@ -156,13 +156,13 @@ public class ExportCommand extends CqlCommands {
   boolean delete = false;
 
   @Option(
-    name = "--archived",
+    name = "--deleted",
     required = false,
-    aliases = {"-a", "archived"},
+    aliases = {"-a", "deleted"},
     multiValued = false,
     description = "Equivalent to --cql \"\\\"metacard-tags\\\" like 'deleted'\""
   )
-  boolean archived = false;
+  boolean deleted = false;
 
   @Option(
     name = "--force",
@@ -619,7 +619,7 @@ public class ExportCommand extends CqlCommands {
 
   protected Filter getFilter() throws InterruptedException, ParseException, CQLException {
     Filter filter = super.getFilter();
-    if (archived) {
+    if (deleted) {
       filter =
           filterBuilder.allOf(
               filter, filterBuilder.attribute(Metacard.TAGS).is().like().text("deleted"));

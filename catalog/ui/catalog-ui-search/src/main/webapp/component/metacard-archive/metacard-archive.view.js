@@ -78,9 +78,9 @@ define([
                 return result.get('metacard').get('id');
             }));
             this.listenTo(ConfirmationView.generateConfirmation({
-                    prompt: 'Are you sure you want to archive?  Doing so will remove the item(s) future search results.',
+                    prompt: 'Are you sure you want to delete?  Doing so will remove the item(s) future search results.',
                     no: 'Cancel',
-                    yes: 'Archive'
+                    yes: 'Delete'
                 }),
                 'change:choice',
                 function(confirmation) {
@@ -118,9 +118,9 @@ define([
         handleOrphans: function(payload) {
             this.render();
             this.listenTo(ConfirmationView.generateConfirmation({
-                prompt: 'Some results have associations not found in the list you are archiving.  Continuing will cause those associations to be orphaned.  Are you sure you want to continue?',
+                prompt: 'Some results have associations not found in the list you are deleting.  Continuing will cause those associations to be orphaned.  Are you sure you want to continue?',
                 no: 'Cancel',
-                yes: 'Archive'
+                yes: 'Delete'
             }),
             'change:choice',
             function(confirmation) {
