@@ -35,9 +35,15 @@ import com.oath.cyclops.util.ExceptionSoftener;
 import cyclops.async.SimpleReact;
 import cyclops.collections.mutable.ListX;
 import ddf.catalog.CatalogFramework;
+import ddf.catalog.cache.SolrCacheMBean;
+import ddf.catalog.content.StorageException;
+import ddf.catalog.content.StorageProvider;
 import ddf.catalog.content.data.ContentItem;
 import ddf.catalog.content.data.impl.ContentItemImpl;
+import ddf.catalog.content.operation.DeleteStorageRequest;
+import ddf.catalog.content.operation.DeleteStorageResponse;
 import ddf.catalog.content.operation.impl.CreateStorageRequestImpl;
+import ddf.catalog.content.operation.impl.DeleteStorageRequestImpl;
 import ddf.catalog.content.operation.impl.UpdateStorageRequestImpl;
 import ddf.catalog.core.versioning.DeletedMetacard;
 import ddf.catalog.core.versioning.MetacardVersion;
@@ -55,6 +61,7 @@ import ddf.catalog.data.impl.AttributeImpl;
 import ddf.catalog.data.impl.ResultImpl;
 import ddf.catalog.federation.FederationException;
 import ddf.catalog.filter.FilterBuilder;
+import ddf.catalog.operation.DeleteRequest;
 import ddf.catalog.operation.DeleteResponse;
 import ddf.catalog.operation.QueryResponse;
 import ddf.catalog.operation.ResourceResponse;
@@ -71,6 +78,7 @@ import ddf.catalog.operation.impl.SourceResponseImpl;
 import ddf.catalog.operation.impl.UpdateRequestImpl;
 import ddf.catalog.resource.ResourceNotFoundException;
 import ddf.catalog.resource.ResourceNotSupportedException;
+import ddf.catalog.source.CatalogProvider;
 import ddf.catalog.source.CatalogStore;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.SourceDescriptor;
@@ -83,6 +91,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -106,6 +115,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -175,6 +187,10 @@ public class MetacardApplication implements SparkApplication {
 
   private final CatalogFramework catalogFramework;
 
+  private final CatalogProvider catalogProvider;
+
+  private final StorageProvider storageProvider;
+
   private final FilterBuilder filterBuilder;
 
   private final EndpointUtil util;
@@ -212,7 +228,9 @@ public class MetacardApplication implements SparkApplication {
       List<CatalogStore> catalogStores,
       QueryResponseTransformer csvQueryResponseTransformer,
       AttributeRegistry attributeRegistry,
-      ConfigurationApplication configuration) {
+      ConfigurationApplication configuration,
+      CatalogProvider catalogProvider,
+      StorageProvider storageProvider) {
     this.catalogFramework = catalogFramework;
     this.filterBuilder = filterBuilder;
     this.util = endpointUtil;
@@ -226,6 +244,8 @@ public class MetacardApplication implements SparkApplication {
     this.csvQueryResponseTransformer = csvQueryResponseTransformer;
     this.attributeRegistry = attributeRegistry;
     this.configuration = configuration;
+    this.catalogProvider = catalogProvider;
+    this.storageProvider = storageProvider;
   }
 
   private String getSubjectEmail() {
@@ -310,6 +330,68 @@ public class MetacardApplication implements SparkApplication {
 
           return req.body();
         });
+
+    delete(
+        "/metacards/permanentlydelete",
+        (req, res) -> {
+          List<Serializable> ids =
+              JsonFactory.create()
+                  .parser()
+                  .parseList(String.class, req.body())
+                  .stream()
+                  .map(string -> (Serializable) string)
+                  .collect(Collectors.toList());
+
+          try {
+            //Delete specified metacards
+            LOGGER.debug("Permanently deleting specified metacards...");
+
+            DeleteResponse deleteResponse = doDelete(new DeleteRequestImpl(ids, Metacard.ID, null));
+
+            LOGGER.debug(
+                "{} metacard(s) permanently deleted: \n {}",
+                deleteResponse.getDeletedMetacards().size(),
+                buildDeleteLog(deleteResponse));
+
+            //Get original ids from soft deleted metacards
+            List<Serializable> originalIds =
+                deleteResponse
+                    .getDeletedMetacards()
+                    .stream()
+                    .map(metacard -> metacard.getAttribute("metacard.deleted.id"))
+                    .filter(Objects::nonNull)
+                    .map(Attribute::getValue)
+                    .collect(Collectors.toList());
+
+            //Delete version histories
+            LOGGER.debug("Permanently deleting version history metacards...");
+
+            List<Serializable> versionIds = new ArrayList<>(ids);
+            versionIds.addAll(originalIds);
+
+            DeleteResponse deleteVersionResponse =
+                doDelete(new DeleteRequestImpl(versionIds, "metacard.version.id", null));
+
+            LOGGER.debug(
+                "{} version metacard(s) permanently deleted: \n {}",
+                deleteVersionResponse.getDeletedMetacards().size(),
+                buildDeleteLog(deleteVersionResponse));
+
+            clearCache(deleteResponse);
+
+          } catch (IngestException e) {
+            res.status(500);
+            LOGGER.debug("IngestException: {}", e);
+            return ImmutableMap.of("message", "Unable to permanently delete metacards.");
+          } catch (StorageException e) {
+            res.status(500);
+            LOGGER.debug("StorageException: {}", e);
+            return ImmutableMap.of("message", "Unable to permanently delete metacards.");
+          }
+
+          return ImmutableMap.of("message", "Successfully deleted metacards permanently.");
+        },
+        util::getJson);
 
     put(
         "/validate/attribute/:attribute",
@@ -1059,6 +1141,86 @@ public class MetacardApplication implements SparkApplication {
     @Override
     public InputStream openStream() throws IOException {
       return supplier.get();
+    }
+  }
+
+  private DeleteResponse doDelete(DeleteRequest request) throws Exception {
+    LOGGER.debug(
+        "Deleting metacards in which the {} attribute matches the following: {}",
+        request.getAttributeName(),
+        request.getAttributeValues());
+
+    DeleteResponse deleteResponse = catalogProvider.delete(request);
+
+    DeleteStorageRequest deleteStorageRequest =
+        new DeleteStorageRequestImpl(deleteResponse.getDeletedMetacards(), null);
+
+    DeleteStorageResponse deleteStorageResponse = storageProvider.delete(deleteStorageRequest);
+
+    storageProvider.commit(deleteStorageRequest);
+
+    if (deleteResponse.getProcessingErrors() != null
+        && !deleteResponse.getProcessingErrors().isEmpty()) {
+      LOGGER.debug(
+          "Processing error(s) while deleting from catalog: {}",
+          deleteResponse.getProcessingErrors());
+      throw new IngestException("Unable to permanently delete metacard");
+    }
+
+    if (deleteStorageResponse.getProcessingErrors() != null
+        && !deleteStorageResponse.getProcessingErrors().isEmpty()) {
+      LOGGER.debug(
+          "Processing error(s) while deleting from catalog: {}",
+          deleteResponse.getProcessingErrors());
+      throw new StorageException("Unable to permanently delete metacard");
+    }
+
+    return deleteResponse;
+  }
+
+  private String buildDeleteLog(DeleteResponse deleteResponse) {
+    StringBuilder strBuilder = new StringBuilder();
+    List<Metacard> metacards = deleteResponse.getDeletedMetacards();
+
+    String metacardTitleLabel = "Metacard Title: ";
+    String metacardIdLabel = "Metacard ID: ";
+
+    for (int i = 0; i < metacards.size(); i++) {
+      Metacard card = metacards.get(i);
+      strBuilder.append(System.lineSeparator()).append("Batch #: ").append(i + 1).append(" | ");
+      if (card != null) {
+        if (card.getTitle() != null) {
+          strBuilder.append(metacardTitleLabel).append(card.getTitle()).append(" | ");
+        }
+        if (card.getId() != null) {
+          strBuilder.append(metacardIdLabel).append(card.getId()).append(" | ");
+        }
+      } else {
+        strBuilder.append("Null Metacard");
+      }
+    }
+    return strBuilder.toString();
+  }
+
+  private void clearCache(DeleteResponse deleteResponse) {
+    try {
+      ObjectName solrCacheObjectName = new ObjectName(SolrCacheMBean.OBJECTNAME);
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      SolrCacheMBean proxy =
+          MBeanServerInvocationHandler.newProxyInstance(
+              mBeanServer, solrCacheObjectName, SolrCacheMBean.class, false);
+
+      //TODO: TIB-726 Make proxy.removeById() work
+      proxy.removeById(
+          deleteResponse
+              .getDeletedMetacards()
+              .stream()
+              .map(Metacard::getId)
+              .collect(Collectors.toList())
+              .toArray(new String[deleteResponse.getDeletedMetacards().size()]));
+
+    } catch (Exception e) {
+      LOGGER.warn("Could not delete all items from cache (Results will eventually expire)", e);
     }
   }
 }

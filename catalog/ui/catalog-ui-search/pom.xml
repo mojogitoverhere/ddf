@@ -258,6 +258,11 @@
             <artifactId>agrona</artifactId>
             <version>0.9.10</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-standardframework</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

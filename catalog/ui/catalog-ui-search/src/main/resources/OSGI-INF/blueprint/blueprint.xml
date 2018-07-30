@@ -211,6 +211,12 @@
         <argument ref="csvQueryResponseTransformer"/>
         <argument ref="attributeRegistry"/>
         <argument ref="configurationApplication"/>
+        <argument>
+            <reference interface="ddf.catalog.source.CatalogProvider"/>
+        </argument>
+        <argument>
+            <reference interface="ddf.catalog.content.StorageProvider"/>
+        </argument>
     </bean>
 
     <bean id="queryApplication" class="org.codice.ddf.catalog.ui.query.QueryApplication">

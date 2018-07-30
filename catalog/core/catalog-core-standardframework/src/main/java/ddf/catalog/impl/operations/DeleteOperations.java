@@ -14,6 +14,7 @@
 package ddf.catalog.impl.operations;
 
 import ddf.catalog.Constants;
+import ddf.catalog.cache.SolrCacheMBean;
 import ddf.catalog.content.StorageException;
 import ddf.catalog.content.StorageProvider;
 import ddf.catalog.content.operation.DeleteStorageRequest;
@@ -52,6 +53,7 @@ import ddf.catalog.source.InternalIngestException;
 import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.util.impl.Requests;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,6 +64,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
 import org.apache.commons.collections.CollectionUtils;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
@@ -122,6 +127,7 @@ public class DeleteOperations {
       throws IngestException, SourceUnavailableException {
     DeleteResponse deleteResponse = doDelete(deleteRequest, fanoutTagBlacklist);
     deleteResponse = doPostIngest(deleteResponse);
+    clearCache(deleteResponse);
     return deleteResponse;
   }
 
@@ -197,6 +203,28 @@ public class DeleteOperations {
     deleteResponse = doPostIngest(deleteResponse);
 
     return deleteResponse;
+  }
+
+  private void clearCache(DeleteResponse deleteResponse) {
+    try {
+      ObjectName solrCacheObjectName = new ObjectName(SolrCacheMBean.OBJECTNAME);
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      SolrCacheMBean proxy =
+          MBeanServerInvocationHandler.newProxyInstance(
+              mBeanServer, solrCacheObjectName, SolrCacheMBean.class, false);
+
+      //TODO: TIB-726 Make proxy.removeById() work
+      proxy.removeById(
+          deleteResponse
+              .getDeletedMetacards()
+              .stream()
+              .map(Metacard::getId)
+              .collect(Collectors.toList())
+              .toArray(new String[deleteResponse.getDeletedMetacards().size()]));
+
+    } catch (Exception e) {
+      LOGGER.warn("Could not delete all items from cache (Results will eventually expire)", e);
+    }
   }
 
   private DeleteResponse doPostIngest(DeleteResponse currentDeleteResponse) {
