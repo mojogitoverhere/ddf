@@ -20,6 +20,7 @@ import static spark.Spark.put;
 import com.google.common.collect.ImmutableMap;
 import ddf.security.Subject;
 import ddf.security.SubjectUtils;
+import ddf.security.permission.CollectionPermission;
 import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.Collections;
@@ -35,6 +36,8 @@ import org.codice.ddf.catalog.ui.util.EndpointUtil;
 import org.codice.ddf.persistence.PersistenceException;
 import org.codice.ddf.persistence.PersistentItem;
 import org.codice.ddf.persistence.PersistentStore;
+import org.codice.ddf.security.policy.context.ContextPolicy;
+import org.codice.ddf.security.policy.context.ContextPolicyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.servlet.SparkApplication;
@@ -47,9 +50,15 @@ public class UserApplication implements SparkApplication {
 
   private final PersistentStore persistentStore;
 
-  public UserApplication(EndpointUtil util, PersistentStore persistentStore) {
+  private final ContextPolicyManager contextPolicyManager;
+
+  public UserApplication(
+      EndpointUtil util,
+      PersistentStore persistentStore,
+      ContextPolicyManager contextPolicyManager) {
     this.util = util;
     this.persistentStore = persistentStore;
+    this.contextPolicyManager = contextPolicyManager;
   }
 
   private void setUserPreferences(Subject subject, Map<String, Object> preferences) {
@@ -107,7 +116,8 @@ public class UserApplication implements SparkApplication {
             "username", SubjectUtils.getName(subject),
             "isGuest", subject.isGuest(),
             "roles", getSubjectRoles(subject),
-            "preferences", getSubjectPreferences(subject));
+            "preferences", getSubjectPreferences(subject),
+            "isRestoreAllowed", isRestoreAllowed());
     // @formatter:on
 
     String email = SubjectUtils.getEmailAddress(subject);
@@ -117,6 +127,21 @@ public class UserApplication implements SparkApplication {
     }
 
     return ImmutableMap.<String, Object>builder().putAll(required).put("email", email).build();
+  }
+
+  private boolean isRestoreAllowed() {
+    Subject subject = (Subject) SecurityUtils.getSubject();
+    ContextPolicy policy =
+        contextPolicyManager.getContextPolicy("/search/catalog/internal/history/revert/");
+
+    if (subject != null && policy != null) {
+      CollectionPermission permissions = policy.getAllowedAttributePermissions();
+      if (!permissions.isEmpty()) {
+        return subject.isPermitted(permissions);
+      }
+    }
+
+    return false;
   }
 
   @Override

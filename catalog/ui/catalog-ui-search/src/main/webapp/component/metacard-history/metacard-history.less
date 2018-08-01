@@ -59,6 +59,10 @@
     }
   }
 
+  .is-restore-allowed {
+    display: block;
+  }
+
 }
 
 .is-editing-restricted @{customElementNamespace}metacard-history {
@@ -81,5 +85,11 @@
       display: block;
       width: 100%;
     }
+  }
+}
+
+@{customElementNamespace}metacard-history:not(.is-restore-allowed) {
+  .is-restore-allowed {
+    display: none;
   }
 }

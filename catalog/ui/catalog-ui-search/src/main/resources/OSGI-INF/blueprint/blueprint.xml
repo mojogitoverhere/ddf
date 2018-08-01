@@ -238,9 +238,13 @@
 
     <reference id="persistentStore" interface="org.codice.ddf.persistence.PersistentStore"/>
 
+    <reference id="contextPolicyManager"
+               interface="org.codice.ddf.security.policy.context.ContextPolicyManager"/>
+
     <bean id="userApplication" class="org.codice.ddf.catalog.ui.security.UserApplication">
         <argument ref="persistentStore"/>
         <argument ref="endpointUtil"/>
+        <argument ref="contextPolicyManager"/>
     </bean>
 
     <bean id="rootReqSupplier" class="org.codice.ddf.catalog.ui.RootContextRequestSupplier"/>

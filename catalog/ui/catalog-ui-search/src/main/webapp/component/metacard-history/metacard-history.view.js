@@ -24,8 +24,9 @@ define([
     'js/Common',
     'js/ResultUtils',
     'component/announcement',
-    'moment'
-], function (Marionette, _, $, template, CustomElements, LoadingCompanionView, store, Common, ResultUtils, announcement, moment) {
+    'moment',
+    'component/singletons/user-instance'
+], function (Marionette, _, $, template, CustomElements, LoadingCompanionView, store, Common, ResultUtils, announcement, moment, user) {
 
     var selectedVersion;
 
@@ -48,6 +49,7 @@ define([
                 this.setDefaultModel();
             }
             this.loadData();
+            this.$el.toggleClass('is-restore-allowed', user.get('user').get('isRestoreAllowed') === true);
         },
         loadData: function(){
             selectedVersion = undefined;

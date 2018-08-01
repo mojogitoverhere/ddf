@@ -59,6 +59,7 @@ define([
             this.listenTo(this.model, 'refreshdata', this.render)
             this.listenTo(user.get('user').get('preferences').get('resultBlacklist'), 
                 'add remove update reset', this.checkIfBlacklisted);
+            this.$el.toggleClass('is-restore-allowed', user.get('user').get('isRestoreAllowed') === true);
         },
         onRender: function(){
             this.checkTypes();

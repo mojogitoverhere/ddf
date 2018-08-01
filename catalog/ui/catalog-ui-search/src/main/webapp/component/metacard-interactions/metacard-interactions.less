@@ -44,6 +44,10 @@
     margin-left: 15px;
   }
 
+  .is-restore-allowed {
+    display: block;
+  }
+
 }
 
 @{customElementNamespace}metacard-interactions.in-workspace {
@@ -120,6 +124,12 @@
 @{customElementNamespace}metacard-interactions.is-revision,
 @{customElementNamespace}metacard-interactions.is-remote {
   .interaction-delete {
+    display: none;
+  }
+}
+
+@{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
+  .is-restore-allowed {
     display: none;
   }
 }
