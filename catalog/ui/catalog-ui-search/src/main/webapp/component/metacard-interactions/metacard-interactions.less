@@ -48,6 +48,9 @@
     display: block;
   }
 
+  .is-perm-delete-allowed {
+    display: block;
+  }
 }
 
 @{customElementNamespace}metacard-interactions.in-workspace {
@@ -130,6 +133,12 @@
 
 @{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
   .is-restore-allowed {
+    display: none;
+  }
+}
+
+@{customElementNamespace}metacard-interactions:not(.is-perm-delete-allowed) {
+  .is-perm-delete-allowed {
     display: none;
   }
 }

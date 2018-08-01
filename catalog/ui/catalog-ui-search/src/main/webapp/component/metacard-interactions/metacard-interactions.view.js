@@ -60,6 +60,7 @@ define([
             this.listenTo(user.get('user').get('preferences').get('resultBlacklist'), 
                 'add remove update reset', this.checkIfBlacklisted);
             this.$el.toggleClass('is-restore-allowed', user.get('user').get('isRestoreAllowed') === true);
+            this.$el.toggleClass('is-perm-delete-allowed', user.get('user').get('isPermDeleteAllowed') === true);
         },
         onRender: function(){
             this.checkTypes();

@@ -110,15 +110,15 @@ public class UserApplication implements SparkApplication {
   }
 
   private Map<String, Object> getSubjectAttributes(Subject subject) {
-    // @formatter:off
     Map<String, Object> required =
-        ImmutableMap.of(
-            "username", SubjectUtils.getName(subject),
-            "isGuest", subject.isGuest(),
-            "roles", getSubjectRoles(subject),
-            "preferences", getSubjectPreferences(subject),
-            "isRestoreAllowed", isRestoreAllowed());
-    // @formatter:on
+        new ImmutableMap.Builder<String, Object>()
+            .put("username", SubjectUtils.getName(subject))
+            .put("isGuest", subject.isGuest())
+            .put("roles", getSubjectRoles(subject))
+            .put("preferences", getSubjectPreferences(subject))
+            .put("isRestoreAllowed", isRestoreAllowed())
+            .put("isPermDeleteAllowed", isPermDeleteAllowed())
+            .build();
 
     String email = SubjectUtils.getEmailAddress(subject);
 
@@ -130,17 +130,22 @@ public class UserApplication implements SparkApplication {
   }
 
   private boolean isRestoreAllowed() {
-    Subject subject = (Subject) SecurityUtils.getSubject();
-    ContextPolicy policy =
-        contextPolicyManager.getContextPolicy("/search/catalog/internal/history/revert/");
+    return isPathAllowed("/search/catalog/internal/history/revert/");
+  }
 
+  private boolean isPermDeleteAllowed() {
+    return isPathAllowed("/search/catalog/internal/metacards/permanentlydelete");
+  }
+
+  private boolean isPathAllowed(String path) {
+    Subject subject = (Subject) SecurityUtils.getSubject();
+    ContextPolicy policy = contextPolicyManager.getContextPolicy(path);
     if (subject != null && policy != null) {
       CollectionPermission permissions = policy.getAllowedAttributePermissions();
       if (!permissions.isEmpty()) {
         return subject.isPermitted(permissions);
       }
     }
-
     return false;
   }
 
