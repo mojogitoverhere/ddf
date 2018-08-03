@@ -27,8 +27,9 @@ define([
     'decorator/menu-navigation.decorator',
     'decorator/Decorators',
     'component/lightbox/lightbox.view.instance',
-    'component/metacard-archive/metacard-archive.view'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView) {
+    'component/metacard-archive/metacard-archive.view',
+    'component/metacard-offline/metacard-offline.view'
+], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView, MetacardOfflineView) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -44,6 +45,7 @@ define([
             'click .interaction-expand': 'handleExpand',
             'click .interaction-share': 'handleShare',
             'click .interaction-download': 'handleDownload',
+            'click .interaction-offline': 'handleOffline',
             'click .interaction-archive': 'handleArchive',
             'click .interaction-archive-restore': 'handleRestore',
             'click .interaction-delete': 'handleDelete',
@@ -125,6 +127,13 @@ define([
             this.model.forEach(function(result){
                 window.open(result.get('metacard').get('properties').get('resource-download-url'));
             });
+        },
+        handleOffline: function() {
+            lightboxInstance.model.updateTitle('Offline Content');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardOfflineView({
+                model: this.model
+            }));
         },
         handleArchive: function() {
             lightboxInstance.model.updateTitle('Delete');
