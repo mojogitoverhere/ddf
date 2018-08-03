@@ -19,18 +19,16 @@ define([
     'jquery',
     './metacard-offline.hbs',
     'js/CustomElements',
-    'js/store',
     'component/loading/loading.view',
-    'js/ResultUtils',
-    'js/jquery.whenAll'
-], function(Marionette, _, $, template, CustomElements, store, LoadingView, ResultUtils) {
+    'js/ResultUtils'
+], function(Marionette, _, $, template, CustomElements, LoadingView, ResultUtils) {
 
     return Marionette.ItemView.extend({
         template: template,
         tagName: CustomElements.register('metacard-offline'),
         events: {
             'click button.offline-confirm': 'triggerOffline',
-            'click button.cancel': 'closeLightbox'
+            'click button.offline-cancel': 'closeLightbox'
         },
         initialize: function(options) {
             this.selectionInterface = options.selectionInterface || this.selectionInterface;
@@ -47,18 +45,17 @@ define([
             var loadingView = new LoadingView();
 
             $.ajax({
+                //TODO support backend endpoint TIB-699
                 url: '/search/catalog/internal/resource/offline',
                 type: 'POST',
                 data: payload,
                 contentType: 'application/json'
             }).always(function(response) {
-                setTimeout(function() { //let solr flush
-                    loadingView.remove();
-                    closeLightbox();
-                }, 2000);
+                loadingView.remove();
+                this.closeLightbox();
             }.bind(this));
             
-            refreshResults();
+            this.refreshResults();
         },
         refreshResults: function(){
             this.model.forEach(function(result){
