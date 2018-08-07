@@ -57,7 +57,7 @@ pipeline {
             //Uncomment this if enabling incremental builds
             //when { expression { env.CHANGE_ID == null } }
             steps {
-                timeout(time: 3, unit: 'HOURS') {
+                timeout(time: 4, unit: 'HOURS') {
                     withMaven(maven: 'M35', globalMavenSettingsConfig: 'lte-global-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
                         sh 'mvn clean install -e $DISABLE_DOWNLOAD_PROGRESS_OPTS -DkeepRuntimeFolder=true'
                     }

@@ -60,8 +60,8 @@
         <!-- ouput directory for reports -->
         <project.report.output.directory>project-info</project.report.output.directory>
         <!-- Properties for the frontend-maven-plugin -->
-        <node.version>v7.1.0</node.version>
-        <yarn.version>v0.21.2</yarn.version>
+        <node.version>v8.9.4</node.version>
+        <yarn.version>v1.5.1</yarn.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-io.version>2.5</commons-io.version>
         <json-smart.version>2.2.1</json-smart.version>
@@ -416,7 +416,7 @@
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
                     <artifactId>frontend-maven-plugin</artifactId>
-                    <version>1.4.CODICE_1</version>
+                    <version>1.6.CODICE</version>
                     <executions>
                         <execution>
                             <id>install node and yarn</id>
