@@ -27,10 +27,12 @@ define([
     'decorator/menu-navigation.decorator',
     'decorator/Decorators',
     'component/lightbox/lightbox.view.instance',
-    'component/metacard-archive/metacard-archive.view',
     'component/metacard-delete/metacard-delete.view',
-    'component/metacard-offline/metacard-offline.view'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView, MetacardDeleteView, MetacardOfflineView) {
+    'component/metacard-offline/metacard-offline.view',
+    'component/loading/loading.view',
+    'js/ResultUtils',
+    'js/jquery.whenAll'
+], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, LoadingView, ResultUtils) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -152,11 +154,20 @@ define([
             }));
         },
         handleRestore: function() {
-            lightboxInstance.model.updateTitle('Restore');
-            lightboxInstance.model.open();
-            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
-                model: this.model
-            }));
+            var loadingView = new LoadingView();
+            $.whenAll.apply(this, this.model.map(function(result) {
+                return $.get('/search/catalog/internal/history/' +
+                    'revert/' +
+                    result.get('metacard').get('properties').get('metacard.deleted.id') +
+                    '/' +
+                    result.get('metacard').get('properties').get('metacard.deleted.version')).then(function(response) {
+                        ResultUtils.refreshResult(result);
+                }.bind(this));
+            }.bind(this))).always(function(response) {
+                setTimeout(function() { //let solr flush
+                    loadingView.remove();
+                }, 2000);
+            });
         },
         handleClick: function(){
             this.$el.trigger('closeDropdown.'+CustomElements.getNamespace());
