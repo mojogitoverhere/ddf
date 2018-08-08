@@ -52,13 +52,13 @@ import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.security.SecurityConstants;
 import ddf.security.Subject;
-import ddf.security.SubjectUtils;
 import ddf.security.common.audit.SecurityLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -386,9 +386,10 @@ public class Historian {
               + versionedMap.values().stream().map(Metacard::getId).collect(TO_A_STRING));
     }
 
-    String emailAddress =
-        SubjectUtils.getEmailAddress(
-            (Subject) deleteResponse.getProperties().get(SecurityConstants.SECURITY_SUBJECT));
+    Subject subject =
+        (Subject)
+            deleteResponse.getRequest().getProperties().get(SecurityConstants.SECURITY_SUBJECT);
+
     List<Metacard> deletionMetacards =
         versionedMap
             .entrySet()
@@ -397,7 +398,8 @@ public class Historian {
                 s ->
                     new DeletedMetacardImpl(
                         s.getKey(),
-                        emailAddress,
+                        subject,
+                        new Date(),
                         s.getValue().getId(),
                         originalMetacardsMap.get(s.getKey())))
             .collect(Collectors.toList());

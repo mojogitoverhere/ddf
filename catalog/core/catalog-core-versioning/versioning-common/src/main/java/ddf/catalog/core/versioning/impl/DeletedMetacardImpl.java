@@ -13,6 +13,8 @@
  */
 package ddf.catalog.core.versioning.impl;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import com.google.common.collect.ImmutableSet;
 import ddf.catalog.core.versioning.DeletedMetacard;
 import ddf.catalog.data.AttributeDescriptor;
@@ -22,6 +24,9 @@ import ddf.catalog.data.impl.AttributeDescriptorImpl;
 import ddf.catalog.data.impl.BasicTypes;
 import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.impl.MetacardTypeImpl;
+import ddf.security.Subject;
+import ddf.security.SubjectUtils;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -45,7 +50,8 @@ public class DeletedMetacardImpl extends MetacardImpl implements DeletedMetacard
   static {
     DESCRIPTORS.add(
         new AttributeDescriptorImpl(DELETED_BY, true, true, false, false, BasicTypes.STRING_TYPE));
-
+    DESCRIPTORS.add(
+        new AttributeDescriptorImpl(DELETED_DATE, true, true, false, false, BasicTypes.DATE_TYPE));
     DESCRIPTORS.add(
         new AttributeDescriptorImpl(
             DELETION_OF_ID, true, true, false, false, BasicTypes.STRING_TYPE));
@@ -56,15 +62,26 @@ public class DeletedMetacardImpl extends MetacardImpl implements DeletedMetacard
   }
 
   public DeletedMetacardImpl(
-      String deletionOfId, String deletedBy, String lastVersionId, Metacard metacardBeingDeleted) {
+      String deletionOfId,
+      Subject subject,
+      Date deletedDate,
+      String lastVersionId,
+      Metacard metacardBeingDeleted) {
     super(
         metacardBeingDeleted,
         new MetacardTypeImpl(
             PREFIX,
             getDeletedMetacardType(),
             metacardBeingDeleted.getMetacardType().getAttributeDescriptors()));
+
+    String deletedBy = SubjectUtils.getEmailAddress(subject);
+    if (isNullOrEmpty(deletedBy)) {
+      deletedBy = SubjectUtils.getName(subject);
+    }
+
     this.setDeletionOfId(deletionOfId);
     this.setDeletedBy(deletedBy);
+    this.setDeletedDate(deletedDate);
     this.setLastVersionId(lastVersionId);
     this.setTags(ImmutableSet.of(DELETED_TAG));
     this.setId(UUID.randomUUID().toString().replace("-", ""));
@@ -103,6 +120,14 @@ public class DeletedMetacardImpl extends MetacardImpl implements DeletedMetacard
 
   public String getDeletedBy() {
     return requestString(DELETED_BY);
+  }
+
+  public void setDeletedDate(Date deletedDate) {
+    setAttribute(DELETED_DATE, deletedDate);
+  }
+
+  public Date getDeletedDate() {
+    return requestDate(DELETED_DATE);
   }
 
   public void setLastVersionId(String lastVersionId) {
