@@ -1,0 +1,62 @@
+{{!--
+/**
+ * Copyright (c) Codice Foundation
+ *
+ * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details. A copy of the GNU Lesser General Public License is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ *
+ **/
+ --}}
+<div>
+    <div class="warning-banner is-perm-delete">
+        <div class="delete-permanently"><span class="fa fa-exclamation-triangle"/> This action cannot be undone</div>
+        <div>
+            This will permanently delete any items you have selected and
+            any associations will be orphaned.
+        </div>
+    </div>
+    <div class="delete-banner is-delete">
+        Deleting an item will remove it from future search results for all users. These items can be searched using the "Search Deleted" search option.
+    </div>
+    <div class="associations">
+        <div class="associations-title">Associations</div>
+        {{#if this.orphans}}
+        <div class="associations-text">
+            The following were found to to have associations to results in the current selection. If you continue deleting, these associations and possibly more will be orphaned:
+        </div>
+        <div>
+            {{#each this.orphans}}
+                <div>
+                    <a href="#metacards/{{this}}" target="_blank">{{this}}</a>
+                </div>
+            {{/each}}
+        </div>
+        {{else}}
+        <div class="associations-text">No associations were found</div>
+        {{/if}}
+    </div>
+    <div class="actions is-perm-delete">
+        <div class="actions-prompt is-perm-delete">Are you absolutely sure?</div>
+        <button class="is-negative cancel" data-help="Cancel">
+            <span class="mainText">Cancel</span>
+        </button>
+        <button class="is-positive perm-delete" data-help="This will remove the item(s) permanently.">
+            <span class="mainText">Yes, delete permanently</span>
+        </button>
+    </div>
+    <div class="actions is-delete">
+        <button class="is-negative cancel" data-help="Cancel">
+            <span class="mainText">Cancel</span>
+        </button>
+        <button class="is-positive delete" data-help="This will remove the item(s) from search results.">
+            <span class="mainText">Delete</span>
+        </button>
+    </div>
+    <div class="large-item-text">
+        <span>Large items may take some time to delete.</span>
+    </div>
+</div>

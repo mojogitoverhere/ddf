@@ -3,16 +3,19 @@
   position: absolute;
   left: 0px;
   top: 0px;
-  line-height: 100vh;
+  height: 100%;
+  width: 100%;
   font-size: @largeFontSize;
   text-align: center;
-  background: @background-color;
+  background: @backgroundAccentContent;
   opacity: 0;
+  overflow: hidden;
+  line-height: 100%;
+  z-index: @zIndexLoadingCompanion;
 }
 
 .is-medium-screen, .is-small-screen, .is-mobile-screen {
   @{customElementNamespace}loading-companion {
     line-height: 50vh;
   }
-
 }

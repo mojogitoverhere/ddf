@@ -28,8 +28,9 @@ define([
     'decorator/Decorators',
     'component/lightbox/lightbox.view.instance',
     'component/metacard-archive/metacard-archive.view',
+    'component/metacard-delete/metacard-delete.view',
     'component/metacard-offline/metacard-offline.view'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView, MetacardOfflineView) {
+], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardArchiveView, MetacardDeleteView, MetacardOfflineView) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -138,14 +139,14 @@ define([
         handleArchive: function() {
             lightboxInstance.model.updateTitle('Delete');
             lightboxInstance.model.open();
-            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
+            lightboxInstance.lightboxContent.show(new MetacardDeleteView({
                 model: this.model
             }));
         },
         handleDelete: function() {
-            lightboxInstance.model.updateTitle('Delete');
+            lightboxInstance.model.updateTitle('Delete Permanently');
             lightboxInstance.model.open();
-            lightboxInstance.lightboxContent.show(new MetacardArchiveView({
+            lightboxInstance.lightboxContent.show(new MetacardDeleteView({
                 model: this.model,
                 permanent: true
             }));

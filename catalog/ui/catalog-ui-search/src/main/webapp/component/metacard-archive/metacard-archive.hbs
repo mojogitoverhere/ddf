@@ -41,32 +41,6 @@
         </button>
     {{/if}}
 </div>
-<div class="is-permanent">
-    {{#if this.orphans}}
-        <div class="section">
-            <div class="section-title">
-                The following were found to have associations to results in the current selection.  If you continue with deleting, these associations and possibly 
-            more will be orphaned:
-            </div>
-            <div class="section-content">
-                {{#each this.orphans}}
-                    <div>
-                        <a href="#metacards/{{this}}" target="_blank">{{this}}</a>
-                    </div>
-                {{/each}}
-            </div>
-        </div>
-        <button class="is-negative delete-confirm" data-help="This will remove the item(s) permanently.">
-            <span class="mainText">Confirm permanently delete item(s)</span>
-            <span class="subText">WARNING: This will remove the item(s) permanently and possibly orphan associations.</span>
-        </button>
-    {{else}}
-        <button class="is-negative delete" data-help=""This will permanently delete the item(s)>
-            <span class="mainText">Permanently delete item(s)</span>
-            <span class="subText">WARNING: This will remove the item(s) permanently.</span>
-        </button>
-    {{/if}}
-</div>
 <div class="is-archived">
     <button class="is-positive restore" data-help="This will restore the item(s) to standard search results.">
         <span class="mainText">Restore item(s)</span>

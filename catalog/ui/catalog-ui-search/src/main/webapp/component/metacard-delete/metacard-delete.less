@@ -1,0 +1,108 @@
+@{customElementNamespace}metacard-delete {
+  .customElement;
+  overflow: auto;
+  text-align: center;
+
+  .is-perm-delete,
+  .is-delete {
+    display: none;
+  }
+
+  button.is-negative,
+  button.is-positive {
+    display: inline-block; // needed for IE
+    height: auto;
+    padding-left: @minimumSpacing;
+    padding-right: @minimumSpacing;
+    margin-right: @minimumSpacing;
+    margin-left: @minimumSpacing;
+  }
+
+  .delete-banner {
+    margin-top: @largeSpacing;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: @minimumSpacing;
+    text-align: left;
+  }
+
+  .warning-banner {
+    margin-top: @largeSpacing;
+    border: 1px solid black;
+    background-color: @negative-color;
+    border-radius: @border-radius;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: @minimumSpacing;
+
+    .delete-permanently {
+      font-size: @largeFontSize;
+      font-weight: bold;
+      margin-bottom: @minimumSpacing;
+    }
+  }
+
+  .associations {
+    text-align: left;
+    padding: @mediumSpacing;
+    margin-top: @mediumSpacing;
+    border: 1px solid @baseGrey;
+    border-radius: @border-radius;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+
+    .associations-title {
+      font-weight: bold;
+      font-size: @mediumFontSize;
+      text-align: left;
+      margin-bottom: @minimumSpacing;
+    }
+
+    .associations-text {
+      margin-bottom: @minimumSpacing;
+    }
+  }
+
+  .actions {
+    margin-top: @largeSpacing;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+
+    .actions-prompt {
+      font-size: @mediumFontSize;
+      margin-bottom: @mediumSpacing;
+    }
+  }
+
+  .large-item-text {
+    margin-top: @minimumSpacing;
+    opacity: @minimumOpacity;
+  }
+}
+
+@{customElementNamespace}metacard-delete.is-perm-delete {
+
+  .is-delete {
+    display: none;
+  }
+
+  .is-perm-delete {
+    display: block;
+  }
+}
+
+@{customElementNamespace}metacard-delete.is-delete {
+
+  .is-delete {
+    display: block;
+  }
+
+  .is-perm-delete {
+    display: none;
+  }
+}
+
