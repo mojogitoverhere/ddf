@@ -21,6 +21,7 @@ define([
     './metacard-interactions.hbs',
     'js/CustomElements',
     'js/store',
+    'js/Download',
     'component/router/router',
     'component/singletons/user-instance',
     'component/singletons/sources-instance',
@@ -31,8 +32,9 @@ define([
     'component/metacard-offline/metacard-offline.view',
     'component/loading/loading.view',
     'js/ResultUtils',
+    'component/announcement',
     'js/jquery.whenAll'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, LoadingView, ResultUtils) {
+], function (wreqr, Marionette, _, $, template, CustomElements, store, Download, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, LoadingView, ResultUtils, announcement) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -126,10 +128,18 @@ define([
         handleShare: function(){
             
         },
-        handleDownload: function(){
-            this.model.forEach(function(result){
-                window.open(result.get('metacard').get('properties').get('resource-download-url'));
+        handleDownload: function() {
+            var self = this;
+            this.model.forEach(function(result) {
+                self.doDirectDownload(result);
             });
+        },
+        doDirectDownload: function(result) {
+            var url = result.get('metacard').get('properties').get('resource-download-url');
+            // This filename is will only be honored if the response from the URL does not contain
+            // a Content-Disposition header with the "filename" attribute
+            var filename = result.get('metacard').get('properties').get('title');
+            Download.fromUrl(filename, url);
         },
         handleOffline: function() {
             lightboxInstance.model.updateTitle('Offline Content');

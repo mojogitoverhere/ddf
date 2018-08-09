@@ -27,20 +27,7 @@ var TableRearrange = require('./table-rearrange.view');
 var ResultsTableView = require('component/table/results/table-results.view');
 var user = require('component/singletons/user-instance');
 var properties = require('properties');
-var store = require('js/store');
-
-function saveFile (name, type, data) {
-    if (data != null && navigator.msSaveBlob)
-        return navigator.msSaveBlob(new Blob([data], { type: type }), name);
-    var a = $("<a style='display: none;'/>");
-    var url = window.URL.createObjectURL(new Blob([data], {type: type}));
-    a.attr("href", url);
-    a.attr("download", name);
-    $("body").append(a);
-    a[0].click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
-}
+var Download = require('js/Download');
 
 function getFilenameFromContentDisposition(header) {
     if (header == null) {
@@ -125,7 +112,7 @@ module.exports = Marionette.LayoutView.extend({
                 if (filename === null) {
                     return;
                 }
-                saveFile(filename, 'data:attachment/csv', data);
+                Download.fromData(filename, 'data:attachment/csv', data);
             }
         })
     },
@@ -147,7 +134,7 @@ module.exports = Marionette.LayoutView.extend({
                 if (filename === null) {
                     return;
                 }
-                saveFile(filename, 'data:attachment/csv', data);
+                Download.fromData(filename, 'data:attachment/csv', data);
             }
         })
     }
