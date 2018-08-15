@@ -87,6 +87,7 @@ import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.QueryResponseTransformer;
 import ddf.security.Subject;
 import ddf.security.SubjectUtils;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -344,14 +345,23 @@ public class MetacardApplication implements SparkApplication {
 
           try {
             //Delete specified metacards
+            SecurityLogger.audit(
+                "called \'Deleted Permanently\' on {} metacard(s): {}", ids.size(), ids.toString());
+
             LOGGER.debug("Permanently deleting specified metacards...");
 
             DeleteResponse deleteResponse = doDelete(new DeleteRequestImpl(ids, Metacard.ID, null));
+            String deleteLog = buildDeleteLog(deleteResponse);
+
+            SecurityLogger.audit(
+                "successfully deleted {} metacards: {}",
+                deleteResponse.getDeletedMetacards().size(),
+                deleteLog);
 
             LOGGER.debug(
                 "{} metacard(s) permanently deleted: \n {}",
                 deleteResponse.getDeletedMetacards().size(),
-                buildDeleteLog(deleteResponse));
+                deleteLog);
 
             //Get original ids from soft deleted metacards
             List<Serializable> originalIds =
