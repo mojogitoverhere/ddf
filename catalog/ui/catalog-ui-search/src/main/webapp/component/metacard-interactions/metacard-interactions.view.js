@@ -30,11 +30,12 @@ define([
     'component/lightbox/lightbox.view.instance',
     'component/metacard-delete/metacard-delete.view',
     'component/metacard-offline/metacard-offline.view',
+    'component/metacard-export/metacard-export.view',
     'component/loading/loading.view',
     'js/ResultUtils',
     'component/announcement',
     'js/jquery.whenAll'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, Download, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, LoadingView, ResultUtils, announcement) {
+], function (wreqr, Marionette, _, $, template, CustomElements, store, Download, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, MetacardExportView, LoadingView, ResultUtils, announcement) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -50,6 +51,7 @@ define([
             'click .interaction-expand': 'handleExpand',
             'click .interaction-share': 'handleShare',
             'click .interaction-download': 'handleDownload',
+            'click .interaction-export': 'handleExport',
             'click .interaction-offline': 'handleOffline',
             'click .interaction-archive': 'handleArchive',
             'click .interaction-archive-restore': 'handleRestore',
@@ -147,6 +149,11 @@ define([
             lightboxInstance.lightboxContent.show(new MetacardOfflineView({
                 model: this.model
             }));
+        },
+        handleExport: function() {
+            lightboxInstance.model.updateTitle('Export');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardExportView({model: this.model}));
         },
         handleArchive: function() {
             lightboxInstance.model.updateTitle('Delete');

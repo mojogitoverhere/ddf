@@ -201,6 +201,13 @@
             default=""
             required="true"/>
 
+        <AD id="exportFormats"
+            name="Export Formats"
+            description="Formats available for users to export metadata"
+            type="String"
+            cardinality="10000"
+            default="xml,gmd:MD_Metadata,propertyjson,kml,html,metadata,csw:Record,geojson"
+            required="true"/>
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.config">
