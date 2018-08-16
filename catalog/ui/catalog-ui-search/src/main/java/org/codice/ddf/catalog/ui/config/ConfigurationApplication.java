@@ -105,21 +105,6 @@ public class ConfigurationApplication implements SparkApplication {
 
   private Map<String, Set<String>> typeNameMapping = new HashMap<String, Set<String>>();
 
-  private List<String> exportFormats =
-      ImmutableList.of(
-          "xml",
-          "gmd:MD_Metadata",
-          "propertyjson",
-          "kml",
-          "html",
-          "metadata",
-          "csw:Record",
-          "geojson");
-
-  public List<String> getExportFormats() {
-    return exportFormats;
-  }
-
   public List<Long> getScheduleFrequencyList() {
     return scheduleFrequencyList;
   }
@@ -158,10 +143,6 @@ public class ConfigurationApplication implements SparkApplication {
 
   public void setScheduleFrequencyList(List<Long> scheduleFrequencyList) {
     this.scheduleFrequencyList = scheduleFrequencyList;
-  }
-
-  public void setExportFormats(List<String> exportFormats) {
-    this.exportFormats = exportFormats;
   }
 
   public void setReadOnly(List<String> readOnly) {
@@ -281,7 +262,6 @@ public class ConfigurationApplication implements SparkApplication {
     config.put("queryFeedbackEmailSubjectTemplate", queryFeedbackEmailSubjectTemplate);
     config.put("queryFeedbackEmailBodyTemplate", queryFeedbackEmailBodyTemplate);
     config.put("queryFeedbackEmailDestination", queryFeedbackEmailDestination);
-    config.put("exportFormats", exportFormats);
 
     return config;
   }

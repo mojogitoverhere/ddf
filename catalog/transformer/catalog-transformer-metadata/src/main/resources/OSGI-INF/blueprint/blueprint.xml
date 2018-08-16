@@ -27,7 +27,7 @@
 
 	<service ref="metadataTransformer" interface="ddf.catalog.transform.MetacardTransformer">
 		<service-properties>
-			<entry key="id" value="metadata"/>
+			<entry key="id" value="metadata.metadata"/>
             <!-- shortname only exists for backwards compatibility -->
             <entry key="shortname" value="metadata"/>
 			<entry key="mime-type" value="text/xml"/>

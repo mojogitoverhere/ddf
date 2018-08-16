@@ -20,7 +20,7 @@
 
     <service ref="transformer" interface="ddf.catalog.transform.MetacardTransformer">
         <service-properties>
-            <entry key="id" value="propertyjson"/>
+            <entry key="id" value="metadata.propertyjson"/>
             <entry key="mime-type" value="application/json"/>
         </service-properties>
     </service>

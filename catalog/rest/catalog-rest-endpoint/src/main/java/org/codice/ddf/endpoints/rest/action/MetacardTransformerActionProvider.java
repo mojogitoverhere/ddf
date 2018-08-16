@@ -64,7 +64,10 @@ public class MetacardTransformerActionProvider extends AbstractMetacardActionPro
       String actionProviderId, String metacardTransformerId, String attributeName) {
     super(
         actionProviderId,
-        TITLE_PREFIX + metacardTransformerId,
+        TITLE_PREFIX
+            + (metacardTransformerId.contains(".")
+                ? metacardTransformerId.substring(metacardTransformerId.lastIndexOf(".") + 1)
+                : metacardTransformerId),
         DESCRIPTION_PREFIX + metacardTransformerId + DESCRIPTION_SUFFIX);
     this.metacardTransformerId = metacardTransformerId;
     this.attributeName = attributeName;

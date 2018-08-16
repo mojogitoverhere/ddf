@@ -44,6 +44,7 @@ module.exports = Marionette.LayoutView.extend({
     onBeforeShow: function() {
         this.formatModel = new Property({
             label: 'Format',
+            value: ['catalog.data.metacard.metadata.xml'],
             enumFiltering: true,
             showLabel: false,
             id: "formats",
@@ -53,19 +54,25 @@ module.exports = Marionette.LayoutView.extend({
         this.formatInput.show(new PropertyView({model: this.formatModel}));
     },
     triggerExport: function() {
-        var transformer = this.formatInput.currentView.model.getValue()[0];
+        var transformerId = this.formatInput.currentView.model.getValue()[0];
         this.model.forEach(function(result) {
-            var filename = transformer + "-metadata-" + result.get('metacard').get('properties').get('id');
-            var url = result.get('metacard').get('properties').get('resource-download-url');
-            url = url.replace('resource', transformer);
+            var filename = result.get('metacard').get('properties').get('id') + "." + transformerId.split(".").pop();
+            var url = _.find(result.get('actions'), {id: transformerId}).url;
             Download.fromUrl(filename, url);
         })
         this.closeLightbox();
     },
     getEnumValues: function() {
-        return properties.exportFormats.map(function(format) {
-            return {label:format, value:format};
+        return this.getCommonActions().filter((actionId) => actionId.includes("catalog.data.metacard.metadata"))
+            .sort()
+            .map(function(actionId) {return {label:actionId.split(".").pop(), value:actionId}});
+    },
+    getCommonActions: function() {
+        var actionIds = [];
+        this.model.forEach(function(result) {
+            actionIds.push(result.get('actions').map(action => action.id));
         });
+        return actionIds.reduce((x, y) => _.intersection(x, y));
     },
     closeLightbox: function() {
         this.$el.trigger(CustomElements.getNamespace() + 'close-lightbox');

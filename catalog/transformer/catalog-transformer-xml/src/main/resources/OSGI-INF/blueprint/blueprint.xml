@@ -47,7 +47,7 @@
 
     <service interface="ddf.catalog.transform.MetacardTransformer">
         <service-properties>
-            <entry key="id" value="xml"/>
+            <entry key="id" value="metadata.xml"/>
             <entry key="mime-type" value="text/xml"/>
             <entry key="title" value="View as XML..."/>
             <!-- deprecated -->

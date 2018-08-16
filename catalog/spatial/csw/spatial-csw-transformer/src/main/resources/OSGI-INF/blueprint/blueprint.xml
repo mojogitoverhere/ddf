@@ -81,7 +81,7 @@
 
     <service ref="cswRecordConverter" interface="ddf.catalog.transform.MetacardTransformer">
         <service-properties>
-            <entry key="id" value="csw:Record"/>
+            <entry key="id" value="metadata.csw:Record"/>
             <entry key="mime-type" >
                 <list>
                     <value>text/xml</value>
@@ -107,7 +107,7 @@
 
     <service ref="gmdInputTransformerTranformer" interface="ddf.catalog.transform.MetacardTransformer">
         <service-properties>
-            <entry key="id" value="gmd:MD_Metadata"/>
+            <entry key="id" value="metadata.gmd:MD_Metadata"/>
             <entry key="mime-type" value="text/xml"/>
             <entry key="schema" value="http://www.isotc211.org/2005/gmd"/>
         </service-properties>

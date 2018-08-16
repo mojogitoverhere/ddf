@@ -41,7 +41,7 @@
 
     <service ref="kmlTransformerImpl" interface="ddf.catalog.transform.MetacardTransformer">
         <service-properties>
-            <entry key="id" value="kml"/>
+            <entry key="id" value="metadata.kml"/>
             <entry key="shortname" value="kml"/>
             <entry key="title" value="View as KML..."/>
             <entry key="description"
