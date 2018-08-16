@@ -12,71 +12,62 @@
  * <http://www.gnu.org/licenses/lgpl.html>.
  *
  **/
-/*global define, setTimeout*/
-define([
-    'marionette',
-    'underscore',
-    'jquery',
-    './metacard-export.hbs',
-    'component/property/property',
-    'component/property/property.view',
-    'js/CustomElements',
-    'js/store',
-    'js/Download',
-    'properties.js'
-], function (Marionette, _, $, template, Property, PropertyView, CustomElements, store, Download, properties) {
+/*global require*/
+var _ = require('underscore');
+var $ = require('jquery');
+var Marionette = require('marionette');
+var CustomElements = require('js/CustomElements');
+var properties = require('properties');
+var store = require('js/store');
+var Download = require('js/Download');
+var template = require('./metacard-export.hbs');
+var Property = require('component/property/property');
+var PropertyView = require('component/property/property.view');
 
-    return Marionette.LayoutView.extend({
-        setDefaultModel: function() {
+module.exports = Marionette.LayoutView.extend({
+    template: template,
+    tagName: CustomElements.register('metacard-export'),
+    regions: {
+        formatInput: '.export-format-options-dropdown'
+    },
+    events: {
+        'click button.export-confirm': 'triggerExport',
+        'click button.export-cancel': 'closeLightbox'
+    },
+    selectionInterface: store,
+    initialize: function(options) {
+        this.selectionInterface = options.selectionInterface || this.selectionInterface;
+        if (!options.model) {
             this.model = this.selectionInterface.getSelectedResults();
-        },
-        template: template,
-        tagName: CustomElements.register('metacard-export'),
-        regions: {
-            formatInput: '.export-format-options-dropdown'
-        },
-        events: {
-            'click button.export-confirm': 'triggerExport',
-            'click button.export-cancel': 'closeLightbox'
-        },
-        selectionInterface: store,
-        initialize: function(options) {
-            this.selectionInterface = options.selectionInterface || this.selectionInterface;
-            if (!options.model){
-                this.setDefaultModel();
-            }
-        },
-        onBeforeShow: function() {
-            this.formatModel = new Property({
-                label: 'Format',
-                enumFiltering: true,
-                showLabel: false,
-                id: "formats",
-                isEditing: true,
-                enum: this.getEnumValues()
-            });
-            this.formatInput.show(new PropertyView({model: this.formatModel}));
-        },
-        triggerExport: function() {
-            var transformer = this.formatInput.currentView.model.getValue()[0];
-            this.model.forEach(function(result) {
-                var filename = transformer + "-metadata-" + result.get('metacard').get('properties').get('title');
-                var url = result.get('metacard').get('properties').get('resource-download-url');
-                url = url.replace('resource', transformer);
-                Download.fromUrl(filename, url);
-            })
-            this.closeLightbox();
-        },
-        getEnumValues: function() {
-            var enumValues = new Array();
-            properties.exportFormats.forEach(function(format) {
-                var val = {label:format, value:format};
-                enumValues.push(val);
-            });
-            return enumValues;
-        },
-        closeLightbox: function() {
-            this.$el.trigger(CustomElements.getNamespace() + 'close-lightbox');
         }
-    });
+    },
+    onBeforeShow: function() {
+        this.formatModel = new Property({
+            label: 'Format',
+            enumFiltering: true,
+            showLabel: false,
+            id: "formats",
+            isEditing: true,
+            enum: this.getEnumValues()
+        });
+        this.formatInput.show(new PropertyView({model: this.formatModel}));
+    },
+    triggerExport: function() {
+        var transformer = this.formatInput.currentView.model.getValue()[0];
+        this.model.forEach(function(result) {
+            var filename = transformer + "-metadata-" + result.get('metacard').get('properties').get('id');
+            var url = result.get('metacard').get('properties').get('resource-download-url');
+            url = url.replace('resource', transformer);
+            Download.fromUrl(filename, url);
+        })
+        this.closeLightbox();
+    },
+    getEnumValues: function() {
+        return properties.exportFormats.map(function(format) {
+            return {label:format, value:format};
+        });
+    },
+    closeLightbox: function() {
+        this.$el.trigger(CustomElements.getNamespace() + 'close-lightbox');
+    }
 });
