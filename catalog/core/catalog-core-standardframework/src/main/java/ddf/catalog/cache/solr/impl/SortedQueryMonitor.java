@@ -56,11 +56,11 @@ import org.slf4j.LoggerFactory;
 class SortedQueryMonitor implements Runnable {
   private static final Logger LOGGER = LoggerFactory.getLogger(SortedQueryMonitor.class);
 
-  private CachingFederationStrategy cachingFederationStrategy;
-
   private final QueryRequest request;
 
   private final CompletionService<SourceResponse> completionService;
+
+  private CachingFederationStrategy cachingFederationStrategy;
 
   private QueryResponseImpl returnResults;
 

@@ -19,7 +19,6 @@ import ddf.catalog.data.Metacard;
 import ddf.catalog.data.Result;
 import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.impl.ResultImpl;
-import ddf.catalog.federation.Federatable;
 import ddf.catalog.federation.FederationStrategy;
 import ddf.catalog.operation.CreateResponse;
 import ddf.catalog.operation.DeleteResponse;
@@ -48,18 +47,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.Validate;
 import org.codice.ddf.configuration.SystemInfo;
 import org.opengis.filter.sort.SortOrder;
 import org.slf4j.Logger;
@@ -108,7 +103,8 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
   /** Query and update the cache without blocking */
   protected static final String UPDATE_QUERY_MODE = "update";
 
-  private static final int DEFAULT_MAX_START_INDEX = 50000;
+  /** package-private to allow for unit testing */
+  static final int DEFAULT_MAX_START_INDEX = 50000;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CachingFederationStrategy.class);
 
@@ -130,11 +126,13 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
    */
   protected List<PostFederatedQueryPlugin> postQuery;
 
+  private SortedQueryMonitorFactory sortedQueryMonitorFactory = new SortedQueryMonitorFactory(this);
+
   private ExecutorService queryExecutorService;
 
   private int maxStartIndex;
 
-  private CacheCommitPhaser cacheCommitPhaser = new CacheCommitPhaser();
+  private CacheCommitPhaser cacheCommitPhaser;
 
   private CacheBulkProcessor cacheBulkProcessor;
 
@@ -163,20 +161,46 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
       ExecutorService cacheExecutorService,
       ValidationQueryFactory validationQueryFactory,
       CacheQueryFactory cacheQueryFactory) {
+
+    Validate.notNull(queryExecutorService, "Valid queryExecutorService required.");
+    Validate.notNull(preQuery, "Valid List<PreFederatedQueryPlugin> required.");
+    Validate.noNullElements(preQuery, "preQuery cannot contain null elements.");
+    Validate.notNull(postQuery, "Valid List<PostFederatedQueryPlugin> required.");
+    Validate.noNullElements(postQuery, "postQuery cannot contain null elements.");
+    Validate.notNull(cache, "Valid SolrCache required.");
+    Validate.notNull(cacheExecutorService, "Valid cacheExecutorService required.");
+    Validate.notNull(validationQueryFactory, "Valid ValidationQueryFactory required.");
+    Validate.notNull(cacheQueryFactory, "Valid CacheQueryFactory required.");
+
     this.queryExecutorService = queryExecutorService;
     this.preQuery = preQuery;
     this.postQuery = postQuery;
     this.maxStartIndex = DEFAULT_MAX_START_INDEX;
     this.cache = cache;
     this.cacheExecutorService = cacheExecutorService;
+    cacheCommitPhaser = new CacheCommitPhaser(cache);
     cacheBulkProcessor = new CacheBulkProcessor(cache);
     this.validationQueryFactory = validationQueryFactory;
     this.cacheQueryFactory = cacheQueryFactory;
     cacheSource = new SolrCacheSource(cache);
   }
 
+  void setSortedQueryMonitorFactory(SortedQueryMonitorFactory sortedQueryMonitorFactory) {
+    this.sortedQueryMonitorFactory = sortedQueryMonitorFactory;
+  }
+
+  void setCacheCommitPhaser(CacheCommitPhaser cacheCommitPhaser) {
+    this.cacheCommitPhaser = cacheCommitPhaser;
+  }
+
+  void setCacheBulkProcessor(CacheBulkProcessor cacheBulkProcessor) {
+    this.cacheBulkProcessor = cacheBulkProcessor;
+  }
+
   @Override
   public QueryResponse federate(List<Source> sources, QueryRequest queryRequest) {
+    Validate.noNullElements(sources, "Cannot federate with null sources.");
+    Validate.notNull(queryRequest, "Cannot federate with null QueryRequest.");
     Set<String> sourceIds = new HashSet<>();
     for (Source source : sources) {
       sourceIds.add(source.getId());
@@ -238,41 +262,36 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
     // Do NOT call source.isAvailable() when checking sources
     for (final Source source : sources) {
       if (source != null) {
-        if (!futuresContainsSource(source, futures)) {
-          LOGGER.debug("running query on source: {}", source.getId());
+        LOGGER.debug("running query on source: {}", source.getId());
 
-          QueryRequest sourceQueryRequest =
-              new QueryRequestImpl(
-                  modifiedQuery,
-                  queryRequest.isEnterprise(),
-                  Collections.singleton(source.getId()),
-                  new HashMap<>(queryRequest.getProperties()));
-          try {
-            for (PreFederatedQueryPlugin service : preQuery) {
-              try {
-                sourceQueryRequest = service.process(source, sourceQueryRequest);
-              } catch (PluginExecutionException e) {
-                LOGGER.info("Error executing PreFederatedQueryPlugin", e);
-              }
+        QueryRequest sourceQueryRequest =
+            new QueryRequestImpl(
+                modifiedQuery,
+                queryRequest.isEnterprise(),
+                Collections.singleton(source.getId()),
+                new HashMap<>(queryRequest.getProperties()));
+        try {
+          for (PreFederatedQueryPlugin service : preQuery) {
+            try {
+              sourceQueryRequest = service.process(source, sourceQueryRequest);
+            } catch (PluginExecutionException e) {
+              LOGGER.info("Error executing PreFederatedQueryPlugin", e);
             }
-          } catch (StopProcessingException e) {
-            LOGGER.info("Plugin stopped processing", e);
           }
-
-          if (source instanceof CatalogProvider
-              && SystemInfo.getSiteName().equals(source.getId())) {
-            // TODO RAP 12 Jul 16: DDF-2294 - Extract into a new PreFederatedQueryPlugin
-            sourceQueryRequest =
-                validationQueryFactory.getQueryRequestWithValidationFilter(
-                    sourceQueryRequest, showErrors, showWarnings);
-          }
-
-          futures.put(
-              queryCompletion.submit(new CallableSourceResponse(source, sourceQueryRequest)),
-              sourceQueryRequest);
-        } else {
-          LOGGER.info("Duplicate source found with name {}. Ignoring second one.", source.getId());
+        } catch (StopProcessingException e) {
+          LOGGER.info("Plugin stopped processing", e);
         }
+
+        if (source instanceof CatalogProvider && SystemInfo.getSiteName().equals(source.getId())) {
+          // TODO RAP 12 Jul 16: DDF-2294 - Extract into a new PreFederatedQueryPlugin
+          sourceQueryRequest =
+              validationQueryFactory.getQueryRequestWithValidationFilter(
+                  sourceQueryRequest, showErrors, showWarnings);
+        }
+
+        futures.put(
+            queryCompletion.submit(new CallableSourceResponse(source, sourceQueryRequest)),
+            sourceQueryRequest);
       }
     }
 
@@ -288,7 +307,8 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
     }
 
     queryExecutorService.submit(
-        createMonitor(queryCompletion, futures, queryResponseQueue, modifiedQueryRequest));
+        sortedQueryMonitorFactory.createMonitor(
+            queryCompletion, futures, queryResponseQueue, modifiedQueryRequest, postQuery));
 
     QueryResponse queryResponse;
     if (offset > 1 && sources.size() > 1) {
@@ -301,17 +321,6 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
 
     LOGGER.debug("returning Query Results: {}", queryResponse);
     return queryResponse;
-  }
-
-  private boolean futuresContainsSource(
-      Source source, Map<Future<SourceResponse>, QueryRequest> futures) {
-    return futures
-        .entrySet()
-        .stream()
-        .map(Map.Entry::getValue)
-        .map(Federatable::getSourceIds)
-        .filter(Objects::nonNull)
-        .anyMatch(s -> s.contains(source.getId()));
   }
 
   private Query getModifiedQuery(
@@ -411,14 +420,8 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
     return input;
   }
 
-  private List<Metacard> getMetacards(List<Result> results) {
-    List<Metacard> metacards = new ArrayList<>(results.size());
-
-    for (Result result : results) {
-      metacards.add(result.getMetacard());
-    }
-
-    return metacards;
+  int getMaxStartIndex() {
+    return maxStartIndex;
   }
 
   /**
@@ -456,22 +459,28 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
     this.cacheRemoteIngests = cacheRemoteIngests;
   }
 
-  protected Runnable createMonitor(
-      final CompletionService<SourceResponse> completionService,
-      final Map<Future<SourceResponse>, QueryRequest> futures,
-      final QueryResponseImpl returnResults,
-      final QueryRequest request) {
-
-    return new SortedQueryMonitor(
-        this, completionService, futures, returnResults, request, postQuery);
-  }
-
   public void shutdown() {
     cacheCommitPhaser.shutdown();
     cacheBulkProcessor.shutdown();
   }
 
-  private static class OffsetResultHandler implements Runnable {
+  public boolean getShowErrors() {
+    return showErrors;
+  }
+
+  public void setShowErrors(boolean showErrors) {
+    this.showErrors = showErrors;
+  }
+
+  public boolean getShowWarnings() {
+    return showWarnings;
+  }
+
+  public void setShowWarnings(boolean showWarnings) {
+    this.showWarnings = showWarnings;
+  }
+
+  static class OffsetResultHandler implements Runnable {
 
     private QueryResponseImpl originalResults = null;
 
@@ -481,7 +490,7 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
 
     private int offset = 1;
 
-    private OffsetResultHandler(
+    OffsetResultHandler(
         QueryResponseImpl originalResults,
         QueryResponseImpl offsetResultQueue,
         int pageSize,
@@ -511,21 +520,6 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
       LOGGER.debug("Closing Queue and setting the total count");
       offsetResultQueue.setHits(originalResults.getHits());
       offsetResultQueue.closeResultQueue();
-    }
-  }
-
-  /** Runnable that makes one party arrive to a phaser on each run */
-  private static class PhaseAdvancer implements Runnable {
-
-    private final Phaser phaser;
-
-    public PhaseAdvancer(Phaser phaser) {
-      this.phaser = phaser;
-    }
-
-    @Override
-    public void run() {
-      phaser.arriveAndAwaitAdvance();
     }
   }
 
@@ -592,63 +586,7 @@ public class CachingFederationStrategy implements FederationStrategy, PostIngest
   }
 
   /** Phaser that forces all added metacards to commit to the cache on phase advance */
-  private class CacheCommitPhaser extends Phaser {
-
-    private final ScheduledExecutorService phaseScheduler =
-        Executors.newSingleThreadScheduledExecutor();
-
-    public CacheCommitPhaser() {
-      // There will always be at least one party which will be the PhaseAdvancer
-      super(1);
-
-      // PhaseAdvancer blocks waiting for next phase advance, delay 1 second between advances
-      // this is used to block queries that request to be indexed before continuing
-      // committing Solr more often than 1 second can cause performance issues and exceptions
-      phaseScheduler.scheduleWithFixedDelay(new PhaseAdvancer(this), 1, 1, TimeUnit.SECONDS);
-    }
-
-    @Override
-    protected boolean onAdvance(int phase, int registeredParties) {
-      // registeredParties should be 1 since all parties other than the PhaseAdvancer
-      // will arriveAndDeregister in the add method
-      cache.forceCommit();
-
-      return super.onAdvance(phase, registeredParties);
-    }
-
-    /**
-     * Adds results to cache and blocks for next phase advance
-     *
-     * @param results metacards to add to cache
-     */
-    public void add(List<Result> results) {
-      // block next phase
-      this.register();
-      // add results to cache
-      cache.create(getMetacards(results));
-      // unblock phase and wait for all other parties to unblock phase
-      this.awaitAdvance(this.arriveAndDeregister());
-    }
-
-    public void shutdown() {
-      this.forceTermination();
-      phaseScheduler.shutdown();
-    }
-  }
-
-  public void setShowErrors(boolean showErrors) {
-    this.showErrors = showErrors;
-  }
-
-  public boolean getShowErrors() {
-    return showErrors;
-  }
-
-  public void setShowWarnings(boolean showWarnings) {
-    this.showWarnings = showWarnings;
-  }
-
-  public boolean getShowWarnings() {
-    return showWarnings;
+  public void setCacheStrategy(String cacheStrategy) {
+    cacheBulkProcessor.setCacheStrategy(CacheStrategy.valueOf(cacheStrategy));
   }
 }
