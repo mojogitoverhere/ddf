@@ -43,6 +43,7 @@ define([
         workspaceRegion: '#workspace',
         metacardRegion: '#metacard',
         alertRegion: '#alert',
+        importRegion: '#import',
         ingestRegion: '#ingest',
         uploadRegion: '#upload',
         controlPanelRegion: '#controlPanel',

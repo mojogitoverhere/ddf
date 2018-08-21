@@ -1,0 +1,21 @@
+@{customElementNamespace}import {
+  .customElement;
+  background: @card-background-color;
+
+  .import-content {
+    display: inline-block;
+    width: 100%;
+    max-height: ~'calc(100% - 2*@{minimumLineSize} - 10px)';
+    overflow: auto;
+  }
+
+  .import-status {
+    transition: padding @coreTransitionTime ease-out @coreTransitionTime;
+    padding-bottom: @minimumButtonSize;
+  }
+
+  .import-files {
+    background: @background-color;
+    border-bottom: @lighten-inherited-background-color;
+  }
+}

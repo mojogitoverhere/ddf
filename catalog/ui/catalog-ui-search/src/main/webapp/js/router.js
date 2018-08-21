@@ -27,6 +27,7 @@ define([
     'js/cql',
     'component/alert/alert',
     'component/alert/alert.view',
+    'component/import/import.view',
     'component/ingest/ingest.view',
     'component/router/router',
     'component/singletons/user-instance',
@@ -36,7 +37,7 @@ define([
     'component/singletons/slideout.left.view-instance.js'
 ], function (wreqr, $, Backbone, Marionette, store, ConfirmationView, Application, ContentView,
              HomeView, MetacardView, metacardInstance, Query, cql, alertInstance, AlertView,
-            IngestView, router, user, uploadInstance, UploadView,
+            ImportView, IngestView, router, user, uploadInstance, UploadView,
             NavigatorView, SlideoutLeftViewInstance) {
 
     function toggleNavigator() {
@@ -70,6 +71,9 @@ define([
             openAlert: function(){
                 //console.log('route to specific alert:'+alertId);
             },
+            openImport: function(){
+                //console.log('route to ingest');
+            },
             openIngest: function(){
                 //console.log('route to ingest');
             },
@@ -83,6 +87,7 @@ define([
             'workspaces(/)': 'workspaces',
             'metacards/:id': 'openMetacard',
             'alerts/:id': 'openAlert',
+            'import(/)': 'openImport',
             'ingest(/)': 'openIngest',
             'uploads/:id': 'openUpload'
         },
@@ -253,6 +258,13 @@ define([
                         Application.App.uploadRegion.$el.removeClass('is-hidden');
                         self.updateRoute(name, path, args);
                     }
+                    break;
+                case 'openImport':
+                    if (Application.App.importRegion.currentView === undefined){
+                        Application.App.importRegion.show(new ImportView());
+                    }
+                    Application.App.importRegion.$el.removeClass('is-hidden');
+                    this.updateRoute(name, path, args);
                     break;
                 case 'openIngest':
                     if (Application.App.ingestRegion.currentView === undefined){
