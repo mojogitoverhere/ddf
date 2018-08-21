@@ -137,6 +137,10 @@ public class ConfigurationApplication implements SparkApplication {
         .collect(Collectors.toList());
   }
 
+  public List<String> getExportActionBlacklist() {
+    return exportActionBlacklist;
+  }
+
   public List<String> getHiddenAttributes() {
     return hiddenAttributes;
   }
@@ -165,6 +169,10 @@ public class ConfigurationApplication implements SparkApplication {
             .collect(Collectors.toMap(list -> list[0].trim(), list -> list[1].trim()));
   }
 
+  public void setExportActionBlacklist(List<String> exportActionBlacklist) {
+    this.exportActionBlacklist = exportActionBlacklist;
+  }
+
   public void setHiddenAttributes(List<String> hiddenAttributes) {
     this.hiddenAttributes = hiddenAttributes;
   }
@@ -185,6 +193,14 @@ public class ConfigurationApplication implements SparkApplication {
   private List<String> resultShow = Collections.emptyList();
 
   private Map<String, String> attributeAliases = Collections.emptyMap();
+
+  private List<String> exportActionBlacklist =
+      ImmutableList.of(
+          "catalog.data.metacard.resource.*",
+          "catalog.data.metacard.map.*",
+          ".*thumbnail$",
+          ".*view$",
+          ".*derived-content$");
 
   private List<String> hiddenAttributes = Collections.emptyList();
 
@@ -262,6 +278,7 @@ public class ConfigurationApplication implements SparkApplication {
     config.put("queryFeedbackEmailSubjectTemplate", queryFeedbackEmailSubjectTemplate);
     config.put("queryFeedbackEmailBodyTemplate", queryFeedbackEmailBodyTemplate);
     config.put("queryFeedbackEmailDestination", queryFeedbackEmailDestination);
+    config.put("exportActionBlacklist", exportActionBlacklist);
 
     return config;
   }

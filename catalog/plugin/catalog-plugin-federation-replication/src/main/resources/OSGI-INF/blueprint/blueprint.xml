@@ -17,7 +17,7 @@
 	<!-- Retrieve the desired transformer -->
     <reference id="transformer"
                interface="ddf.catalog.transform.MetacardTransformer"
-               filter="(id=metadata.geojson)"></reference>
+               filter="(id=geojson)"></reference>
 
     <!-- Post Ingest Plugin -->
     <bean id="plugin" class="ddf.catalog.federation.layered.replication.RestReplicatorPlugin">

@@ -201,6 +201,13 @@
             default=""
             required="true"/>
 
+        <AD id="exportActionBlacklist"
+            name="Metacard Export Action Blacklist"
+            description="Actions that should be blacklisted from metacard export.  NOTE: the provided values will be evaluated as JavaScript regular expressions when matched against metacard actions."
+            type="String"
+            cardinality="10000"
+            default="catalog.data.metacard.resource.*,catalog.data.metacard.map.*,.*thumbnail$,.*view$,.*derived-content$"
+            required="false"/>
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.config">

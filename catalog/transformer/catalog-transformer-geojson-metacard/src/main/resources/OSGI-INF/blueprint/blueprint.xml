@@ -21,7 +21,7 @@
 
 	<service ref="transformer" interface="ddf.catalog.transform.MetacardTransformer">
 		<service-properties>
-			<entry key="id" value="metadata.geojson"/>
+			<entry key="id" value="geojson"/>
             <!-- shortname only exists for backwards compatibility -->
             <entry key="shortname" value="geojson"/>
 			<entry key="mime-type" value="application/json"/>

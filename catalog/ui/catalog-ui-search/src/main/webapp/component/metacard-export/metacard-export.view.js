@@ -63,9 +63,9 @@ module.exports = Marionette.LayoutView.extend({
         this.closeLightbox();
     },
     getEnumValues: function() {
-        return this.getCommonActions().filter((actionId) => actionId.includes("catalog.data.metacard.metadata"))
+        return this.getCommonActions().filter(actionId => !this.match(properties.exportActionBlacklist, actionId))
             .sort()
-            .map(function(actionId) {return {label:actionId.split(".").pop(), value:actionId}});
+            .map(actionId => ({label:actionId.split(".").pop(), value:actionId}));
     },
     getCommonActions: function() {
         var actionIds = [];
@@ -73,6 +73,12 @@ module.exports = Marionette.LayoutView.extend({
             actionIds.push(result.get('actions').map(action => action.id));
         });
         return actionIds.reduce((x, y) => _.intersection(x, y));
+    },
+    match: function(regexList, action) {
+        return _.chain(regexList)
+            .map(str => (new RegExp(str)))
+            .find(regex => regex.exec(action))
+            .value() !== undefined;
     },
     closeLightbox: function() {
         this.$el.trigger(CustomElements.getNamespace() + 'close-lightbox');
