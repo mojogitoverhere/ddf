@@ -84,6 +84,7 @@ define([
         },
         selectionInterface: store,
         initialize: function(options){
+            this.onBeforeShow = _.debounce(this.onBeforeShow, 30);
             this.selectionInterface = options.selectionInterface || store;
             if (!this.model.get('result')) {
                 this.model.startSearch();
@@ -178,6 +179,9 @@ define([
             }
         },
         onBeforeShow: function(){
+            if (this.isDestroyed === true) {
+                return;  //possible with the debounce being applied to this method
+            }
             var resultFilter = user.get('user').get('preferences').get('resultFilter');
             if (resultFilter) {
                 resultFilter = cql.simplify(cql.read(resultFilter));
