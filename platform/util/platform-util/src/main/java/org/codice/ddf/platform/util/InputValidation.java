@@ -30,7 +30,7 @@ public class InputValidation {
   private static final String DEFAULT_FILE = "file" + DEFAULT_EXTENSION;
 
   private static final List<String> BAD_FILES =
-      Arrays.asList(System.getProperty("bad.files").split(","));
+      Arrays.asList(System.getProperty("bad.files").toLowerCase().split(","));
 
   private static final List<String> BAD_FILE_EXTENSIONS =
       Arrays.asList(System.getProperty("bad.file.extensions").split(","));
@@ -88,5 +88,23 @@ public class InputValidation {
       }
     }
     return true;
+  }
+
+  /**
+   * Checks if the file is banned by the system and cannot be imported.
+   *
+   * @param filePathOrName a standalone filename or full file path
+   * @return true if the file is in the list of banned filenames
+   */
+  public static boolean isBadFile(String filePathOrName) {
+    Path path = Paths.get(filePathOrName.toLowerCase());
+    String basefile = path.getFileName().toString();
+
+    for (String badFileExtension : BAD_FILE_EXTENSIONS) {
+      if (basefile.endsWith(badFileExtension)) {
+        return true;
+      }
+    }
+    return BAD_FILES.contains(basefile);
   }
 }

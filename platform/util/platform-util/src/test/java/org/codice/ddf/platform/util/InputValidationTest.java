@@ -37,6 +37,8 @@ public class InputValidationTest {
 
   private static final String KNOWN_BAD_FILE = ".htaccess";
 
+  private static final String KNOWN_BAD_FILE2 = "thumb.db";
+
   private static final String DEFAULT_FILE = "file.bin";
 
   private static final String GOOD_MIME = "application/pdf";
@@ -47,7 +49,7 @@ public class InputValidationTest {
   public void setup() {
     System.setProperty(
         "bad.files",
-        "crossdomain.xml,clientaccesspolicy.xml,.htaccess,.htpasswd,hosts,passwd,group,resolv.conf,nfs.conf,ftpd.conf,ntp.conf,web.config,robots.txt");
+        "Thumb.db,crossdomain.xml,clientaccesspolicy.xml,.htaccess,.htpasswd,hosts,passwd,group,resolv.conf,nfs.conf,ftpd.conf,ntp.conf,web.config,robots.txt");
     System.setProperty(
         "bad.file.extensions",
         ".exe,.jsp,.html,.js,.php,.phtml,.php3,.php4,.php5,.phps,.shtml,.jhtml,.pl,.py,.cgi,.msi,.com,.scr,.gadget,.application,.pif,.hta,.cpl,.msc,.jar,.kar,.bat,.cmd,.vb,.vbs,.vbe,.jse,.ws,.wsf,.wsc,.wsh,.ps1,.ps1xml,.ps2,.ps2xml,.psc1,.psc2,.msh,.msh1,.msh2,.mshxml,.msh1xml,.msh2xml,.scf,.lnk,.inf,.reg,.dll,.vxd,.cpl,.cfg,.config,.crt,.cert,.pem,.jks,.p12,.p7b,.key,.der,.csr,.jsb,.mhtml,.mht,.xhtml,.xht");
@@ -95,6 +97,24 @@ public class InputValidationTest {
   @Test
   public void testCheckForClientSideVulnerableMimeTypeGood() {
     boolean result = InputValidation.checkForClientSideVulnerableMimeType(GOOD_MIME);
+    assertTrue(result);
+  }
+
+  @Test
+  public void testIsBadFileGood() {
+    boolean result = InputValidation.isBadFile(GOOD_FILE);
+    assertFalse(result);
+  }
+
+  @Test
+  public void testIsBadFileKnownBad() {
+    boolean result = InputValidation.isBadFile(KNOWN_BAD_FILE);
+    assertTrue(result);
+  }
+
+  @Test
+  public void testIsBadFileCaseInsensitive() {
+    boolean result = InputValidation.isBadFile(KNOWN_BAD_FILE2);
     assertTrue(result);
   }
 }

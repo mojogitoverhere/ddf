@@ -246,6 +246,17 @@
         <argument ref="contextPolicyManager"/>
     </bean>
 
+    <bean id="importDirectory" class="org.codice.ddf.catalog.ui.imports.ImportDirectory">
+        <cm:managed-properties
+                persistent-id="org.codice.ddf.catalog.ui.imports.ImportDirectory"
+                update-strategy="container-managed"/>
+        <property name="rootDirectory" value="/imports"/>
+    </bean>
+
+    <bean id="importApplication" class="org.codice.ddf.catalog.ui.imports.ImportApplication">
+        <argument ref="importDirectory"/>
+    </bean>
+
     <bean id="rootReqSupplier" class="org.codice.ddf.catalog.ui.RootContextRequestSupplier"/>
     <bean id="sparkServlet" class="org.codice.ddf.catalog.ui.SparkServlet">
         <property name="sparkApplications">
@@ -255,6 +266,7 @@
                 <ref component-id="userApplication"/>
                 <ref component-id="configurationApplication"/>
                 <ref component-id="feedbackApplication"/>
+                <ref component-id="importApplication"/>
             </list>
         </property>
         <property name="requestSupplier" ref="rootReqSupplier"/>
