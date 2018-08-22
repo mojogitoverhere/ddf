@@ -44,7 +44,7 @@ module.exports = Marionette.LayoutView.extend({
     onBeforeShow: function() {
         this.formatModel = new Property({
             label: 'Format',
-            value: ['catalog.data.metacard.metadata.xml'],
+            value: ['catalog.data.metacard.xml'],
             enumFiltering: true,
             showLabel: false,
             id: "formats",
