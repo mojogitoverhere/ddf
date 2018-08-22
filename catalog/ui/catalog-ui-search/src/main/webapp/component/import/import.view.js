@@ -21,6 +21,8 @@ var template = require('./import.hbs');
 var CustomElements = require('js/CustomElements');
 var router = require('component/router/router');
 var NavigationView = require('component/navigation/import/navigation.import.view');
+var ImportFilesView =  require('component/import-files/import-files.view');
+var Import = require('./import.js');
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
@@ -28,6 +30,7 @@ module.exports = Marionette.LayoutView.extend({
     modelEvents: {
     },
     events: {
+        'click .import': 'handleImport'
     },
     ui: {
     },
@@ -37,7 +40,9 @@ module.exports = Marionette.LayoutView.extend({
         importStatusList: '.import-status-list'
     },
     initialize: function(){
+        this.model = new Import();
         this.listenTo(router, 'change', this.handleRoute);
+        this.listenTo(this.model.get('selectedFiles'), 'add remove reset', this.handleSelectionChange);
         this.handleRoute();
     },
     handleRoute: function(){
@@ -47,8 +52,26 @@ module.exports = Marionette.LayoutView.extend({
             this.$el.addClass('is-hidden');
         }
     },
+    handleImport: function(){
+        var paths = this.model.getSelectedFiles().map(file => file.get('path'));
+        $.ajax({
+            url: "/search/catalog/internal/resources/import",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(paths)
+        });
+    },
     onBeforeShow: function(){
         this.importMenu.show(new NavigationView());
+        this.importFileList.show(new ImportFilesView({model:this.model}));
+        this.$(".import-button").hide();
+    },
+    handleSelectionChange: function() {
+        if (this.model.get('selectedFiles').isEmpty()) {
+            this.$(".import-button").hide();
+        } else {
+            this.$(".import-button").show();
+        }
     }
 });
 

@@ -5,17 +5,57 @@
   .import-content {
     display: inline-block;
     width: 100%;
-    max-height: ~'calc(100% - 2*@{minimumLineSize} - 10px)';
+    height: ~'calc(100% - 2*@{minimumLineSize} - 10px)';
+    overflow: hidden;
+  }
+
+  .import-status-container {
+    padding: @largeSpacing;
     overflow: auto;
+
+    > * {
+      transition: width @coreTransitionTime linear;
+      width: 75%;
+      margin: auto;
+    }
+
   }
 
-  .import-status {
-    transition: padding @coreTransitionTime ease-out @coreTransitionTime;
-    padding-bottom: @minimumButtonSize;
-  }
-
-  .import-files {
+  .import-files-container {
     background: @background-color;
-    border-bottom: @lighten-inherited-background-color;
+    border-bottom: 1px solid rgba(255, 255, 255, .10); //TODO: make this a var
+    padding: @largeSpacing;
+    height: 50%;
+    overflow: hidden;
+
+    > * {
+      transition: width @coreTransitionTime linear;
+      width: 75%;
+      margin: auto;
+    }
+
+    .import-file-list {
+      height: ~'calc(100% - 2*@{minimumSpacing} - @{minimumButtonSize})';
+      overflow-x: hidden;
+      border: 1px solid rgba(255, 255, 255, .10) !important; //TODO
+    }
+
+    button {
+      float:right;
+      padding-left: @minimumSpacing;
+      padding-right: @minimumSpacing;
+      margin: @minimumSpacing;
+    }
   }
+
+  @media screen and (max-width: 1500px) {
+    .import-status-container, .import-files-container {
+
+      > * {
+        width: 100%;
+      }
+
+    }
+  }
+
 }
