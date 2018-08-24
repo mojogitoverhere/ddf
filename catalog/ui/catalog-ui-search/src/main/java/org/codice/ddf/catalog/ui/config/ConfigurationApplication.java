@@ -129,6 +129,8 @@ public class ConfigurationApplication implements SparkApplication {
 
   private String queryFeedbackEmailDestination;
 
+  private String offlineRootPath;
+
   public List<String> getAttributeAliases() {
     return attributeAliases
         .entrySet()
@@ -645,5 +647,13 @@ public class ConfigurationApplication implements SparkApplication {
 
   public void setQueryFeedbackEmailDestination(String queryFeedbackEmailDestination) {
     this.queryFeedbackEmailDestination = queryFeedbackEmailDestination;
+  }
+
+  public String getOfflineRootPath() {
+    return offlineRootPath;
+  }
+
+  public void setOfflineRootPath(String offlineRootPath) {
+    this.offlineRootPath = offlineRootPath;
   }
 }

@@ -17,6 +17,10 @@
            xmlns:jaxrs="http://cxf.apache.org/blueprint/jaxrs"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
 
+    <service interface="ddf.catalog.data.MetacardType">
+        <bean class="ddf.catalog.data.impl.types.OfflineAttributes"/>
+    </service>
+
     <bean id="workspaceMetacardType"
           class="org.codice.ddf.catalog.ui.metacard.workspace.WorkspaceMetacardType"/>
 
@@ -195,6 +199,19 @@
 
     <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry"/>
 
+    <reference id="xmlTransformer" interface="ddf.catalog.transform.MetacardTransformer" filter="(id=xml)"/>
+
+    <bean id="offlineResources" class="org.codice.ddf.catalog.ui.offline.OfflineResources">
+        <argument ref="catalogFramework"/>
+        <argument ref="xmlTransformer"/>
+        <argument ref="configurationApplication"/>
+        <argument>
+            <reference interface="ddf.catalog.content.StorageProvider"/>
+        </argument>
+        <argument ref="filterBuilder"/>
+    </bean>
+
+
     <bean id="metacardApplication" class="org.codice.ddf.catalog.ui.metacard.MetacardApplication">
         <argument ref="catalogFramework"/>
         <argument ref="filterBuilder"/>
@@ -217,6 +234,7 @@
         <argument>
             <reference interface="ddf.catalog.content.StorageProvider"/>
         </argument>
+        <argument ref="offlineResources"/>
     </bean>
 
     <bean id="queryApplication" class="org.codice.ddf.catalog.ui.query.QueryApplication">

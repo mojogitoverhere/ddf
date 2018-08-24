@@ -122,6 +122,8 @@ import javax.management.ObjectName;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.ExecutionException;
 import org.boon.json.JsonFactory;
@@ -138,6 +140,7 @@ import org.codice.ddf.catalog.ui.metacard.transform.CsvTransform;
 import org.codice.ddf.catalog.ui.metacard.validation.Validator;
 import org.codice.ddf.catalog.ui.metacard.workspace.WorkspaceAttributes;
 import org.codice.ddf.catalog.ui.metacard.workspace.WorkspaceTransformer;
+import org.codice.ddf.catalog.ui.offline.OfflineResources;
 import org.codice.ddf.catalog.ui.query.monitor.api.SubscriptionsPersistentStore;
 import org.codice.ddf.catalog.ui.util.EndpointUtil;
 import org.codice.ddf.security.common.Security;
@@ -216,6 +219,8 @@ public class MetacardApplication implements SparkApplication {
 
   private final ConfigurationApplication configuration;
 
+  private final OfflineResources offlineResources;
+
   public MetacardApplication(
       CatalogFramework catalogFramework,
       FilterBuilder filterBuilder,
@@ -231,7 +236,8 @@ public class MetacardApplication implements SparkApplication {
       AttributeRegistry attributeRegistry,
       ConfigurationApplication configuration,
       CatalogProvider catalogProvider,
-      StorageProvider storageProvider) {
+      StorageProvider storageProvider,
+      OfflineResources offlineResources) {
     this.catalogFramework = catalogFramework;
     this.filterBuilder = filterBuilder;
     this.util = endpointUtil;
@@ -247,6 +253,7 @@ public class MetacardApplication implements SparkApplication {
     this.configuration = configuration;
     this.catalogProvider = catalogProvider;
     this.storageProvider = storageProvider;
+    this.offlineResources = offlineResources;
   }
 
   private String getSubjectEmail() {
@@ -759,6 +766,28 @@ public class MetacardApplication implements SparkApplication {
           return "";
         });
 
+    post(
+        "/resource/offline",
+        APPLICATION_JSON,
+        (req, res) -> {
+          Map<String, Object> offlineArguments = JsonFactory.create().parser().parseMap(req.body());
+          List<String> metacardIds = getOfflineMetacardIds(offlineArguments);
+          String comment = getOfflineComment(offlineArguments);
+
+          Map<String, OfflineStatus> results = offlineMetacards(metacardIds, comment);
+
+          if (didAnyOfflineFail(results)) {
+            res.status(500);
+            return new ImmutableMap.Builder<String, Object>()
+                .put("message", "Failed to offline one or more metacards.")
+                .putAll(results)
+                .build();
+          }
+
+          return results;
+        },
+        util::getJson);
+
     after(
         (req, res) -> {
           res.type(APPLICATION_JSON);
@@ -812,6 +841,52 @@ public class MetacardApplication implements SparkApplication {
                       "message",
                       "Could not connect to the sources at this time. Please try again later.")));
         });
+  }
+
+  private boolean didAnyOfflineFail(Map<String, OfflineStatus> results) {
+    return results.values().stream().anyMatch(offlineStatus -> !offlineStatus.isSuccessful());
+  }
+
+  private Map<String, OfflineStatus> offlineMetacards(List<String> metacardIds, String location) {
+    return metacardIds
+        .stream()
+        .map(metacardId -> offlineMetacard(metacardId, location))
+        .flatMap(List::stream)
+        .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+  }
+
+  private List<Pair<String, OfflineStatus>> offlineMetacard(String id, String location) {
+    return offlineResources
+        .moveResourceOffline(id, location)
+        .entrySet()
+        .stream()
+        .map(this::mapMoveResourceOfflineToResponse)
+        .collect(Collectors.toList());
+  }
+
+  private Pair<String, OfflineStatus> mapMoveResourceOfflineToResponse(
+      Map.Entry<String, String> moveResourceOfflineResult) {
+    String errorMessage = moveResourceOfflineResult.getValue();
+    return new ImmutablePair<>(
+        moveResourceOfflineResult.getKey(),
+        new OfflineStatus("".equals(errorMessage), errorMessage));
+  }
+
+  private List<String> getOfflineMetacardIds(Map<String, Object> offlineArguments) {
+    return Stream.of(offlineArguments.get("ids"))
+        .filter(List.class::isInstance)
+        .map(List.class::cast)
+        .flatMap(Collection::stream)
+        .filter(String.class::isInstance)
+        .map(String.class::cast)
+        .collect(Collectors.toList());
+  }
+
+  private String getOfflineComment(Map<String, Object> offlineArguments) {
+    return Optional.of(offlineArguments.get("comment"))
+        .filter(String.class::isInstance)
+        .map(String.class::cast)
+        .orElse("");
   }
 
   private SourceInfoResponse getSources() throws SourceUnavailableException {
@@ -1231,6 +1306,24 @@ public class MetacardApplication implements SparkApplication {
 
     } catch (Exception e) {
       LOGGER.warn("Could not delete all items from cache (Results will eventually expire)", e);
+    }
+  }
+
+  private static class OfflineStatus {
+    private boolean successful;
+    private String reason;
+
+    OfflineStatus(boolean successful, String reason) {
+      this.successful = successful;
+      this.reason = reason;
+    }
+
+    public boolean isSuccessful() {
+      return successful;
+    }
+
+    public String getReason() {
+      return reason;
     }
   }
 }

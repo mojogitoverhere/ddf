@@ -45,7 +45,6 @@ define([
             var loadingView = new LoadingView();
 
             $.ajax({
-                //TODO support backend endpoint TIB-699
                 url: '/search/catalog/internal/resource/offline',
                 type: 'POST',
                 data: payload,

@@ -268,6 +268,16 @@
             <artifactId>security-policy-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-commands</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -350,6 +360,8 @@
                             spark-core,
                             spatial4j,
                             versioning-common,
+                            zip4j,
+                            catalog-core-commands
                         </Embed-Dependency>
                         <Web-ContextPath>/search/catalog</Web-ContextPath>
                         <_wab>src/main/webapp,${project.build.directory}/webapp</_wab>
@@ -376,6 +388,7 @@
                             !org.hibernate.*,
                             !weblogic.jdbc.*,
                             !org.abego.treelayout.*,
+                            !org.codice.ddf.catalog.transformer.zip.*,
                             *
                         </Import-Package>
                         <Export-Package />

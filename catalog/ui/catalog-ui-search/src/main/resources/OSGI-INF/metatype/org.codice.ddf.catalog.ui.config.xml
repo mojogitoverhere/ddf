@@ -208,6 +208,14 @@
             cardinality="10000"
             default="catalog.data.metacard.resource.*,catalog.data.metacard.map.*,.*thumbnail$,.*view$,.*derived-content$"
             required="false"/>
+
+        <AD id="offlineRootPath"
+            name="Offline Root Path"
+            description="The root path for storing offline resources."
+            type="String"
+            default=""
+            required="true"/>
+
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.config">

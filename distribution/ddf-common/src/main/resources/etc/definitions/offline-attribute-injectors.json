@@ -1,0 +1,16 @@
+{
+  "inject": [
+    {
+      "attribute": "ext.offline-comment"
+    },
+    {
+      "attribute": "ext.offline-location-path"
+    },
+    {
+      "attribute": "ext.offlined-by"
+    },
+    {
+      "attribute": "ext.offline-date"
+    }
+  ]
+}
