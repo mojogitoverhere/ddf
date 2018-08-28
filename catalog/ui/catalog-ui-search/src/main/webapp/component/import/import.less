@@ -1,17 +1,19 @@
 @{customElementNamespace}import {
   .customElement;
   background: @card-background-color;
+  @contentHeight: ~'calc(100vh - 2*@{minimumLineSize})';
 
   .import-content {
     display: inline-block;
     width: 100%;
-    height: ~'calc(100% - 2*@{minimumLineSize} - 10px)';
+    height: @contentHeight;
     overflow: hidden;
   }
 
   .import-status-container {
     padding: @largeSpacing;
     overflow: auto;
+    height: ~'calc(@{contentHeight} / 2)';
 
     > * {
       transition: width @coreTransitionTime linear;
@@ -19,13 +21,23 @@
       margin: auto;
     }
 
+    .import-status-title {
+      display: inline-block;
+      font-size: @mediumFontSize;
+    }
+
+    .import-location {
+      display: inline-block;
+      opacity: .6;
+      font-size: @minimumFontSize;
+    }
   }
 
   .import-files-container {
     background: @background-color;
-    border-bottom: 1px solid rgba(255, 255, 255, .10); //TODO: make this a var
+    border-bottom: 1px solid @borderColor;
     padding: @largeSpacing;
-    height: 50%;
+    height: ~'calc(@{contentHeight} / 2)';
     overflow: hidden;
 
     > * {
@@ -35,16 +47,22 @@
     }
 
     .import-file-list {
-      height: ~'calc(100% - 2*@{minimumSpacing} - @{minimumButtonSize})';
+      height: ~'calc((@{contentHeight} / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
       overflow-x: hidden;
-      border: 1px solid rgba(255, 255, 255, .10) !important; //TODO
+      border: 1px solid @borderColor;
     }
 
     button {
       float:right;
       padding-left: @minimumSpacing;
       padding-right: @minimumSpacing;
-      margin: @minimumSpacing;
+      margin-top: @minimumSpacing;
+      transition: opacity @coreTransitionTime linear;
+
+      &.disabled {
+        pointer-events: none;
+        opacity: .25;
+      }
     }
   }
 

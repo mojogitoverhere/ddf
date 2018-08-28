@@ -70,7 +70,6 @@ module.exports = Marionette.CollectionView.extend({
         var firstIndex = files.index(selectedFiles.first());
         var lastIndex = files.index(selectedFiles.last());
         if (firstIndex === -1 && lastIndex === -1) {
-            //this.options.selectionInterface.clearSelectedResults();
             this.handleControlClick(filepath, alreadySelected);
         } else if (indexClicked <= firstIndex) {
             this.selectBetween(indexClicked, firstIndex);

@@ -1,6 +1,11 @@
 @{customElementNamespace}import-files-empty {
+  @containerHeight: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
   text-align: center;
   vertical-align: middle;
   font-size: @largeFontSize;
-  height: 100%;
+  height: ~'calc(@{containerHeight} - @{minimumSpacing} - 2*@{largeSpacing} - 2*@{minimumButtonSize} - 2px)';
+
+  .error {
+    color: @negative-color;
+  }
 }

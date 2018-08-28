@@ -27,12 +27,9 @@ var Import = require('./import.js');
 module.exports = Marionette.LayoutView.extend({
     template: template,
     tagName: CustomElements.register('import'),
-    modelEvents: {
-    },
+    model: new Import(),
     events: {
-        'click .import': 'handleImport'
-    },
-    ui: {
+        'click .import-button': 'handleImport'
     },
     regions: {
         importMenu: '.import-menu',
@@ -40,7 +37,6 @@ module.exports = Marionette.LayoutView.extend({
         importStatusList: '.import-status-list'
     },
     initialize: function(){
-        this.model = new Import();
         this.listenTo(router, 'change', this.handleRoute);
         this.listenTo(this.model.get('selectedFiles'), 'add remove reset', this.handleSelectionChange);
         this.handleRoute();
@@ -54,23 +50,26 @@ module.exports = Marionette.LayoutView.extend({
     },
     handleImport: function(){
         var paths = this.model.getSelectedFiles().map(file => file.get('path'));
+        //TODO and backend enpoint to handle this request TIB-749
         $.ajax({
-            url: "/search/catalog/internal/resources/import",
-            type: "POST",
-            contentType: "application/json",
+            url: '/search/catalog/internal/resources/import',
+            type: 'POST',
+            contentType: 'application/json',
             data: JSON.stringify(paths)
         });
     },
     onBeforeShow: function(){
         this.importMenu.show(new NavigationView());
         this.importFileList.show(new ImportFilesView({model:this.model}));
-        this.$(".import-button").hide();
+        if (!this.model.get('root')) {
+            this.$(".import-location").hide();
+        }
     },
     handleSelectionChange: function() {
         if (this.model.get('selectedFiles').isEmpty()) {
-            this.$(".import-button").hide();
+            this.$(".import-button").addClass('disabled');
         } else {
-            this.$(".import-button").show();
+            this.$(".import-button").removeClass('disabled');
         }
     }
 });

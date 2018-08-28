@@ -42,7 +42,7 @@ module.exports = Backbone.AssociatedModel.extend({
         }
     ],
     defaults: {
-        root: '/imports/',
+        root: undefined,
         files: [],
         selectedFiles: []
     },
@@ -51,10 +51,12 @@ module.exports = Backbone.AssociatedModel.extend({
         $.ajax({
             url: self.url,
             type: "GET",
-            contentType: "application/json"
+            contentType: "application/json",
+            async: false,
+            customErrorHandling: true
         }).success(function(data) {
-           self.set({root: data.root});
-           self.set({files: data.files});
+            self.set({root: data.root});
+            self.set({files: data.files});
         });
     },
     getSelectedFiles: function(){

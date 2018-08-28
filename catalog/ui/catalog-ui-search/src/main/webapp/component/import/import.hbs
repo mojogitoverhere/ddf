@@ -17,8 +17,8 @@
 
     <div class="import-files-container">
         <div class="import-file-list"/>
-        <div class="import-button">
-            <button class="is-positive import" data-help="Import">
+        <div>
+            <button class="is-positive import-button disabled" data-help="Import">
                 <span class="mainText">Import</span>
             </button>
         </div>
@@ -27,9 +27,11 @@
     <div class="import-status-container">
         <div class="import-status-content">
             <div class="import-status-title">
-                Import status (Configured import directory: {{root}})
+                Import status
             </div>
-            <div class="import-location"/>
+            <div class="import-location">
+                (Configured import directory: {{this.root}})
+            </div>
             <div class="completed-imports"/>
             <div class="import-status-list"/>
         </div>

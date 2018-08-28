@@ -19,8 +19,6 @@ var BodyView = require('./body/import-files-body.view');
 
 module.exports = TableView.extend({
     className: 'import-files',
-    initialize: function(){
-    },
     getHeaderView: function(){
         return new HeaderView();
     },
