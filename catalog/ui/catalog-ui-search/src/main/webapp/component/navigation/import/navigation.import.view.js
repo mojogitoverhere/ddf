@@ -12,15 +12,13 @@
  * <http://www.gnu.org/licenses/lgpl.html>.
  *
  **/
-/*global define*/
-define([
-    '../navigation.view',
-    'component/import-menu/import-menu.view'
-], function (NavigationView, ImportMenu) {
+/*global require*/
 
-    return NavigationView.extend({
-        showNavigationMiddle: function(){
-            this.navigationMiddle.show(new ImportMenu());
-        }
-    });
+var NavigationView = require('../navigation.view');
+var ImportMenu = require('component/import-menu/import-menu.view');
+
+module.exports = NavigationView.extend({
+    showNavigationMiddle: function(){
+        this.navigationMiddle.show(new ImportMenu());
+    }
 });

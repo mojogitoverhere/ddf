@@ -49,14 +49,14 @@ module.exports = Marionette.LayoutView.extend({
         }
     },
     handleImport: function(){
-        var paths = this.model.getSelectedFiles().map(file => file.get('path'));
-        //TODO and backend enpoint to handle this request TIB-749
-        $.ajax({
-            url: '/search/catalog/internal/resources/import',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(paths)
-        });
+        this.model.getSelectedFiles().forEach( file =>
+            $.ajax({
+                url: '/search/catalog/internal/import',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(file)
+            })
+        );
     },
     onBeforeShow: function(){
         this.importMenu.show(new NavigationView());
