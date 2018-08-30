@@ -1,0 +1,79 @@
+@{customElementNamespace}export {
+  .customElement;
+  background: @card-background-color;
+  @contentHeight: ~'calc(100vh - 2*@{minimumLineSize})';
+
+  .export-content {
+    display: inline-block;
+    width: 100%;
+    height: @contentHeight;
+    overflow: hidden;
+  }
+
+  .export-status-container {
+    padding: @largeSpacing;
+    overflow: auto;
+    height: ~'calc(@{contentHeight} / 2)';
+
+    > * {
+      transition: width @coreTransitionTime linear;
+      width: 75%;
+      margin: auto;
+    }
+
+    .export-status-title {
+      display: inline-block;
+      font-size: @mediumFontSize;
+    }
+
+    .export-location {
+      display: inline-block;
+      opacity: .6;
+      font-size: @minimumFontSize;
+    }
+  }
+
+  .export-search-container {
+    background: @background-color;
+    border-bottom: 1px solid @borderColor;
+    padding: @largeSpacing;
+    height: ~'calc(@{contentHeight} / 2)';
+    overflow: hidden;
+
+    > * {
+      transition: width @coreTransitionTime linear;
+      width: 75%;
+      margin: auto;
+    }
+
+    .export-file-list {
+      height: ~'calc((@{contentHeight} / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+      overflow-x: hidden;
+      border: 1px solid @borderColor;
+    }
+
+    button {
+      float:right;
+      padding-left: @minimumSpacing;
+      padding-right: @minimumSpacing;
+      margin-top: @minimumSpacing;
+      transition: opacity @coreTransitionTime linear;
+
+      &.disabled {
+        pointer-events: none;
+        opacity: .25;
+      }
+    }
+  }
+
+  @media screen and (max-width: 1500px) {
+    .export-status-container, .export-search-container {
+
+      > * {
+        width: 100%;
+      }
+
+    }
+  }
+
+}

@@ -27,6 +27,7 @@ define([
     'js/cql',
     'component/alert/alert',
     'component/alert/alert.view',
+    'component/export/export.view',
     'component/import/import.view',
     'component/ingest/ingest.view',
     'component/router/router',
@@ -37,7 +38,7 @@ define([
     'component/singletons/slideout.left.view-instance.js'
 ], function (wreqr, $, Backbone, Marionette, store, ConfirmationView, Application, ContentView,
              HomeView, MetacardView, metacardInstance, Query, cql, alertInstance, AlertView,
-            ImportView, IngestView, router, user, uploadInstance, UploadView,
+            ExportView, ImportView, IngestView, router, user, uploadInstance, UploadView,
             NavigatorView, SlideoutLeftViewInstance) {
 
     function toggleNavigator() {
@@ -50,6 +51,8 @@ define([
         Application.App.workspacesRegion.$el.addClass("is-hidden");
         Application.App.metacardRegion.$el.addClass("is-hidden");
         Application.App.alertRegion.$el.addClass("is-hidden");
+        Application.App.exportRegion.$el.addClass('is-hidden');
+        Application.App.importRegion.$el.addClass('is-hidden');
         Application.App.ingestRegion.$el.addClass('is-hidden');
         Application.App.uploadRegion.$el.addClass('is-hidden');
     }
@@ -71,6 +74,9 @@ define([
             openAlert: function(){
                 //console.log('route to specific alert:'+alertId);
             },
+            openExport: function(){
+                //console.log('route to export');
+            },
             openImport: function(){
                 //console.log('route to import');
             },
@@ -87,6 +93,7 @@ define([
             'workspaces(/)': 'workspaces',
             'metacards/:id': 'openMetacard',
             'alerts/:id': 'openAlert',
+            'export(/)': 'openExport',
             'import(/)': 'openImport',
             'ingest(/)': 'openIngest',
             'uploads/:id': 'openUpload'
@@ -258,6 +265,13 @@ define([
                         Application.App.uploadRegion.$el.removeClass('is-hidden');
                         self.updateRoute(name, path, args);
                     }
+                    break;
+                case 'openExport':
+                    if (Application.App.exportRegion.currentView === undefined){
+                        Application.App.exportRegion.show(new ExportView());
+                    }
+                    Application.App.exportRegion.$el.removeClass('is-hidden');
+                    this.updateRoute(name, path, args);
                     break;
                 case 'openImport':
                     if (Application.App.importRegion.currentView === undefined){

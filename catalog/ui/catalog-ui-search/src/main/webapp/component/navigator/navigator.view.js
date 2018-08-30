@@ -36,6 +36,7 @@ module.exports = Marionette.LayoutView.extend({
         'click .choice-workspaces': 'handleWorkspaces',
         'click .choice-previous-workspace': 'handlePreviousWorkspace',
         'click .choice-previous-metacard': 'handlePreviousMetacard',
+        'click .choice-export': 'handleExport',
         'click .choice-import': 'handleImport',
         'click .choice-upload': 'handleUpload',
         'click .navigation-choice': 'closeSlideout',
@@ -75,6 +76,14 @@ module.exports = Marionette.LayoutView.extend({
     handleUpload: function() {
         wreqr.vent.trigger('router:navigate', {
             fragment: 'ingest',
+            options: {
+                trigger: true
+            }
+        });
+    },
+    handleExport: function() {
+        wreqr.vent.trigger('router:navigate', {
+            fragment: 'export',
             options: {
                 trigger: true
             }
