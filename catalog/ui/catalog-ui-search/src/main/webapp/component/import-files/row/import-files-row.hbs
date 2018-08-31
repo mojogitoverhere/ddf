@@ -15,5 +15,9 @@
     {{this.path}}
 </td>
 <td>
-    {{this.size}}
+    {{#if this.size}}
+        {{this.size}}
+    {{else}}
+        --
+    {{/if}}
 </td>

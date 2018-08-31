@@ -1,19 +1,18 @@
 @{customElementNamespace}import {
   .customElement;
   background: @card-background-color;
-  @contentHeight: ~'calc(100vh - 2*@{minimumLineSize})';
 
   .import-content {
     display: inline-block;
     width: 100%;
-    height: @contentHeight;
+    height: ~'calc(100vh - 2*@{minimumLineSize})';
     overflow: hidden;
   }
 
   .import-status-container {
     padding: @largeSpacing;
     overflow: auto;
-    height: ~'calc(@{contentHeight} / 2)';
+    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
 
     > * {
       transition: width @coreTransitionTime linear;
@@ -37,7 +36,7 @@
     background: @background-color;
     border-bottom: 1px solid @borderColor;
     padding: @largeSpacing;
-    height: ~'calc(@{contentHeight} / 2)';
+    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
     overflow: hidden;
 
     > * {
@@ -47,8 +46,7 @@
     }
 
     .import-file-list {
-      height: ~'calc((@{contentHeight} / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
-      overflow-x: hidden;
+      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
       border: 1px solid @borderColor;
     }
 

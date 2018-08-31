@@ -72,7 +72,7 @@ define([
                 //console.log('route to specific alert:'+alertId);
             },
             openImport: function(){
-                //console.log('route to ingest');
+                //console.log('route to import');
             },
             openIngest: function(){
                 //console.log('route to ingest');

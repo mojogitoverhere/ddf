@@ -19,12 +19,12 @@
     {{/if}}
 
     {{#is this.root undefined}}
-        <span class="fa fa-exclamation-triangle error" />
+        <span class="fa fa-exclamation-triangle" />
         An error occurred fetching the import files.
     {{/is}}
 
     {{#is this.root ""}}
-        <span class="fa fa-exclamation-triangle error" />
-        The directory to place import files has not been configured.
+        <span class="fa fa-exclamation-triangle" />
+        The import directory is not configured. Please contact your administrator.
     {{/is}}
 </td>
