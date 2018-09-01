@@ -51,6 +51,10 @@
   .is-perm-delete-allowed {
     display: block;
   }
+
+  .is-offline-allowed {
+    display: block;
+  }
 }
 
 @{customElementNamespace}metacard-interactions.in-workspace {
@@ -139,6 +143,12 @@
 
 @{customElementNamespace}metacard-interactions:not(.is-perm-delete-allowed) {
   .is-perm-delete-allowed {
+    display: none;
+  }
+}
+
+@{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
+  .is-offline-allowed {
     display: none;
   }
 }

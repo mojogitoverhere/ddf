@@ -118,6 +118,7 @@ public class UserApplication implements SparkApplication {
             .put("preferences", getSubjectPreferences(subject))
             .put("isRestoreAllowed", isRestoreAllowed())
             .put("isPermDeleteAllowed", isPermDeleteAllowed())
+            .put("isOfflineAllowed", isOfflineAllowed())
             .build();
 
     String email = SubjectUtils.getEmailAddress(subject);
@@ -135,6 +136,10 @@ public class UserApplication implements SparkApplication {
 
   private boolean isPermDeleteAllowed() {
     return isPathAllowed("/search/catalog/internal/metacards/permanentlydelete");
+  }
+
+  private boolean isOfflineAllowed() {
+    return isPathAllowed("/search/catalog/internal/resource/offline");
   }
 
   private boolean isPathAllowed(String path) {
