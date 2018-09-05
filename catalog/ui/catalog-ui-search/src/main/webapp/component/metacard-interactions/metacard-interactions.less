@@ -135,6 +135,16 @@
   }
 }
 
+// restricted if revisions, remote items, deleted items, or already offlined items are in the list
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-remote,
+@{customElementNamespace}metacard-interactions.is-offlined {
+  .interaction-offline {
+    display: none;
+  }
+}
+
 @{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
   .is-restore-allowed {
     display: none;

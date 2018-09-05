@@ -145,7 +145,7 @@ define([
             Download.fromUrl(filename, url);
         },
         handleOffline: function() {
-            lightboxInstance.model.updateTitle('Offline Content');
+            lightboxInstance.model.updateTitle('Move to Offline Archive');
             lightboxInstance.model.open();
             lightboxInstance.lightboxContent.show(new MetacardOfflineView({
                 model: this.model
@@ -232,18 +232,21 @@ define([
         checkTypes: function(){
             var types = {};
             this.model.forEach(function(result){
-                var tags = result.get('metacard').get('properties').get('metacard-tags');
                 if (result.isWorkspace()){
                     types.workspace = true;
                 } else if (result.isResource()){
                     types.resource = true;
                 } else if (result.isRevision()){
                     types.revision = true;
-                } else if (result.isDeleted()) {
+                } else if (result.isDeleted()){
                     types.deleted = true;
                 }
+
                 if (result.isRemote()){
                     types.remote = true;
+                }
+                if (result.isOfflined()){
+                    types.offlined = true;
                 }
             });
             this.$el.toggleClass('is-mixed', Object.keys(types).length > 1);
@@ -251,6 +254,7 @@ define([
             this.$el.toggleClass('is-resource', types.resource !== undefined);
             this.$el.toggleClass('is-revision', types.revision !== undefined);
             this.$el.toggleClass('is-deleted', types.deleted !== undefined);
+            this.$el.toggleClass('is-offlined', types.offlined !== undefined);
             this.$el.toggleClass('is-remote', types.remote !== undefined);
         },
         serializeData: function(){

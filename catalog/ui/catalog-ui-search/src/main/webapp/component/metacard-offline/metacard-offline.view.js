@@ -50,11 +50,10 @@ define([
                 data: payload,
                 contentType: 'application/json'
             }).always(function(response) {
+                this.refreshResults();
                 loadingView.remove();
                 this.closeLightbox();
             }.bind(this));
-            
-            this.refreshResults();
         },
         refreshResults: function(){
             this.model.forEach(function(result){
