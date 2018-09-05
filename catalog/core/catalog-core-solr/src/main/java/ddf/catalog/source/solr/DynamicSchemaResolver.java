@@ -684,6 +684,10 @@ public class DynamicSchemaResolver {
     return mappedPropertyName + SchemaFields.HAS_CASE;
   }
 
+  public String getWhitespaceTokenizedField(String mappedPropertyName) {
+    return mappedPropertyName + SchemaFields.WHITESPACE_TEXT_SUFFIX;
+  }
+
   protected String getSpecialIndexSuffix(AttributeFormat format) {
 
     switch (format) {
