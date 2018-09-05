@@ -53,8 +53,7 @@ public class ImportApplication implements SparkApplication {
         "/resources/import/available",
         APPLICATION_JSON,
         (req, res) ->
-            makeAvailableImportsResponse(
-                importDirectory.getRootDirectory(), importDirectory.getPaths()),
+            makeAvailableImportsResponse(importDirectory.toString(), importDirectory.getPaths()),
         JSON_MAPPER::toJson);
   }
 
@@ -73,7 +72,7 @@ public class ImportApplication implements SparkApplication {
   }
 
   private String normalizePath(Path path, String root) {
-    String normalizedPath = stripRoot(path.toString(), root);
+    String normalizedPath = stripRoot(path.toString(), root + File.separator);
     if (path.toFile().isDirectory()) {
       normalizedPath = normalizedPath + File.separator;
     }

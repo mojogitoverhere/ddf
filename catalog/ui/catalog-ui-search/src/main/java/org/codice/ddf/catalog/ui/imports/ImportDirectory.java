@@ -13,7 +13,6 @@
  */
 package org.codice.ddf.catalog.ui.imports;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,7 +38,10 @@ public class ImportDirectory {
     }
 
     try (Stream<Path> allPaths = Files.walk(Paths.get(rootDirectory), 1)) {
-      return allPaths.filter(this::isValidPath).sorted().collect(Collectors.toList());
+      return allPaths
+          .filter(this::isValidPath)
+          .sorted(this::compareIgnoreCase)
+          .collect(Collectors.toList());
     } catch (IOException e) {
       LOGGER.debug("Unable to walk through root import directory [{}]", rootDirectory, e);
       return Collections.emptyList();
@@ -51,12 +53,21 @@ public class ImportDirectory {
         && (path.toFile().isDirectory() || !InputValidation.isBadFile(path.toString()));
   }
 
-  public String getRootDirectory() {
-    return rootDirectory;
+  private int compareIgnoreCase(Path path1, Path path2) {
+    return path1.toString().compareToIgnoreCase(path2.toString());
+  }
+
+  @Override
+  public String toString() {
+    return rootDirectory == null ? "" : rootDirectory;
   }
 
   public void setRootDirectory(String rootDirectory) {
-    this.rootDirectory =
-        rootDirectory.endsWith(File.separator) ? rootDirectory : rootDirectory + File.separator;
+    if (rootDirectory == null) {
+      return;
+    }
+
+    // Strip trailing slashes
+    this.rootDirectory = Paths.get(rootDirectory).toString();
   }
 }

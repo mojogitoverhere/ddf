@@ -20,8 +20,7 @@
          id="org.codice.ddf.catalog.ui.imports.ImportDirectory">
 
         <AD description="The directory from which archives can be chosen for import."
-            name="Import Directory" id="rootDirectory" required="true" type="String"
-            default="/imports/"/>
+            name="Import Directory" id="rootDirectory" required="false" type="String"/>
 
     </OCD>
 

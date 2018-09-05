@@ -30,13 +30,19 @@ public class ImportDirectoryTest {
 
   @Test
   public void testSetRootDirectory() {
-    importDirectory.setRootDirectory("/path/to/imports/");
-    assertThat(importDirectory.getRootDirectory(), is("/path/to/imports/"));
+    importDirectory.setRootDirectory("/path/to/imports");
+    assertThat(importDirectory.toString(), is("/path/to/imports"));
   }
 
   @Test
-  public void testSetRootDirectoryAddsTrailingSlash() {
-    importDirectory.setRootDirectory("/path/to/imports");
-    assertThat(importDirectory.getRootDirectory(), is("/path/to/imports/"));
+  public void testSetRootDirectoryRemovesTrailingSlash() {
+    importDirectory.setRootDirectory("/path/to/imports/");
+    assertThat(importDirectory.toString(), is("/path/to/imports"));
+  }
+
+  @Test
+  public void testGetRootDirectoryIsEmptyIfNotConfigured() {
+    importDirectory.setRootDirectory(null);
+    assertThat(importDirectory.toString(), is(""));
   }
 }
