@@ -21,35 +21,98 @@ var template = require('./export.hbs');
 var CustomElements = require('js/CustomElements');
 var router = require('component/router/router');
 var NavigationView = require('component/navigation/export/navigation.export.view');
+var ExportSearchView =  require('component/export-search/export-search.view');
+var Export = require('./export.js');
+var Property = require('component/property/property');
+var PropertyView = require('component/property/property.view');
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
+    model: new Export(),
     tagName: CustomElements.register('export'),
     events: {
-        'click .export-button': 'handleExport'
+        'click .export-button': 'handleExport',
+        'click .export-custom-title': 'handleCustom'
     },
     regions: {
-        exportMenu: '.export-menu'
+        exportMenu: '.export-menu',
+        exportSearchList: '.export-search-list',
+        formatInput: '.export-custom-format',
+        typeInput: '.export-custom-type'
     },
-    initialize: function(){
+    initialize: function() {
         this.listenTo(router, 'change', this.handleRoute);
+        this.listenTo(this.model.get('selectedSearches'), 'add remove reset', this.handleSelectionChange);
         this.handleRoute();
     },
-    handleRoute: function(){
+    handleRoute: function() {
         if (router.toJSON().name === 'openExport'){
             this.$el.removeClass('is-hidden');
         } else {
             this.$el.addClass('is-hidden');
         }
     },
-    handleExport: function(){
-
+    handleCustom: function() {
+        this.$el.toggleClass('is-custom');
+        this.$el.toggleClass('not-custom');
     },
-    onBeforeShow: function(){
+    onBeforeShow: function() {
         this.exportMenu.show(new NavigationView());
+        this.exportSearchList.show(new ExportSearchView({model:this.model}));
+        this.formatModel = new Property({
+            label: 'Export Format',
+            value: ['backup'],
+            showLabel: true,
+            id: "format",
+            isEditing: true,
+            enum: this.model.get("formatValues")
+        });
+        this.formatInput.show(new PropertyView({model: this.formatModel}));
+        this.formatInput.currentView.turnOnLimitedWidth();
+        this.typeModel = new Property({
+            label: 'Export Type',
+            value: ['METADATA_AND_CONTENT'],
+            showLabel: true,
+            id: "type",
+            isEditing: true,
+            limitedWidth: true,
+            enum: [
+                {label:"Metadata and Content", value:"METADATA_AND_CONTENT"},
+                {label:"Metadata Only", value:"METADATA_ONLY"},
+                {label:"Content Only", value:"CONTENT_ONLY"},
+            ]
+        });
+        this.typeInput.show(new PropertyView({model: this.typeModel}));
+        this.typeInput.currentView.turnOnLimitedWidth();
+        if (!this.model.get('exportLocation')) {
+            this.$(".export-location").hide();
+        }
     },
     handleSelectionChange: function() {
-
+        if (this.model.get('selectedSearches').isEmpty()) {
+            this.$(".export-button").addClass('disabled');
+        } else {
+            this.$(".export-button").removeClass('disabled');
+        }
+    },
+    handleExport: function() {
+        var transformerId = this.formatInput.currentView.model.getValue()[0];
+        var exportType = this.typeInput.currentView.model.getValue()[0];
+        if (transformerId == "backup") {
+            transformerId = "xml";
+        }
+        this.model.getSelectedSearches().forEach(function(search) {
+            $.ajax({
+                url: '/search/catalog/internal/resources/export',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "cql": search.get("cql"),
+                    "metadataFormat": transformerId,
+                    "type": exportType
+                })
+            })
+        });
     }
 });
 

@@ -16,6 +16,26 @@
 <div class="export-content">
 
     <div class="export-search-container">
+        <div class="export-title-container">
+            <div class="export-title">
+                Content to Export
+            </div>
+            <div class="export-custom-title is-button">
+                Custom Export Settings
+                <span class="fa fa-caret-up is-custom"/>
+                <span class="fa fa-caret-down not-custom"/>
+            </div>
+        </div>
+
+        <div class="export-custom-container">
+            <div class="export-custom-type input"/>
+            <div class="export-custom-format input"/>
+            <div class="export-custom-warning">
+                <span class="fa fa-exclamation warning"/>
+                Please note, only the export format titled “Backup Format” is able to be reimported <b>without data loss</b>.
+            </div>
+        </div>
+
         <div class="export-search-list"/>
         <div>
             <button class="is-positive export-button disabled" data-help="Export">
@@ -30,7 +50,7 @@
                 Export status
             </div>
             <div class="export-location">
-                (Configured export directory: {{this.root}})
+                (Configured export directory: {{this.exportLocation}})
             </div>
             <div class="completed-exports"/>
             <div class="export-status-list"/>

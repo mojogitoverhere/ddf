@@ -1,19 +1,18 @@
 @{customElementNamespace}export {
   .customElement;
   background: @card-background-color;
-  @contentHeight: ~'calc(100vh - 2*@{minimumLineSize})';
 
   .export-content {
     display: inline-block;
     width: 100%;
-    height: @contentHeight;
+    height: ~'calc(100vh - 2*@{minimumLineSize})';
     overflow: hidden;
   }
 
   .export-status-container {
     padding: @largeSpacing;
     overflow: auto;
-    height: ~'calc(@{contentHeight} / 2)';
+    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
 
     > * {
       transition: width @coreTransitionTime linear;
@@ -28,7 +27,7 @@
 
     .export-location {
       display: inline-block;
-      opacity: .6;
+      opacity: @minimumOpacity;
       font-size: @minimumFontSize;
     }
   }
@@ -37,7 +36,7 @@
     background: @background-color;
     border-bottom: 1px solid @borderColor;
     padding: @largeSpacing;
-    height: ~'calc(@{contentHeight} / 2)';
+    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
     overflow: hidden;
 
     > * {
@@ -46,14 +45,47 @@
       margin: auto;
     }
 
-    .export-file-list {
-      height: ~'calc((@{contentHeight} / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+    .export-title-container {
+      > * {
+        display: inline-block;
+      }
+
+      .export-custom-title {
+        float: right;
+      }
+    }
+
+    .export-custom-container {
+      height: 0%;
+      display: none;
+      > * {
+        display: inline-block;
+      }
+
+      .input {
+        width: 25%;
+      }
+
+      .warning{
+        color: yellow;
+      }
+
+      .export-custom-warning {
+        width: ~'calc(50% - 10px)';
+        padding-left: @largeSpacing;
+        vertical-align: middle;
+      }
+    }
+
+    .export-search-list {
+      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - 3*@{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
       overflow-x: hidden;
       border: 1px solid @borderColor;
+      margin-top: @minimumSpacing;
     }
 
     button {
-      float:right;
+      float: right;
       padding-left: @minimumSpacing;
       padding-right: @minimumSpacing;
       margin-top: @minimumSpacing;
@@ -63,6 +95,27 @@
         pointer-events: none;
         opacity: .25;
       }
+    }
+  }
+
+  .is-custom {
+    display: none;
+  }
+
+  &.is-custom {
+    .is-custom {
+      display: inline-block;
+    }
+    .not-custom {
+      display: none;
+    }
+    .export-custom-container {
+      display: block;
+      height: ~'calc(3*@{minimumButtonSize})';
+    }
+    .export-search-list {
+      margin-top: 0;
+      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - 2*@{minimumSpacing} - 2*@{largeSpacing} - 4*@{minimumButtonSize})';
     }
   }
 
