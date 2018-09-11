@@ -101,7 +101,7 @@ define([
                     result.get('metacard').get('properties').set('metacard-tags', ['deleted']);
                     result.trigger('refreshdata');
                 });
-                this.refreshResults();
+                this.deleteResults();
                 this.closeLightbox();
             }.bind(this)).always(function(response) {
                 setTimeout(function() { //let solr flush

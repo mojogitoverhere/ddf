@@ -179,7 +179,7 @@ define([
                     result.get('metacard').get('properties').get('metacard.deleted.id') +
                     '/' +
                     result.get('metacard').get('properties').get('metacard.deleted.version')).then(function(response) {
-                        ResultUtils.refreshResult(result);
+                        ResultUtils.deleteResults(this.model.models);
                 }.bind(this));
             }.bind(this))).always(function(response) {
                 setTimeout(function() { //let solr flush
