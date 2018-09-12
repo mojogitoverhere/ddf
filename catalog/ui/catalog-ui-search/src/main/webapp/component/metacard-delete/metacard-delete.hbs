@@ -13,10 +13,11 @@
  --}}
 <div>
     <div class="warning-banner is-perm-delete">
-        <div class="delete-permanently"><span class="fa fa-exclamation-triangle"/> This action cannot be undone</div>
+        <div class="delete-permanently"><span class="fa fa-exclamation-triangle"/> Are you absolutely sure?</div>
         <div>
-            This will permanently delete any items you have selected and
-            any associations will be orphaned.
+            This action cannot be undone.
+            <br>
+            This will permanently delete any items you have selected.
         </div>
     </div>
     <div class="delete-banner is-delete">
@@ -26,7 +27,7 @@
         <div class="associations-title">Associations</div>
         <div class="associations-text">
             {{#if this.orphans}}
-                The following were found to to have associations to results in the current selection. If you continue deleting, these associations and possibly more will be orphaned:
+                The following items were found to to have associations to the items selected for deletion. If you continue, these associations and possibly more will be deleted:
                 <div>
                     {{#each this.orphans}}
                         <div>
@@ -41,12 +42,11 @@
     <div class="loader"/>
     </div>
     <div class="actions is-perm-delete">
-        <div class="actions-prompt is-perm-delete">Are you absolutely sure?</div>
         <button class="is-negative cancel" data-help="Cancel">
             <span class="mainText">Cancel</span>
         </button>
         <button class="is-positive perm-delete" data-help="This will remove the item(s) permanently.">
-            <span class="mainText">Yes, delete permanently</span>
+            <span class="mainText">I am sure I want to delete permanently</span>
         </button>
     </div>
     <div class="actions is-delete">
