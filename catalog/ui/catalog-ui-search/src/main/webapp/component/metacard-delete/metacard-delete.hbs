@@ -24,20 +24,21 @@
     </div>
     <div class="associations">
         <div class="associations-title">Associations</div>
-        {{#if this.orphans}}
         <div class="associations-text">
-            The following were found to to have associations to results in the current selection. If you continue deleting, these associations and possibly more will be orphaned:
-        </div>
-        <div>
-            {{#each this.orphans}}
+            {{#if this.orphans}}
+                The following were found to to have associations to results in the current selection. If you continue deleting, these associations and possibly more will be orphaned:
                 <div>
-                    <a href="#metacards/{{this}}" target="_blank">{{this}}</a>
+                    {{#each this.orphans}}
+                        <div>
+                            <a href="#metacards/{{this}}" target="_blank">{{this}}</a>
+                        </div>
+                    {{/each}}
                 </div>
-            {{/each}}
+            {{else}}
+                No associations were found
+            {{/if}}
         </div>
-        {{else}}
-        <div class="associations-text">No associations were found</div>
-        {{/if}}
+    <div class="loader"/>
     </div>
     <div class="actions is-perm-delete">
         <div class="actions-prompt is-perm-delete">Are you absolutely sure?</div>

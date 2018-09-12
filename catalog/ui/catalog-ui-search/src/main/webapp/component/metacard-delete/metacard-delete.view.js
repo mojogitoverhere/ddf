@@ -43,6 +43,7 @@ define([
         orphans: [],
         selectionInterface: store,
         initialize: function(options) {
+            this.$el.toggleClass('is-loading', true);
             this.orphans = [];
             this.selectionInterface = options.selectionInterface || this.selectionInterface;
             if (!options.model) {
@@ -140,7 +141,6 @@ define([
         },
         fetchOrphans: function() {
             var self = this;
-            LoadingCompanionView.beginLoading(self);
             var payload = JSON.stringify(this.getMetacardIds());
             $.ajax({
                 url: '/search/catalog/internal/metacards/deletecheck',
@@ -149,11 +149,10 @@ define([
                 contentType: 'application/json',
                 success: function(response, status, xhr) {
                     self.orphans = response['broken-links'];
+                    self.$el.toggleClass('is-loading', false);
                     self.render();
-                    LoadingCompanionView.endLoading(self);
                 },
                 error: function() {
-                    LoadingCompanionView.endLoading(self);
                     self.closeLightbox();
                     announcement.announce({
                         title: 'Unable to fetch associations before deleting',

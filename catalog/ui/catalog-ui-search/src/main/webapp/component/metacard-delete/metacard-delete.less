@@ -63,6 +63,7 @@
 
     .associations-text {
       margin-bottom: @minimumSpacing;
+      display: block;
     }
   }
 
@@ -81,6 +82,21 @@
   .large-item-text {
     margin-top: @minimumSpacing;
     opacity: @minimumOpacity;
+  }
+
+  .loader {
+    margin-bottom: 0;
+    mergin-left: ~'calc(50% - 5em)';
+    display: none;
+  }
+
+  &.is-loading {
+    .loader {
+      display: block;
+    }
+    .associations-text {
+      display: none;
+    }
   }
 }
 
