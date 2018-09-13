@@ -151,7 +151,7 @@ public class UserApplication implements SparkApplication {
         return subject.isPermitted(permissions);
       }
     }
-    return false;
+    return true;
   }
 
   @Override
