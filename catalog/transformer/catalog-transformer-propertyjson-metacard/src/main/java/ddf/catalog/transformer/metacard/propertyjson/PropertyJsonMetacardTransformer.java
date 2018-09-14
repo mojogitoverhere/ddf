@@ -20,6 +20,7 @@ import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.BinaryContentImpl;
 import ddf.catalog.transform.CatalogTransformerException;
+import ddf.catalog.transform.ExportableMetadataTransformer;
 import ddf.catalog.transform.MetacardTransformer;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
@@ -62,7 +63,7 @@ import org.slf4j.LoggerFactory;
  * geojson components. Simply put, a flat mapping of all attributes to K/V pairs stored inside a
  * root key of "property"
  */
-public class PropertyJsonMetacardTransformer implements MetacardTransformer {
+public class PropertyJsonMetacardTransformer implements ExportableMetadataTransformer {
 
   private static final Logger LOGGER =
       LoggerFactory.getLogger(PropertyJsonMetacardTransformer.class);

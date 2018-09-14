@@ -39,7 +39,11 @@
         <argument ref="resourceActionProvider"/>
     </bean>
 
-    <service ref="kmlTransformerImpl" interface="ddf.catalog.transform.MetacardTransformer">
+    <service ref="kmlTransformerImpl">
+        <interfaces>
+            <value>ddf.catalog.transform.MetacardTransformer</value>
+            <value>ddf.catalog.transform.ExportableMetadataTransformer</value>
+        </interfaces>
         <service-properties>
             <entry key="id" value="kml"/>
             <entry key="shortname" value="kml"/>

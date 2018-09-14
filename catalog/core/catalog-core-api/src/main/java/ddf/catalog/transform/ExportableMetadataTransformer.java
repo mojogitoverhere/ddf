@@ -11,10 +11,10 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.ui.offline;
+package ddf.catalog.transform;
 
-class OfflineException extends Exception {
-  OfflineException(String message, Throwable cause) {
-    super(message, cause);
-  }
-}
+/**
+ * A marker interface to distinguish {@link MetacardTransformer}s that generate metadata based
+ * content that can be exported from the UI.
+ */
+public interface ExportableMetadataTransformer extends MetacardTransformer {}

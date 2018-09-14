@@ -11,18 +11,31 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.spatial.kml.transformer;
+package org.codice.ddf.catalog.ui.content.exports;
 
-import ddf.catalog.data.Metacard;
-import ddf.catalog.transform.CatalogTransformerException;
-import ddf.catalog.transform.ExportableMetadataTransformer;
-import ddf.catalog.transform.QueryResponseTransformer;
-import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import java.io.Serializable;
-import java.util.Map;
-import javax.security.auth.Subject;
+import java.io.File;
+import java.nio.file.Paths;
+import spark.utils.StringUtils;
 
-public interface KMLTransformer extends QueryResponseTransformer, ExportableMetadataTransformer {
-  public Placemark transformEntry(Subject user, Metacard entry, Map<String, Serializable> arguments)
-      throws CatalogTransformerException;
+public class ExportDirectory {
+
+  private String exportDirectory;
+
+  public void setExportDirectory(String exportDirectory) {
+    this.exportDirectory = exportDirectory;
+  }
+
+  @Override
+  public String toString() {
+    return exportDirectory == null ? "" : exportDirectory;
+  }
+
+  public boolean existsAndIsWritable() {
+    if (StringUtils.isBlank(exportDirectory)) {
+      return false;
+    }
+
+    File exportRoot = Paths.get(exportDirectory).toFile();
+    return exportRoot.isDirectory() && exportRoot.canWrite();
+  }
 }

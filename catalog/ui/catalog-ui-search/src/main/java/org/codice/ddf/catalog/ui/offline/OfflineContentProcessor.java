@@ -25,12 +25,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.codice.ddf.commands.catalog.export.IdAndUriMetacard;
 
-class Content {
+public class OfflineContentProcessor {
 
   private final StorageProvider storageProvider;
 
-  Content(StorageProvider storageProvider) {
+  public OfflineContentProcessor(StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
+  }
+
+  public void process(Metacard metacard) throws StorageException {
+    deleteContent(metacard);
   }
 
   void deleteContent(Metacard metacard) throws StorageException {

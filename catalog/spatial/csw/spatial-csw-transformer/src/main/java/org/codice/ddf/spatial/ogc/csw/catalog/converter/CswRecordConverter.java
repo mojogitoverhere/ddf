@@ -37,8 +37,8 @@ import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.impl.MetacardTypeImpl;
 import ddf.catalog.data.types.Core;
 import ddf.catalog.transform.CatalogTransformerException;
+import ddf.catalog.transform.ExportableMetadataTransformer;
 import ddf.catalog.transform.InputTransformer;
-import ddf.catalog.transform.MetacardTransformer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,7 +65,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Converts CSW Record to a Metacard. */
-public class CswRecordConverter implements Converter, MetacardTransformer, InputTransformer {
+public class CswRecordConverter
+    implements Converter, ExportableMetadataTransformer, InputTransformer {
   public static final MimeType XML_MIME_TYPE = setXmlMimeType();
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CswRecordConverter.class);

@@ -13,80 +13,41 @@
  */
 package org.codice.ddf.catalog.ui.offline;
 
-import ddf.catalog.data.Metacard;
 import java.nio.file.Paths;
 
-class ZipPathGenerator {
+public class ZipPathGenerator {
 
-  private final String parentMetacardId;
+  private ZipPathGenerator() {}
 
-  ZipPathGenerator(String parentMetacardId) {
-    this.parentMetacardId = parentMetacardId;
+  public static String metacardPath(String metacardId) {
+    return Paths.get(rootPath(metacardId), "metacard", metacardId + ".xml").toString();
   }
 
-  String primaryMetacardPath() {
-    return Paths.get(rootPath(parentMetacardId), "metacard", parentMetacardId + ".xml").toString();
-  }
-
-  String historyMetacardPath(Metacard metacard) {
-    return Paths.get(historyRootPath(metacard.getId()), "metacard", metacard.getId() + ".xml")
-        .toString();
-  }
-
-  String historyContentPath(String id, String name) {
-    return Paths.get(historyRootPath(id), "content", name).toString();
-  }
-
-  String primaryContentPath(String metacardId, String contentFileName) {
+  public static String contentPath(String metacardId, String contentFileName) {
     return Paths.get(rootPath(metacardId), "content", contentFileName).toString();
   }
 
-  String derivedOverviewContentPath(String name) {
-    return Paths.get(derivedRootPath(), "overview", name).toString();
+  public static String derivedOverviewPath(String metacardId, String name) {
+    return Paths.get(derivedRootPath(metacardId), "overview", name).toString();
   }
 
-  String derivedOriginalContentPath(String name) {
-    return Paths.get(derivedRootPath(), "original", name).toString();
+  public static String derivedOriginalPath(String metacardId, String name) {
+    return Paths.get(derivedRootPath(metacardId), "original", name).toString();
   }
 
-  String derivedOtherContentPath(int intex, String name) {
-    return Paths.get(derivedRootPath(), derivedOtherContentName(intex), name).toString();
+  public static String derivedOtherPath(String metacardId, int index, String name) {
+    return Paths.get(derivedRootPath(metacardId), derivedOtherContentName(index), name).toString();
   }
 
-  String historyDerivedOriginalContentPath(String metacardId, String name) {
-    return Paths.get(rootPath(parentMetacardId), "history", metacardId, "derived", "original", name)
-        .toString();
-  }
-
-  String historyDerivedOverviewContentPath(String metacardId, String name) {
-    return Paths.get(rootPath(parentMetacardId), "history", metacardId, "derived", "overview", name)
-        .toString();
-  }
-
-  String historyDerivedOtherContentPath(String metacardId, int index, String name) {
-    return Paths.get(
-            rootPath(parentMetacardId),
-            "history",
-            metacardId,
-            "derived",
-            derivedOtherContentName(index),
-            name)
-        .toString();
-  }
-
-  private String derivedOtherContentName(int index) {
+  public static String derivedOtherContentName(int index) {
     return "other-" + index;
   }
 
-  private String rootPath(String metacardId) {
+  private static String rootPath(String metacardId) {
     return Paths.get("metacards", metacardId.substring(0, 3), metacardId).toString();
   }
 
-  private String historyRootPath(String metacardId) {
-    return Paths.get(rootPath(parentMetacardId), "history", metacardId).toString();
-  }
-
-  private String derivedRootPath() {
-    return Paths.get(rootPath(parentMetacardId), "derived").toString();
+  private static String derivedRootPath(String metacardId) {
+    return Paths.get(rootPath(metacardId), "derived").toString();
   }
 }

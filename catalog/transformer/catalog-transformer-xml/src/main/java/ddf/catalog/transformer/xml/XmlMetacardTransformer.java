@@ -17,7 +17,7 @@ import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.BinaryContentImpl;
 import ddf.catalog.transform.CatalogTransformerException;
-import ddf.catalog.transform.MetacardTransformer;
+import ddf.catalog.transform.ExportableMetadataTransformer;
 import ddf.catalog.transformer.api.MetacardMarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 
-public class XmlMetacardTransformer implements MetacardTransformer {
+public class XmlMetacardTransformer implements ExportableMetadataTransformer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(XmlMetacardTransformer.class);
 

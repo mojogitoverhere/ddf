@@ -201,6 +201,8 @@
 
     <reference id="xmlTransformer" interface="ddf.catalog.transform.MetacardTransformer" filter="(id=xml)"/>
 
+    <reference id="xmlMetadataTransformer" interface="ddf.catalog.transform.ExportableMetadataTransformer" filter="(id=xml)"/>
+
     <bean id="offlineResources" class="org.codice.ddf.catalog.ui.offline.OfflineResources">
         <argument ref="catalogFramework"/>
         <argument ref="xmlTransformer"/>
@@ -235,6 +237,40 @@
             <reference interface="ddf.catalog.content.StorageProvider"/>
         </argument>
         <argument ref="offlineResources"/>
+    </bean>
+
+    <bean id="exportCatalog" class="org.codice.ddf.catalog.ui.content.exports.ExportCatalog">
+        <argument ref="catalogFramework"/>
+        <argument ref="filterBuilder"/>
+    </bean>
+
+    <bean id="exportDirectory" class="org.codice.ddf.catalog.ui.content.exports.ExportDirectory">
+        <cm:managed-properties
+                persistent-id="org.codice.ddf.catalog.ui.content.exports.ExportDirectory"
+                update-strategy="container-managed"/>
+        <property name="exportDirectory" value=""/>
+    </bean>
+
+    <reference-list id="metadataTransformers"
+                    interface="ddf.catalog.transform.ExportableMetadataTransformer"
+                    member-type="service-reference"
+                    availability="optional">
+        <reference-listener bind-method="bind"
+                            unbind-method="unbind"
+                            ref="metadataFormats"/>
+    </reference-list>
+
+    <bean id="metadataFormats" class="org.codice.ddf.catalog.ui.content.exports.MetadataFormats"/>
+
+    <bean id="exportResources" class="org.codice.ddf.catalog.ui.content.exports.ExportResources">
+        <argument ref="exportCatalog"/>
+        <argument ref="catalogFramework"/>
+    </bean>
+
+    <bean id="exportApplication" class="org.codice.ddf.catalog.ui.content.exports.ExportApplication">
+        <argument ref="exportResources"/>
+        <argument ref="metadataFormats"/>
+        <argument ref="exportDirectory"/>
     </bean>
 
     <bean id="queryApplication" class="org.codice.ddf.catalog.ui.query.QueryApplication">
@@ -279,6 +315,7 @@
     <bean id="sparkServlet" class="org.codice.ddf.catalog.ui.SparkServlet">
         <property name="sparkApplications">
             <list>
+                <ref component-id="exportApplication"/>
                 <ref component-id="queryApplication"/>
                 <ref component-id="metacardApplication"/>
                 <ref component-id="userApplication"/>

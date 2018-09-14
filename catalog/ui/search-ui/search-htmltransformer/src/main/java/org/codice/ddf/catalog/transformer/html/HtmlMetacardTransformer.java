@@ -24,7 +24,7 @@ import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.BinaryContentImpl;
 import ddf.catalog.transform.CatalogTransformerException;
-import ddf.catalog.transform.MetacardTransformer;
+import ddf.catalog.transform.ExportableMetadataTransformer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -35,7 +35,7 @@ import javax.activation.MimeTypeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HtmlMetacardTransformer implements MetacardTransformer {
+public class HtmlMetacardTransformer implements ExportableMetadataTransformer {
 
   private static final MimeType DEFAULT_MIME_TYPE;
 

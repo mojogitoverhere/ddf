@@ -11,18 +11,27 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.spatial.kml.transformer;
+package org.codice.ddf.catalog.ui.content.exports;
 
-import ddf.catalog.data.Metacard;
-import ddf.catalog.transform.CatalogTransformerException;
-import ddf.catalog.transform.ExportableMetadataTransformer;
-import ddf.catalog.transform.QueryResponseTransformer;
-import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import java.io.Serializable;
-import java.util.Map;
-import javax.security.auth.Subject;
+public enum ExportType {
+  METADATA_AND_CONTENT,
+  METADATA_ONLY,
+  CONTENT_ONLY,
+  INVALID;
 
-public interface KMLTransformer extends QueryResponseTransformer, ExportableMetadataTransformer {
-  public Placemark transformEntry(Subject user, Metacard entry, Map<String, Serializable> arguments)
-      throws CatalogTransformerException;
+  public static ExportType fromString(String type) {
+    if (type == null) {
+      return INVALID;
+    }
+
+    if (METADATA_AND_CONTENT.toString().equalsIgnoreCase(type)) {
+      return METADATA_AND_CONTENT;
+    } else if (METADATA_ONLY.toString().equalsIgnoreCase(type)) {
+      return METADATA_ONLY;
+    } else if (CONTENT_ONLY.toString().equalsIgnoreCase(type)) {
+      return CONTENT_ONLY;
+    } else {
+      return INVALID;
+    }
+  }
 }

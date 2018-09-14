@@ -847,17 +847,17 @@ public class MetacardApplication implements SparkApplication {
     return results.values().stream().anyMatch(offlineStatus -> !offlineStatus.isSuccessful());
   }
 
-  private Map<String, OfflineStatus> offlineMetacards(List<String> metacardIds, String location) {
+  private Map<String, OfflineStatus> offlineMetacards(List<String> metacardIds, String comment) {
     return metacardIds
         .stream()
-        .map(metacardId -> offlineMetacard(metacardId, location))
+        .map(metacardId -> offlineMetacard(metacardId, comment))
         .flatMap(List::stream)
         .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
   }
 
-  private List<Pair<String, OfflineStatus>> offlineMetacard(String id, String location) {
+  private List<Pair<String, OfflineStatus>> offlineMetacard(String id, String comment) {
     return offlineResources
-        .moveResourceOffline(id, location)
+        .moveResourceOffline(id, comment)
         .entrySet()
         .stream()
         .map(this::mapMoveResourceOfflineToResponse)

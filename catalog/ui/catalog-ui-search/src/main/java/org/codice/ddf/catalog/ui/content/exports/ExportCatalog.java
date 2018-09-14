@@ -11,26 +11,25 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.ui.offline;
+package org.codice.ddf.catalog.ui.content.exports;
 
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.core.versioning.MetacardVersion;
 import ddf.catalog.data.Metacard;
-import ddf.catalog.data.Result;
 import ddf.catalog.filter.FilterBuilder;
+import ddf.catalog.operation.QueryRequest;
 import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import org.codice.ddf.catalog.ui.query.cql.CqlRequest;
 import org.codice.ddf.commands.util.QueryResulterable;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
 
-public class OfflineCatalog {
+public class ExportCatalog {
 
   private static final int PAGE_SIZE = 64;
 
@@ -38,23 +37,27 @@ public class OfflineCatalog {
 
   private final FilterBuilder filterBuilder;
 
-  public OfflineCatalog(CatalogFramework catalogFramework, FilterBuilder filterBuilder) {
+  public ExportCatalog(CatalogFramework catalogFramework, FilterBuilder filterBuilder) {
     this.catalogFramework = catalogFramework;
     this.filterBuilder = filterBuilder;
   }
 
-  public List<Metacard> query(String metacardId) {
+  public QueryResulterable queryAsLocalOnly(String cql) {
+    CqlRequest cqlRequest = new CqlRequest();
+    cqlRequest.setCql(cql);
+    QueryRequest localQuery =
+        cqlRequest.createQueryRequest(catalogFramework.getId(), filterBuilder);
+
     return new QueryResulterable(
-            catalogFramework,
-            i ->
-                OfflineCatalog.this.createLocalOnlyQuery(
-                    OfflineCatalog.this.createFilter(metacardId), i))
-        .stream()
-        .map(Result::getMetacard)
-        .collect(Collectors.toList());
+        catalogFramework, i -> createLocalOnlyQuery(localQuery.getQuery(), i));
   }
 
-  private Filter createFilter(String metacardId) {
+  public QueryResulterable getLocalHistory(String metacardId) {
+    return new QueryResulterable(
+        catalogFramework, i -> createLocalOnlyQuery(createHistoryFilter(metacardId), i));
+  }
+
+  private Filter createHistoryFilter(String metacardId) {
     return filterBuilder.allOf(
         Arrays.asList(
             filterBuilder.anyOf(
@@ -63,7 +66,7 @@ public class OfflineCatalog {
             filterBuilder.attribute(Metacard.TAGS).like().text("*")));
   }
 
-  private QueryRequestImpl createLocalOnlyQuery(Filter filter, int index) {
+  private QueryRequest createLocalOnlyQuery(Filter filter, int index) {
     return new QueryRequestImpl(
         new QueryImpl(
             filter, index, PAGE_SIZE, SortBy.NATURAL_ORDER, false, TimeUnit.MINUTES.toMillis(1)),

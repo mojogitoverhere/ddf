@@ -45,7 +45,11 @@
         </bean>
     </service>
 
-    <service interface="ddf.catalog.transform.MetacardTransformer">
+    <service>
+        <interfaces>
+            <value>ddf.catalog.transform.MetacardTransformer</value>
+            <value>ddf.catalog.transform.ExportableMetadataTransformer</value>
+        </interfaces>
         <service-properties>
             <entry key="id" value="xml"/>
             <entry key="mime-type" value="text/xml"/>

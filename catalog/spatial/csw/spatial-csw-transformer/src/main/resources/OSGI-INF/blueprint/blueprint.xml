@@ -79,7 +79,11 @@
         </service-properties>
     </service>
 
-    <service ref="cswRecordConverter" interface="ddf.catalog.transform.MetacardTransformer">
+    <service ref="cswRecordConverter">
+        <interfaces>
+            <value>ddf.catalog.transform.MetacardTransformer</value>
+            <value>ddf.catalog.transform.ExportableMetadataTransformer</value>
+        </interfaces>
         <service-properties>
             <entry key="id" value="csw:Record"/>
             <entry key="mime-type" >
@@ -105,7 +109,11 @@
         </service-properties>
     </service>
 
-    <service ref="gmdInputTransformerTranformer" interface="ddf.catalog.transform.MetacardTransformer">
+    <service ref="gmdInputTransformerTranformer">
+        <interfaces>
+            <value>ddf.catalog.transform.MetacardTransformer</value>
+            <value>ddf.catalog.transform.ExportableMetadataTransformer</value>
+        </interfaces>
         <service-properties>
             <entry key="id" value="gmd:MD_Metadata"/>
             <entry key="mime-type" value="text/xml"/>

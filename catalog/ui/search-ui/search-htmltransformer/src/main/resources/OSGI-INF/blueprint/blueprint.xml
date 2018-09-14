@@ -20,7 +20,11 @@
           class="org.codice.ddf.catalog.transformer.html.HtmlMetacardTransformer">
 	</bean>
 
-	<service ref="transformer" interface="ddf.catalog.transform.MetacardTransformer">
+	<service ref="transformer">
+		<interfaces>
+			<value>ddf.catalog.transform.MetacardTransformer</value>
+			<value>ddf.catalog.transform.ExportableMetadataTransformer</value>
+		</interfaces>
 		<service-properties>
 			<entry key="id" value="html"/>
             <!-- shortname only exists for backwards compatibility -->

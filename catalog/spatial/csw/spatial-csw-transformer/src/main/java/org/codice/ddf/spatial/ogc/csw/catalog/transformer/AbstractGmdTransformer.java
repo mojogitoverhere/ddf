@@ -24,7 +24,7 @@ import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.BinaryContentImpl;
 import ddf.catalog.transform.CatalogTransformerException;
-import ddf.catalog.transform.MetacardTransformer;
+import ddf.catalog.transform.ExportableMetadataTransformer;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -36,7 +36,7 @@ import org.codice.ddf.spatial.ogc.csw.catalog.common.CswConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.GmdConstants;
 import org.codice.ddf.spatial.ogc.csw.catalog.converter.CswRecordConverter;
 
-public class AbstractGmdTransformer implements MetacardTransformer {
+public class AbstractGmdTransformer implements ExportableMetadataTransformer {
 
   public static final String GML_PREFIX = "gml:";
 

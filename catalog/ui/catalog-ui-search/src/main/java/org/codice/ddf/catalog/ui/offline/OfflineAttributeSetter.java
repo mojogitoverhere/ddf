@@ -13,26 +13,35 @@
  */
 package org.codice.ddf.catalog.ui.offline;
 
-import ddf.catalog.data.Attribute;
-import ddf.catalog.data.AttributeDescriptor;
+import ddf.catalog.CatalogFramework;
+import ddf.catalog.core.versioning.MetacardVersion;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.AttributeImpl;
-import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.types.Core;
 import ddf.catalog.data.types.Offline;
+import ddf.catalog.operation.ProcessingDetails;
+import ddf.catalog.operation.UpdateResponse;
+import ddf.catalog.operation.impl.UpdateRequestImpl;
+import ddf.catalog.source.IngestException;
+import ddf.catalog.source.SourceUnavailableException;
 import ddf.security.SubjectUtils;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class OfflineAttributeSetter {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(OfflineAttributeSetter.class);
 
   private static final Set<String> ATTRIBUTES_TO_REMOVE =
       new HashSet<>(
@@ -42,12 +51,43 @@ class OfflineAttributeSetter {
               Core.DERIVED_RESOURCE_URI,
               Core.DERIVED_RESOURCE_DOWNLOAD_URL));
 
-  Metacard setOfflineAttributes(Metacard metacard, String location, String path) {
-    metacard.setAttribute(new AttributeImpl(Offline.OFFLINE_COMMENT, location));
+  private final CatalogFramework catalogFramework;
+
+  public OfflineAttributeSetter(CatalogFramework catalogFramework) {
+    this.catalogFramework = catalogFramework;
+  }
+
+  public void process(Metacard metacard, String comment, String outputPath)
+      throws SourceUnavailableException, IngestException {
+    if (!isRevision(metacard)) {
+      setOfflineAttributes(metacard, comment, outputPath);
+      update(metacard);
+    }
+  }
+
+  private void update(Metacard metacard) throws SourceUnavailableException, IngestException {
+    UpdateResponse updateResponse =
+        catalogFramework.update(new UpdateRequestImpl(metacard.getId(), metacard));
+    if (CollectionUtils.isNotEmpty(updateResponse.getProcessingErrors())) {
+      LOGGER.debug(
+          "Failed to update the catalog: metacardId=[{}] details=[{}]",
+          metacard.getId(),
+          stringifyProcessingErrors(updateResponse.getProcessingErrors()));
+    }
+  }
+
+  private void setOfflineAttributes(Metacard metacard, String comment, String path) {
+    metacard.setAttribute(new AttributeImpl(Offline.OFFLINE_COMMENT, comment));
     metacard.setAttribute(new AttributeImpl(Offline.OFFLINE_LOCATION_PATH, path));
     metacard.setAttribute(new AttributeImpl(Offline.OFFLINED_BY, getWhoAmI()));
     metacard.setAttribute(new AttributeImpl(Offline.OFFLINE_DATE, new Date()));
-    return removeAttributes(metacard);
+    removeAttributes(metacard);
+  }
+
+  private void removeAttributes(Metacard metacard) {
+    for (String attribute : ATTRIBUTES_TO_REMOVE) {
+      metacard.setAttribute(new AttributeImpl(attribute, (Serializable) null));
+    }
   }
 
   private String getWhoAmI() {
@@ -62,28 +102,23 @@ class OfflineAttributeSetter {
     return whoami;
   }
 
-  private Metacard removeAttributes(Metacard metacard) {
-    List<String> attributeNames =
-        metacard
-            .getMetacardType()
-            .getAttributeDescriptors()
-            .stream()
-            .map(AttributeDescriptor::getName)
-            .collect(Collectors.toList());
+  private String stringifyProcessingErrors(Set<ProcessingDetails> details) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
 
-    List<Attribute> attributesToSave =
-        attributeNames
-            .stream()
-            .filter(s -> !ATTRIBUTES_TO_REMOVE.contains(s))
-            .map(metacard::getAttribute)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+    for (ProcessingDetails detail : details) {
+      pw.append(detail.getSourceId());
+      pw.append(":");
+      if (detail.hasException()) {
+        detail.getException().printStackTrace(pw);
+      }
+      pw.append(System.lineSeparator());
+    }
+    return pw.toString();
+  }
 
-    Metacard newMetacard = new MetacardImpl(metacard.getMetacardType());
-    newMetacard.setSourceId(metacard.getSourceId());
-
-    attributesToSave.forEach(newMetacard::setAttribute);
-
-    return newMetacard;
+  private static boolean isRevision(Metacard metacard) {
+    Set<String> tags = metacard.getTags();
+    return CollectionUtils.isNotEmpty(tags) && tags.contains(MetacardVersion.VERSION_TAG);
   }
 }
