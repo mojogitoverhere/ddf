@@ -83,6 +83,7 @@ define([
                 this.$el.toggleClass('is-revision', result.isRevision());
                 this.$el.toggleClass('is-deleted', result.isDeleted());
                 this.$el.toggleClass('is-remote', result.isRemote());
+                this.$el.toggleClass('is-offline', result.isOfflined());
             }
         }
     });

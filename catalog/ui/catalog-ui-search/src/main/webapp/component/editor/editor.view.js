@@ -110,6 +110,9 @@ define([
                 if (result.isRemote()){
                     types.remote = true;
                 }
+                if (result.isOfflined()){
+                    types.offlined = true;
+                }
             });
             this.$el.toggleClass('is-mixed', Object.keys(types).length > 1);
             this.$el.toggleClass('is-workspace', types.workspace !== undefined);
@@ -117,6 +120,7 @@ define([
             this.$el.toggleClass('is-revision', types.revision !== undefined);
             this.$el.toggleClass('is-deleted', types.deleted !== undefined);
             this.$el.toggleClass('is-remote', types.remote !== undefined);
+            this.$el.toggleClass('is-offline', types.offlined !== undefined);
         },
         getEditorActionsOptions: function(){
             return {

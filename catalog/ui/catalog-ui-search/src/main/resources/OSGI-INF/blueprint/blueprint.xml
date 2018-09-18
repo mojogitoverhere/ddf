@@ -312,6 +312,14 @@
 
     <reference id="contextPolicyManager" interface="org.codice.ddf.security.policy.context.ContextPolicyManager"/>
 
+    <bean id="editOfflineMetacardPlugin" class="org.codice.ddf.catalog.ui.security.OfflineReadOnlyPolicyPlugin">
+        <cm:managed-properties
+                persistent-id="org.codice.ddf.catalog.ui.security.import"
+                update-strategy="container-managed"/>
+    </bean>
+
+    <service ref="editOfflineMetacardPlugin" interface="ddf.catalog.plugin.PolicyPlugin"/>
+
     <bean id="userApplication" class="org.codice.ddf.catalog.ui.security.UserApplication">
         <argument ref="persistentStore"/>
         <argument ref="endpointUtil"/>

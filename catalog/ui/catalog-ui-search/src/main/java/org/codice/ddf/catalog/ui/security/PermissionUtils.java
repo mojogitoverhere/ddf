@@ -20,13 +20,13 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PermissionUtils {
+class PermissionUtils {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PermissionUtils.class);
 
   private PermissionUtils() {}
 
-  public static String[] parsePermission(String permission) {
+  static String[] parsePermission(String permission) {
     if (permission == null) {
       return null;
     }
@@ -42,12 +42,16 @@ public class PermissionUtils {
     return keyValue;
   }
 
-  public static boolean isPermitted(Subject subject, String permission) {
+  static boolean isPermitted(Subject subject, String permission) {
     String[] keyValue = parsePermission(permission);
     if (keyValue == null || subject == null) {
       return true;
     }
 
-    return subject.isPermitted(new KeyValuePermission(keyValue[0], ImmutableSet.of(keyValue[1])));
+    return isPermitted(subject, keyValue[0], keyValue[1]);
+  }
+
+  static boolean isPermitted(Subject subject, String key, String value) {
+    return subject.isPermitted(new KeyValuePermission(key, ImmutableSet.of(value)));
   }
 }
