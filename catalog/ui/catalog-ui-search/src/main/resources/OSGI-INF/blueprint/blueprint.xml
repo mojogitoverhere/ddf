@@ -137,7 +137,6 @@
         <argument ref="endpointUtil"/>
     </bean>
 
-
     <bean id="validator" class="org.codice.ddf.catalog.ui.metacard.validation.Validator">
         <argument>
             <reference-list interface="ddf.catalog.validation.ReportingMetacardValidator"
@@ -213,6 +212,24 @@
         <argument ref="filterBuilder"/>
     </bean>
 
+    <bean id="importer" class="org.codice.ddf.catalog.ui.imports.Importer">
+        <argument ref="inputTransformer"/>
+        <argument ref="catalogFramework"/>
+        <argument>
+            <reference interface="ddf.catalog.content.StorageProvider"/>
+        </argument>
+        <argument ref="filterBuilder"/>
+        <argument>
+            <reference interface="ddf.mime.MimeTypeMapper"/>
+        </argument>
+        <argument ref="catalogUtils"/>
+    </bean>
+
+    <bean id="catalogUtils" class="org.codice.ddf.catalog.ui.util.CatalogUtils">
+        <argument ref="endpointUtil"/>
+        <argument ref="filterBuilder"/>
+        <argument ref="catalogFramework"/>
+    </bean>
 
     <bean id="metacardApplication" class="org.codice.ddf.catalog.ui.metacard.MetacardApplication">
         <argument ref="catalogFramework"/>
@@ -237,6 +254,7 @@
             <reference interface="ddf.catalog.content.StorageProvider"/>
         </argument>
         <argument ref="offlineResources"/>
+        <argument ref="catalogUtils"/>
     </bean>
 
     <bean id="exportCatalog" class="org.codice.ddf.catalog.ui.content.exports.ExportCatalog">
@@ -304,11 +322,11 @@
         <cm:managed-properties
                 persistent-id="org.codice.ddf.catalog.ui.imports.ImportDirectory"
                 update-strategy="container-managed"/>
-        <property name="rootDirectory" value="/imports"/>
     </bean>
 
     <bean id="importApplication" class="org.codice.ddf.catalog.ui.imports.ImportApplication">
         <argument ref="importDirectory"/>
+        <argument ref="importer"/>
     </bean>
 
     <bean id="rootReqSupplier" class="org.codice.ddf.catalog.ui.RootContextRequestSupplier"/>
