@@ -20,6 +20,7 @@ import ddf.catalog.data.Result;
 import ddf.catalog.resource.ResourceNotSupportedException;
 import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.MetacardTransformer;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -67,7 +68,10 @@ public class ExportResources {
     ResourceZipper resourceZipper =
         new ResourceZipper(catalogFramework, metadataTransformer, filename);
 
+    SecurityLogger.audit(
+        "Exporting [{}] of local results from cql [{}] to file [{}]", exportType, cql, filename);
     List<String> failedIds = doExport(cql, resourceZipper, exportType);
+    SecurityLogger.audit("Export completed with {} failed result(s)", failedIds.size());
     return new ImmutablePair<>(filename, failedIds);
   }
 
@@ -79,13 +83,17 @@ public class ExportResources {
       QueryResulterable primaryAndHistoryResults =
           exportCatalog.getLocalHistory(primaryResult.getMetacard().getId());
       for (Result primaryOrHistory : primaryAndHistoryResults) {
+        Metacard metacard = primaryOrHistory.getMetacard();
         try {
-          resourceZipper.add(primaryOrHistory.getMetacard(), exportType);
+          resourceZipper.add(metacard, exportType);
+          SecurityLogger.audit("Metacard [{}] was exported successfully", metacard.getId());
         } catch (IOException | CatalogTransformerException | ResourceNotSupportedException e) {
-          LOGGER.debug(
-              "Metacard [{}] could not be added to the export zip",
-              primaryOrHistory.getMetacard().getId());
-          failedMetacards.add(primaryOrHistory.getMetacard());
+          LOGGER.debug("Metacard [{}] could not be added to the export zip", metacard.getId(), e);
+          SecurityLogger.audit(
+              "Metacard [{}] could not be added to the export zip. {}",
+              metacard.getId(),
+              e.getMessage());
+          failedMetacards.add(metacard);
         }
       }
     }
