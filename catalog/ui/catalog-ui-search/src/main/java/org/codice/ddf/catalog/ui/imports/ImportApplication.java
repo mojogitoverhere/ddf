@@ -63,7 +63,6 @@ public class ImportApplication implements SparkApplication {
   public void init() {
     get(
         "/resources/import/available",
-        APPLICATION_JSON,
         (req, res) ->
             makeAvailableImportsResponse(importDirectory.toString(), importDirectory.getPaths()),
         JSON_MAPPER::toJson);
