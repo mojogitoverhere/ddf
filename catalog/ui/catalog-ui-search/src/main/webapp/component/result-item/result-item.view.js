@@ -152,6 +152,7 @@ define([
             return result;
         },
         serializeData: function(){
+            this.model.set('isOffline', this.model.isOfflined());
             return this.addConfiguredResultProperties(this.massageResult(this.model.toJSON()));
         },
         checkIfBlacklisted: function(){

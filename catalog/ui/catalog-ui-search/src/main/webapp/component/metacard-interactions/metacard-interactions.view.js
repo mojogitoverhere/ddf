@@ -71,6 +71,9 @@ define([
             this.$el.toggleClass('is-restore-allowed', user.get('user').get('isRestoreAllowed') === true);
             this.$el.toggleClass('is-perm-delete-allowed', user.get('user').get('isPermDeleteAllowed') === true);
             this.$el.toggleClass('is-offline-allowed', user.get('user').get('isOfflineAllowed') === true);
+
+            var allMetacardsAreOffline = this.model.every(entry => entry.isOfflined());
+            this.$el.toggleClass('is-download-enabled', allMetacardsAreOffline === false);
         },
         onRender: function(){
             this.checkTypes();

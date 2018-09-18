@@ -145,6 +145,13 @@
   }
 }
 
+@{customElementNamespace}metacard-interactions:not(.is-download-enabled) {
+ .is-download-enabled {
+   opacity: 0.4;
+   pointer-events: none;
+ }
+}
+
 @{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
   .is-restore-allowed {
     display: none;

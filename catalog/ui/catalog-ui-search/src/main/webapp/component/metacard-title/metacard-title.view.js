@@ -73,10 +73,14 @@ define([
         },
         serializeData: function(){
             var title;
+            var areAnyMetacardsOffline = this.model.find(entry => entry.isOfflined()) !== undefined;
             if (this.model.length === 1){
                 title = this.model.first().get('metacard').get('properties').get('title');
             } else {
                 title = this.model.length + ' Items'
+                if (areAnyMetacardsOffline) {
+                  title = title + " (one or more are offline)";
+                }
             }
             return {
                 title: title

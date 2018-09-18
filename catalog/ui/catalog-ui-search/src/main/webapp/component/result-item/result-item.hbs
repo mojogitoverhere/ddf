@@ -28,6 +28,13 @@
                 {{metacard.properties.title}}
             </span>
         </div>
+        {{#if isOffline}}
+          <div class="detail-is-offline details-property">
+            <span>
+              offline
+            </span>
+          </div>
+        {{/if}}
         {{#if metacard.properties.thumbnail}}
         <div class="detail-thumbnail details-property" data-help="thumbnail">
                 <img src="{{getImageSrc metacard.properties.thumbnail}}">
