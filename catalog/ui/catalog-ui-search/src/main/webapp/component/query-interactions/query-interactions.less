@@ -39,17 +39,22 @@
   .interaction-feedback {
     display: none;
   }
-
 }
 
 @{customElementNamespace}query-interactions.has-results {
   .interaction-feedback {
-    display: block; 
+    display: block;
   }
 }
 
 .is-feedback-restricted @{customElementNamespace}query-interactions {
   .interaction-feedback {
     display: none !important;
+  }
+}
+
+@{customElementNamespace}query-interactions.is-deleted-search-restricted {
+  .interaction-deleted {
+    display: none;
   }
 }

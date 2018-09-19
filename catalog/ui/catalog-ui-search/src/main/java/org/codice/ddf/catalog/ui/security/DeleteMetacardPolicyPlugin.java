@@ -39,15 +39,16 @@ public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteMetacardPolicyPlugin.class);
 
-  private String permission;
+  private String deletePermission;
+
+  private String searchDeletedPermission;
+
+  public boolean isAllowedToSearchDeleted(Subject subject) {
+    return isPermitted(subject, searchDeletedPermission);
+  }
 
   public boolean isAllowedToDelete(Subject subject) {
-    String[] keyValue = parsePermission(permission);
-    if (keyValue == null || subject == null) {
-      return true;
-    }
-
-    return subject.isPermitted(new KeyValuePermission(keyValue[0], ImmutableSet.of(keyValue[1])));
+    return isPermitted(subject, deletePermission);
   }
 
   @Override
@@ -99,9 +100,18 @@ public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
     return noOpPolicyResponse();
   }
 
+  private boolean isPermitted(Subject subject, String permission) {
+    String[] keyValue = parsePermission(permission);
+    if (keyValue == null || subject == null) {
+      return true;
+    }
+
+    return subject.isPermitted(new KeyValuePermission(keyValue[0], ImmutableSet.of(keyValue[1])));
+  }
+
   private Map<String, Set<String>> getPolicy(List<Metacard> metacards) {
     boolean includesResourceMetacard = metacards.stream().anyMatch(this::isResource);
-    String[] keyValue = parsePermission(permission);
+    String[] keyValue = parsePermission(deletePermission);
     if (includesResourceMetacard && keyValue != null) {
       return ImmutableMap.of(keyValue[0], ImmutableSet.of(keyValue[1]));
     } else {
@@ -133,7 +143,11 @@ public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
     return keyValue;
   }
 
-  public void setPermission(String permission) {
-    this.permission = permission;
+  public void setDeletePermission(String deletePermission) {
+    this.deletePermission = deletePermission;
+  }
+
+  public void setSearchDeletedPermission(String searchDeletedPermission) {
+    this.searchDeletedPermission = searchDeletedPermission;
   }
 }

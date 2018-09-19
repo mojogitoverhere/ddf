@@ -124,6 +124,7 @@ public class UserApplication implements SparkApplication {
             .put("isPermDeleteAllowed", isPermDeleteAllowed())
             .put("isOfflineAllowed", isOfflineAllowed())
             .put("isDeleteAllowed", isDeleteAllowed(subject))
+            .put("isSearchDeletedAllowed", isSearchDeletedAllowed(subject))
             .build();
 
     String email = SubjectUtils.getEmailAddress(subject);
@@ -161,6 +162,10 @@ public class UserApplication implements SparkApplication {
 
   private boolean isDeleteAllowed(Subject subject) {
     return deletePolicy.isAllowedToDelete(subject);
+  }
+
+  private Object isSearchDeletedAllowed(Subject subject) {
+    return deletePolicy.isAllowedToSearchDeleted(subject);
   }
 
   @Override

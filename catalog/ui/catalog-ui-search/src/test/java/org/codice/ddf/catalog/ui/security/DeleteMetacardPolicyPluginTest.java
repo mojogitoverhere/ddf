@@ -57,36 +57,80 @@ public class DeleteMetacardPolicyPluginTest {
   @Before
   public void setup() {
     plugin = new DeleteMetacardPolicyPlugin();
-    plugin.setPermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     subject = mock(Subject.class);
   }
 
   @Test
-  public void testIsAllowedToDeleteIsTrue() {
+  public void testIsAllowedToSearchDeletedIsTrue() {
+    plugin.setSearchDeletedPermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     when(subject.isPermitted(Matchers.any(KeyValuePermission.class))).thenReturn(true);
 
-    boolean canQuery = plugin.isAllowedToDelete(subject);
-    assertThat(canQuery, is(true));
+    boolean canSearchDeleted = plugin.isAllowedToSearchDeleted(subject);
+    assertThat(canSearchDeleted, is(true));
+  }
+
+  @Test
+  public void testIsAllowedToSearchDeletedIsTrueWithInvalidPermission() {
+    plugin.setSearchDeletedPermission("some=invalid=permission");
+
+    boolean canSearchDeleted = plugin.isAllowedToSearchDeleted(subject);
+    assertThat(canSearchDeleted, is(true));
+  }
+
+  @Test
+  public void testIsAllowedToSearchDeletedIsTrueIfPermissionNotSet() {
+    plugin.setDeletePermission(null);
+
+    boolean canSearchDeleted = plugin.isAllowedToSearchDeleted(subject);
+    assertThat(canSearchDeleted, is(true));
+  }
+
+  @Test
+  public void testIsAllowedToSearchDeletedIsFalse() {
+    plugin.setSearchDeletedPermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
+    when(subject.isPermitted(Matchers.any(KeyValuePermission.class))).thenReturn(false);
+
+    boolean canSearchDeleted = plugin.isAllowedToSearchDeleted(subject);
+    assertThat(canSearchDeleted, is(false));
+  }
+
+  @Test
+  public void testIsAllowedToDeleteIsTrue() {
+    plugin.setDeletePermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
+    when(subject.isPermitted(Matchers.any(KeyValuePermission.class))).thenReturn(true);
+
+    boolean canDelete = plugin.isAllowedToDelete(subject);
+    assertThat(canDelete, is(true));
   }
 
   @Test
   public void testIsAllowedToDeleteIsTrueWithInvalidPermission() {
-    plugin.setPermission("some=invalid=permission");
-    boolean canQuery = plugin.isAllowedToDelete(subject);
-    assertThat(canQuery, is(true));
+    plugin.setDeletePermission("some=invalid=permission");
+
+    boolean canDelete = plugin.isAllowedToDelete(subject);
+    assertThat(canDelete, is(true));
+  }
+
+  @Test
+  public void testIsAllowedToDeleteIsTrueIfPermissionNotSet() {
+    plugin.setDeletePermission(null);
+
+    boolean canDelete = plugin.isAllowedToDelete(subject);
+    assertThat(canDelete, is(true));
   }
 
   @Test
   public void testIsAllowedToDeleteIsFalse() {
+    plugin.setDeletePermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     when(subject.isPermitted(Matchers.any(KeyValuePermission.class))).thenReturn(false);
 
-    plugin.setPermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
-    boolean canQuery = plugin.isAllowedToDelete(subject);
-    assertThat(canQuery, is(false));
+    boolean canDelete = plugin.isAllowedToDelete(subject);
+    assertThat(canDelete, is(false));
   }
 
   @Test
   public void testProcessPreDelete() throws StopProcessingException {
+    plugin.setDeletePermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertPolicyResponse(response);
@@ -94,7 +138,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteWithoutPermissionSet() throws StopProcessingException {
-    plugin.setPermission(null);
+    plugin.setDeletePermission(null);
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -102,6 +146,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteNonResourceMetacard() throws StopProcessingException {
+    plugin.setDeletePermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     List<Metacard> metacards = Collections.singletonList(getMetacard("other"));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -109,7 +154,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteWithNoEqualsSignInPermission() throws StopProcessingException {
-    plugin.setPermission("does-not-contain-an-equals-sign");
+    plugin.setDeletePermission("does-not-contain-an-equals-sign");
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -118,7 +163,7 @@ public class DeleteMetacardPolicyPluginTest {
   @Test
   public void testProcessPreDeleteWithTooManyEqualsSignsInPermission()
       throws StopProcessingException {
-    plugin.setPermission("has=too=many=equals=signs");
+    plugin.setDeletePermission("has=too=many=equals=signs");
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -126,7 +171,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteWithNoPermissionKey() throws StopProcessingException {
-    plugin.setPermission("=some-role");
+    plugin.setDeletePermission("=some-role");
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -134,7 +179,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteWithNoPermissionValue() throws StopProcessingException {
-    plugin.setPermission("some-uri=");
+    plugin.setDeletePermission("some-uri=");
     List<Metacard> metacards = Collections.singletonList(getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertEmptyPolicyResponse(response);
@@ -142,6 +187,7 @@ public class DeleteMetacardPolicyPluginTest {
 
   @Test
   public void testProcessPreDeleteAssortedMetacards() throws StopProcessingException {
+    plugin.setDeletePermission(PERMISSION_KEY + "=" + PERMISSION_VALUE);
     List<Metacard> metacards = Arrays.asList(getMetacard("other"), getMetacard(RESOURCE));
     PolicyResponse response = plugin.processPreDelete(metacards, null);
     assertPolicyResponse(response);

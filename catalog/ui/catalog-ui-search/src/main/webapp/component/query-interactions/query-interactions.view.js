@@ -21,11 +21,12 @@ define([
     './query-interactions.hbs',
     'js/CustomElements',
     'js/store',
+    'component/singletons/user-instance',
     'decorator/menu-navigation.decorator',
     'decorator/Decorators',
     'component/lightbox/lightbox.view.instance',
     'component/query-feedback/query-feedback.view'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, MenuNavigationDecorator, Decorators, lightboxInstance, QueryFeedbackView) {
+], function (wreqr, Marionette, _, $, template, CustomElements, store, user, MenuNavigationDecorator, Decorators, lightboxInstance, QueryFeedbackView) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -49,6 +50,7 @@ define([
                 this.startListeningToSearch();
             }
             this.handleResult();
+            this.$el.toggleClass('is-deleted-search-restricted', user.get('user').get('isSearchDeletedAllowed') === false);
         },
         onRender: function(){
         },

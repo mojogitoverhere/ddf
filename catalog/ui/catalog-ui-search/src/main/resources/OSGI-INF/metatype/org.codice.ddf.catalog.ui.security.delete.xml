@@ -18,9 +18,16 @@
   <OCD name="Metacard Delete Security"
     id="org.codice.ddf.catalog.ui.security.delete">
 
-    <AD id="permission"
-      name="Permission"
+    <AD id="deletePermission"
+      name="Delete Permission"
       description="The key value permission to allow users to delete results. It should be in the format of 'permission-key=permission-value'. If no permission is provided, all users will be allowed to delete results."
+      required="false"
+      type="String"
+      default=""/>
+
+    <AD id="searchDeletedPermission"
+      name="Search Deleted Permission"
+      description="The key value permission to allow users to search deleted results. It should be in the format of 'permission-key=permission-value'. If no permission is provided, all users will be allowed to search deleted results."
       required="false"
       type="String"
       default=""/>
