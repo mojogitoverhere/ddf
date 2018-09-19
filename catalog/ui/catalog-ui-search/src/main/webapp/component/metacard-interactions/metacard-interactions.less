@@ -55,6 +55,10 @@
   .is-offline-allowed {
     display: block;
   }
+
+  .is-archive-allowed {
+    display: block;
+  }
 }
 
 @{customElementNamespace}metacard-interactions.in-workspace {
@@ -166,6 +170,12 @@
 
 @{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
   .is-offline-allowed {
+    display: none;
+  }
+}
+
+@{customElementNamespace}metacard-interactions:not(.is-archive-allowed) {
+  .is-archive-allowed {
     display: none;
   }
 }

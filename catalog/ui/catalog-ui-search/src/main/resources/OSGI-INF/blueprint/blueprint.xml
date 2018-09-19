@@ -316,6 +316,7 @@
         <argument ref="persistentStore"/>
         <argument ref="endpointUtil"/>
         <argument ref="contextPolicyManager"/>
+        <argument ref="deleteMetacardPlugin"/>
     </bean>
 
     <bean id="importDirectory" class="org.codice.ddf.catalog.ui.imports.ImportDirectory">
@@ -442,5 +443,12 @@
 
     <service ref="workspaceQueryService"
              interface="org.codice.ddf.catalog.ui.query.monitor.api.WorkspaceQueryService"/>
+
+    <bean id="deleteMetacardPlugin" class="org.codice.ddf.catalog.ui.security.DeleteMetacardPolicyPlugin">
+        <cm:managed-properties persistent-id="org.codice.ddf.catalog.ui.security.delete"
+            update-strategy="container-managed"/>
+    </bean>
+
+    <service ref="deleteMetacardPlugin" interface="ddf.catalog.plugin.PolicyPlugin"/>
 
 </blueprint>

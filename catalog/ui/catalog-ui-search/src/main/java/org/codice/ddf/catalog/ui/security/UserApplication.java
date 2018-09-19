@@ -52,13 +52,17 @@ public class UserApplication implements SparkApplication {
 
   private final ContextPolicyManager contextPolicyManager;
 
+  private final DeleteMetacardPolicyPlugin deletePolicy;
+
   public UserApplication(
       EndpointUtil util,
       PersistentStore persistentStore,
-      ContextPolicyManager contextPolicyManager) {
+      ContextPolicyManager contextPolicyManager,
+      DeleteMetacardPolicyPlugin deletePolicy) {
     this.util = util;
     this.persistentStore = persistentStore;
     this.contextPolicyManager = contextPolicyManager;
+    this.deletePolicy = deletePolicy;
   }
 
   private void setUserPreferences(Subject subject, Map<String, Object> preferences) {
@@ -119,6 +123,7 @@ public class UserApplication implements SparkApplication {
             .put("isRestoreAllowed", isRestoreAllowed())
             .put("isPermDeleteAllowed", isPermDeleteAllowed())
             .put("isOfflineAllowed", isOfflineAllowed())
+            .put("isDeleteAllowed", isDeleteAllowed(subject))
             .build();
 
     String email = SubjectUtils.getEmailAddress(subject);
@@ -152,6 +157,10 @@ public class UserApplication implements SparkApplication {
       }
     }
     return true;
+  }
+
+  private boolean isDeleteAllowed(Subject subject) {
+    return deletePolicy.isAllowedToDelete(subject);
   }
 
   @Override
