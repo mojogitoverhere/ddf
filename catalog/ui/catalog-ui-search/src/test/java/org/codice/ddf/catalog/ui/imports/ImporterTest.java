@@ -156,18 +156,18 @@ public class ImporterTest {
             "metacards/012/0123456789/derived/original/c.dat",
             "metacards/012/0123456789/derived/overview/b.dat",
             "metacards/012/0123456789/content/a.dat",
-            "metacards/012/0123456789/history/history1/metacard/history1.xml",
-            "metacards/012/0123456789/history/history1/derived/original/f.dat",
-            "metacards/012/0123456789/history/history1/derived/overview/e.dat",
-            "metacards/012/0123456789/history/history1/content/a.dat",
-            "metacards/012/0123456789/history/history2/metacard/history2.xml",
-            "metacards/012/0123456789/history/history2/derived/original/i.dat",
-            "metacards/012/0123456789/history/history2/derived/overview/h.dat",
-            "metacards/012/0123456789/history/history2/content/a.dat");
+            "metacards/his/history1/metacard/history1.xml",
+            "metacards/his/history1/derived/original/f.dat",
+            "metacards/his/history1/derived/overview/e.dat",
+            "metacards/his/history1/content/a.dat",
+            "metacards/his/history2/metacard/history2.xml",
+            "metacards/his/history2/derived/original/i.dat",
+            "metacards/his/history2/derived/overview/h.dat",
+            "metacards/his/history2/content/a.dat");
 
     importFile(fileToImport);
 
-    verify(importStatus).update(0, 1);
+    verify(importStatus).update(0, 3);
   }
 
   @Test
@@ -185,14 +185,14 @@ public class ImporterTest {
             "metacards/012/0123456789/derived/original/c.dat",
             "metacards/012/0123456789/derived/overview/b.dat",
             "metacards/012/0123456789/content/a.dat",
-            "metacards/012/0123456789/history/history1/metacard/history1.xml",
-            "metacards/012/0123456789/history/history1/derived/original/f.dat",
-            "metacards/012/0123456789/history/history1/derived/overview/e.dat",
-            "metacards/012/0123456789/history/history1/content/a.dat",
-            "metacards/012/0123456789/history/history2/metacard/history2.xml",
-            "metacards/012/0123456789/history/history2/derived/original/i.dat",
-            "metacards/012/0123456789/history/history2/derived/overview/h.dat",
-            "metacards/012/0123456789/history/history2/content/a.dat");
+            "metacards/his/history1/metacard/history1.xml",
+            "metacards/his/history1/derived/original/f.dat",
+            "metacards/his/history1/derived/overview/e.dat",
+            "metacards/his/history1/content/a.dat",
+            "metacards/his/history2/metacard/history2.xml",
+            "metacards/his/history2/derived/original/i.dat",
+            "metacards/his/history2/derived/overview/h.dat",
+            "metacards/his/history2/content/a.dat");
 
     importFile(fileToImport);
 
@@ -314,8 +314,8 @@ public class ImporterTest {
         createTestZip(
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/metacard/ef302deb60a54d4fa15c7b03c3ed96b5.xml",
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/content/a.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat");
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat");
 
     importFile(fileToImport);
 
@@ -325,7 +325,7 @@ public class ImporterTest {
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat"));
 
-    assertStatusUpdated(1);
+    assertStatusUpdated(2);
   }
 
   @Test
@@ -341,8 +341,8 @@ public class ImporterTest {
         createTestZip(
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/metacard/ef302deb60a54d4fa15c7b03c3ed96b5.xml",
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/content/a.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat");
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat");
 
     importFile(fileToImport);
 
@@ -352,7 +352,7 @@ public class ImporterTest {
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat"));
 
-    assertStatusUpdated(1);
+    assertStatusUpdated(2);
   }
 
   @Test
@@ -368,9 +368,9 @@ public class ImporterTest {
         createTestZip(
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/metacard/ef302deb60a54d4fa15c7b03c3ed96b5.xml",
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/content/a.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/derived/original/c.dat");
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/derived/original/c.dat");
 
     importFile(fileToImport);
 
@@ -380,7 +380,7 @@ public class ImporterTest {
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat", "c.dat"));
 
-    assertStatusUpdated(1);
+    assertStatusUpdated(2);
   }
 
   @Test
@@ -396,9 +396,9 @@ public class ImporterTest {
         createTestZip(
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/metacard/ef302deb60a54d4fa15c7b03c3ed96b5.xml",
             "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/content/a.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat",
-            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b5/history/ef302deb60a54d4fa15c7b03c3ed96b6/derived/original/c.dat");
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/metacard/ef302deb60a54d4fa15c7b03c3ed96b6.xml",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/content/b.dat",
+            "metacards/ef3/ef302deb60a54d4fa15c7b03c3ed96b6/derived/original/c.dat");
 
     importFile(fileToImport);
 
@@ -408,7 +408,7 @@ public class ImporterTest {
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat", "c.dat"));
 
-    assertStatusUpdated(1);
+    assertStatusUpdated(2);
   }
 
   @Test

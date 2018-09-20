@@ -37,15 +37,6 @@ class ExtractedArchive {
 
     void visitDerivedContent(String type, Path derivedContentFile)
         throws FileNotFoundException, MimeTypeResolutionException, MimeTypeParseException;
-
-    void visitHistoryMetacardXml(Path metacardXmlFile)
-        throws IOException, CatalogTransformerException;
-
-    void visitHistoryDerivedContent(String type, Path derivedContentFile)
-        throws MimeTypeResolutionException, MimeTypeParseException, FileNotFoundException;
-
-    void visitHistoryContent(Path contentFile)
-        throws MimeTypeResolutionException, MimeTypeParseException, FileNotFoundException;
   }
 
   private Path temporaryDirectory;
@@ -71,18 +62,6 @@ class ExtractedArchive {
             visitor::visitMetacardXml,
             visitor::visitContent,
             visitor::visitDerivedContent);
-
-        Path historyFile = Paths.get(threeDigitSubdirectory.toString(), "history");
-        if (Files.exists(historyFile)) {
-          List<Path> histories = listFiles(historyFile);
-          for (Path history : histories) {
-            visitMetacardAndDerivedDirectories(
-                history,
-                visitor::visitHistoryMetacardXml,
-                visitor::visitHistoryContent,
-                visitor::visitHistoryDerivedContent);
-          }
-        }
       }
     }
 

@@ -33,13 +33,4 @@ class TotalWorkVisitor implements ExtractedArchive.Visitor {
 
   @Override
   public void visitDerivedContent(String type, Path derivedContentFile) {}
-
-  @Override
-  public void visitHistoryMetacardXml(Path metacardXmlFile) {}
-
-  @Override
-  public void visitHistoryDerivedContent(String type, Path derivedContentFile) {}
-
-  @Override
-  public void visitHistoryContent(Path contentFile) {}
 }

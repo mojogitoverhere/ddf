@@ -16,8 +16,6 @@ package org.codice.ddf.catalog.ui.imports;
 import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 class MetacardImportItem {
@@ -27,8 +25,6 @@ class MetacardImportItem {
   private ContentImportItem content;
 
   private Map<String, ContentImportItem> derivedContent = new HashMap<>();
-
-  private List<MetacardImportItem> history = new LinkedList<>();
 
   Metacard getMetacard() {
     return metacard;
@@ -48,10 +44,6 @@ class MetacardImportItem {
 
   Map<String, ContentImportItem> getDerivedContent() {
     return derivedContent;
-  }
-
-  List<MetacardImportItem> getHistory() {
-    return history;
   }
 
   static class ContentImportItem {

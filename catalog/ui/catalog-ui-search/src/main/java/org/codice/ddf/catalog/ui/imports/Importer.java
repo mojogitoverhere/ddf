@@ -116,7 +116,7 @@ public class Importer {
       long completed = 0;
       for (MetacardImportItem metacardImportItem : metacardImportItems) {
         try {
-          processMetacardToImport(metacardImportItem);
+          handlerFactory(metacardImportItem).handle();
         } catch (UnsupportedQueryException
             | IngestException
             | StorageException
@@ -170,18 +170,6 @@ public class Importer {
         | MimeTypeResolutionException
         | MimeTypeParseException e) {
       throw new ImportException("Failed to extract the import details from the import archive.", e);
-    }
-  }
-
-  private void processMetacardToImport(MetacardImportItem metacardImportItem)
-      throws UnsupportedQueryException, IngestException, IOException, StorageException,
-          ImportException, SourceUnavailableException, FederationException,
-          ResourceNotFoundException, ResourceNotSupportedException {
-
-    handlerFactory(metacardImportItem).handle();
-
-    for (MetacardImportItem historyMetacardToImport : metacardImportItem.getHistory()) {
-      processMetacardToImport(historyMetacardToImport);
     }
   }
 

@@ -37,8 +37,6 @@ class ImportFileVisitor implements ExtractedArchive.Visitor {
 
   private MetacardImportItem metacardImportItemInProgress = null;
 
-  private MetacardImportItem historyMetacardImportItemInProgress = null;
-
   private final InputTransformer inputTransformer;
 
   private final MimeTypeMapper mimeTypeMapper;
@@ -73,29 +71,7 @@ class ImportFileVisitor implements ExtractedArchive.Visitor {
         .put(type, createContentImportItem(derivedContentFile));
   }
 
-  @Override
-  public void visitHistoryMetacardXml(Path metacardXmlFile)
-      throws IOException, CatalogTransformerException {
-    flushHistory();
-    historyMetacardImportItemInProgress = createMetacardImportItem(metacardXmlFile);
-  }
-
-  @Override
-  public void visitHistoryDerivedContent(String type, Path derivedContentFile)
-      throws MimeTypeResolutionException, MimeTypeParseException, FileNotFoundException {
-    historyMetacardImportItemInProgress
-        .getDerivedContent()
-        .put(type, createContentImportItem(derivedContentFile));
-  }
-
-  @Override
-  public void visitHistoryContent(Path contentFile)
-      throws MimeTypeResolutionException, MimeTypeParseException, FileNotFoundException {
-    historyMetacardImportItemInProgress.setContentImportItem(createContentImportItem(contentFile));
-  }
-
   ImportFileVisitor flush() {
-    flushHistory();
     if (metacardImportItemInProgress != null) {
       metacardImportItems.add(metacardImportItemInProgress);
       metacardImportItemInProgress = null;
@@ -123,12 +99,5 @@ class ImportFileVisitor implements ExtractedArchive.Visitor {
     }
 
     return metacardImportItem;
-  }
-
-  private void flushHistory() {
-    if (historyMetacardImportItemInProgress != null) {
-      metacardImportItemInProgress.getHistory().add(historyMetacardImportItemInProgress);
-      historyMetacardImportItemInProgress = null;
-    }
   }
 }
