@@ -125,6 +125,8 @@ public class UserApplication implements SparkApplication {
             .put("isOfflineAllowed", isOfflineAllowed())
             .put("isDeleteAllowed", isDeleteAllowed(subject))
             .put("isSearchDeletedAllowed", isSearchDeletedAllowed(subject))
+            .put("isBulkExportAllowed", isBulkExportAllowed())
+            .put("isBulkImportAllowed", isBulkImportAllowed())
             .build();
 
     String email = SubjectUtils.getEmailAddress(subject);
@@ -166,6 +168,14 @@ public class UserApplication implements SparkApplication {
 
   private Object isSearchDeletedAllowed(Subject subject) {
     return deletePolicy.isAllowedToSearchDeleted(subject);
+  }
+
+  private boolean isBulkExportAllowed() {
+    return isPathAllowed("/search/catalog/internal/resources/export");
+  }
+
+  private boolean isBulkImportAllowed() {
+    return isPathAllowed("/search/catalog/internal/import");
   }
 
   @Override

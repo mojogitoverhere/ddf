@@ -24,31 +24,25 @@ import ddf.catalog.plugin.PolicyPlugin;
 import ddf.catalog.plugin.PolicyResponse;
 import ddf.catalog.plugin.StopProcessingException;
 import ddf.catalog.plugin.impl.PolicyResponseImpl;
-import ddf.security.permission.KeyValuePermission;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(DeleteMetacardPolicyPlugin.class);
 
   private String deletePermission;
 
   private String searchDeletedPermission;
 
   public boolean isAllowedToSearchDeleted(Subject subject) {
-    return isPermitted(subject, searchDeletedPermission);
+    return PermissionUtils.isPermitted(subject, searchDeletedPermission);
   }
 
   public boolean isAllowedToDelete(Subject subject) {
-    return isPermitted(subject, deletePermission);
+    return PermissionUtils.isPermitted(subject, deletePermission);
   }
 
   @Override
@@ -100,18 +94,9 @@ public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
     return noOpPolicyResponse();
   }
 
-  private boolean isPermitted(Subject subject, String permission) {
-    String[] keyValue = parsePermission(permission);
-    if (keyValue == null || subject == null) {
-      return true;
-    }
-
-    return subject.isPermitted(new KeyValuePermission(keyValue[0], ImmutableSet.of(keyValue[1])));
-  }
-
   private Map<String, Set<String>> getPolicy(List<Metacard> metacards) {
     boolean includesResourceMetacard = metacards.stream().anyMatch(this::isResource);
-    String[] keyValue = parsePermission(deletePermission);
+    String[] keyValue = PermissionUtils.parsePermission(deletePermission);
     if (includesResourceMetacard && keyValue != null) {
       return ImmutableMap.of(keyValue[0], ImmutableSet.of(keyValue[1]));
     } else {
@@ -125,22 +110,6 @@ public class DeleteMetacardPolicyPlugin implements PolicyPlugin {
 
   private PolicyResponse noOpPolicyResponse() {
     return new PolicyResponseImpl();
-  }
-
-  private String[] parsePermission(String permission) {
-    if (permission == null) {
-      return null;
-    }
-
-    String[] keyValue = permission.split("=");
-    if (keyValue.length != 2 || StringUtils.isAnyBlank(keyValue)) {
-      LOGGER.debug(
-          "Failed to parse the permission [{}]. It must be in the \"permission key=permission value\" format",
-          permission);
-      return null;
-    }
-
-    return keyValue;
   }
 
   public void setDeletePermission(String deletePermission) {

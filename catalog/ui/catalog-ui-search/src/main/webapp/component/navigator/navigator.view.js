@@ -19,6 +19,7 @@ var template = require('./navigator.hbs');
 var wreqr = require('wreqr');
 var properties = require('properties');
 var store = require('js/store');
+var user = require('component/singletons/user-instance');
 var router = require('component/router/router');
 var metacard = require('component/metacard/metacard');
 var SaveView = require('component/save/workspaces/workspaces-save.view');
@@ -44,6 +45,8 @@ module.exports = Marionette.LayoutView.extend({
     initialize: function(){
         this.listenTo(store.get('workspaces'), 'change:saved update add remove', this.handleSaved);
         this.handleSaved();
+        this.$el.toggleClass('is-export-allowed', user.get('user').get('isBulkExportAllowed') === true);
+        this.$el.toggleClass('is-import-allowed', user.get('user').get('isBulkImportAllowed') === true);
     },
     onBeforeShow: function(){
         this.workspacesSave.show(new SaveView());

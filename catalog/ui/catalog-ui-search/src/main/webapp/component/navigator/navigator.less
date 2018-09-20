@@ -40,6 +40,11 @@
     .workspaces-save > @{customElementNamespace}save {
         padding: @largeSpacing;
     }
+
+    button.navigation-choice.choice-import,
+    button.navigation-choice.choice-export {
+        display: none;
+    }
 }
 
 @{customElementNamespace}navigator.is-saved {
@@ -51,4 +56,16 @@
         max-width: 0%;
     }
 
+}
+
+@{customElementNamespace}navigator.is-import-allowed {
+    button.navigation-choice.choice-import {
+        display: block;
+    }
+}
+
+@{customElementNamespace}navigator.is-export-allowed {
+    button.navigation-choice.choice-export {
+        display: block;
+    }
 }
