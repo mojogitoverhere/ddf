@@ -78,15 +78,15 @@ public class OfflineResources {
 
     List<Metacard> metacards = queryCatalog(metacardId);
 
-    boolean wasMetacardFound =
-        metacards.stream().map(Metacard::getId).anyMatch(id -> id.equals(metacardId));
-    if (!wasMetacardFound) {
+    Optional<Metacard> metacardToOffline =
+        metacards.stream().filter(metacard -> metacard.getId().equals(metacardId)).findAny();
+
+    if (!metacardToOffline.isPresent()) {
       LOGGER.debug("The metacard was not found: [{}]", metacardId);
       return ImmutableMap.of(metacardId, "The metacard was not found.");
     }
 
-    boolean isOfflined = metacards.stream().anyMatch(OfflineResources::isOfflined);
-    if (isOfflined) {
+    if (OfflineResources.isOfflined(metacardToOffline.get())) {
       LOGGER.debug("The metacard is already offlined: metacardId=[{}]", metacardId);
       return ImmutableMap.of(metacardId, "The metacard is already offlined.");
     }
