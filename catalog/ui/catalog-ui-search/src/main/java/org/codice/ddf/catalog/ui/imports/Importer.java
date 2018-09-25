@@ -30,6 +30,7 @@ import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.InputTransformer;
 import ddf.mime.MimeTypeMapper;
 import ddf.mime.MimeTypeResolutionException;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -113,10 +114,16 @@ public class Importer {
 
       Set<String> metacardsThatFailedToImport = new HashSet<>();
 
+      SecurityLogger.audit("Importing content from archive [{}]", fileToImport);
+
       long completed = 0;
       for (MetacardImportItem metacardImportItem : metacardImportItems) {
         try {
           handlerFactory(metacardImportItem).handle();
+          SecurityLogger.audit(
+              "Metacard [{}] was imported successfully from archive [{}]",
+              metacardImportItem.getMetacard().getId(),
+              fileToImport);
         } catch (UnsupportedQueryException
             | IngestException
             | StorageException
@@ -135,6 +142,11 @@ public class Importer {
               "Failed to import a metacard: metacardId=[{}]",
               metacardImportItem.getMetacard().getId(),
               e);
+          SecurityLogger.audit(
+              "Metacard [{}] failed to be imported from archive [{}]. {}",
+              metacardImportItem.getMetacard().getId(),
+              fileToImport,
+              e.getMessage());
           metacardsThatFailedToImport.add(metacardImportItem.getMetacard().getId());
         } finally {
           localImportStatus.update(++completed, totalWork);

@@ -18,6 +18,7 @@ import static spark.Spark.get;
 import static spark.Spark.post;
 
 import com.google.common.collect.ImmutableMap;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -93,10 +94,12 @@ public class ImportApplication implements SparkApplication {
 
           Set<String> failedMetacardImports;
 
+          File archiveFile = Paths.get(rootPath, relativePath).toFile();
+
           try {
             failedMetacardImports =
                 importer.importArchive(
-                    Paths.get(rootPath, relativePath).toFile(),
+                    archiveFile,
                     (completed, total) -> {
                       // TODO To be implemented by TIB-731
                     },
@@ -105,6 +108,10 @@ public class ImportApplication implements SparkApplication {
                     });
           } catch (ImportException e) {
             LOGGER.debug("Failed to import: relativePath=[{}]", relativePath, e);
+            SecurityLogger.audit(
+                "Failed to import the archive [{}] and a partial import was not possible. {}",
+                archiveFile,
+                e.getMessage());
             res.status(500);
             return Collections.singletonMap(
                 "message", "Failed to import the archive. A partial import was not possible.");
@@ -117,6 +124,11 @@ public class ImportApplication implements SparkApplication {
                 .put("failed", new ArrayList<>(failedMetacardImports))
                 .build();
           }
+
+          SecurityLogger.audit(
+              "Import of archive [{}] completed with {} failed result(s)",
+              archiveFile,
+              failedMetacardImports.size());
 
           return Collections.emptyMap();
         },

@@ -69,13 +69,18 @@ public class ExportResources {
         new ResourceZipper(catalogFramework, metadataTransformer, filename);
 
     SecurityLogger.audit(
-        "Exporting [{}] of local results from cql [{}] to file [{}]", exportType, cql, filename);
-    List<String> failedIds = doExport(cql, resourceZipper, exportType);
-    SecurityLogger.audit("Export completed with {} failed result(s)", failedIds.size());
+        "Exporting [{}] of local results from cql [{}] to zip file [{}]",
+        exportType,
+        cql,
+        filename);
+    List<String> failedIds = doExport(cql, resourceZipper, exportType, filename);
+    SecurityLogger.audit(
+        "Export to zip file [{}] completed with {} failed result(s)", filename, failedIds.size());
     return new ImmutablePair<>(filename, failedIds);
   }
 
-  private List<String> doExport(String cql, ResourceZipper resourceZipper, ExportType exportType) {
+  private List<String> doExport(
+      String cql, ResourceZipper resourceZipper, ExportType exportType, String filename) {
     List<Metacard> failedMetacards = new ArrayList<>();
 
     QueryResulterable primaryResults = exportCatalog.queryAsLocalOnly(cql);
@@ -86,12 +91,16 @@ public class ExportResources {
         Metacard metacard = primaryOrHistory.getMetacard();
         try {
           resourceZipper.add(metacard, exportType);
-          SecurityLogger.audit("Metacard [{}] was exported successfully", metacard.getId());
-        } catch (IOException | CatalogTransformerException | ResourceNotSupportedException e) {
-          LOGGER.debug("Metacard [{}] could not be added to the export zip", metacard.getId(), e);
           SecurityLogger.audit(
-              "Metacard [{}] could not be added to the export zip. {}",
+              "Metacard [{}] was exported successfully to zip file [{}]",
               metacard.getId(),
+              filename);
+        } catch (IOException | CatalogTransformerException | ResourceNotSupportedException e) {
+          LOGGER.debug("Metacard [{}] could not be added to the zip file", metacard.getId(), e);
+          SecurityLogger.audit(
+              "Metacard [{}] could not be added to the zip file [{}]. {}",
+              metacard.getId(),
+              filename,
               e.getMessage());
           failedMetacards.add(metacard);
         }
