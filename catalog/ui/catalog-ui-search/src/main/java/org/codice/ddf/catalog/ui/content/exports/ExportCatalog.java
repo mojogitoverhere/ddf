@@ -52,6 +52,13 @@ public class ExportCatalog {
         catalogFramework, i -> createLocalOnlyQuery(localQuery.getQuery(), i));
   }
 
+  public QueryRequest getLocalResultCountQueryRequest(String cql) {
+    CqlRequest cqlRequest = new CqlRequest();
+    cqlRequest.setCount(1);
+    cqlRequest.setCql(cql);
+    return cqlRequest.createQueryRequest(catalogFramework.getId(), filterBuilder);
+  }
+
   public QueryResulterable getLocalHistory(String metacardId) {
     return new QueryResulterable(
         catalogFramework, i -> createLocalOnlyQuery(createHistoryFilter(metacardId), i));

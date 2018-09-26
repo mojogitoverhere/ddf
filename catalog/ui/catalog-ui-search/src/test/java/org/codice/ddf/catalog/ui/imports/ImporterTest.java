@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
+import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.codice.ddf.catalog.ui.util.CatalogUtils;
 import org.codice.ddf.catalog.ui.util.EndpointUtil;
 import org.junit.Before;
@@ -73,7 +74,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -87,9 +87,7 @@ public class ImporterTest {
 
   @Mock private StorageProvider storageProvider;
 
-  @Mock private Status unzipStatus;
-
-  @Mock private Status importStatus;
+  @Mock private Task task;
 
   @Mock private MimeTypeMapper mimeTypeMapper;
 
@@ -166,48 +164,6 @@ public class ImporterTest {
             "metacards/his/history2/content/a.dat");
 
     importFile(fileToImport);
-
-    verify(importStatus).update(0, 3);
-  }
-
-  @Test
-  public void testUnzippingStatusUpdate()
-      throws ImportException, IOException, CatalogTransformerException, IngestException,
-          UnsupportedQueryException, SourceUnavailableException, ZipException, FederationException {
-
-    mockMetacardNotInCatalog("0123456789");
-    mockMetacardNotInCatalog("history1");
-    mockMetacardNotInCatalog("history2");
-
-    File fileToImport =
-        createTestZip(
-            "metacards/012/0123456789/metacard/0123456789.xml",
-            "metacards/012/0123456789/derived/original/c.dat",
-            "metacards/012/0123456789/derived/overview/b.dat",
-            "metacards/012/0123456789/content/a.dat",
-            "metacards/his/history1/metacard/history1.xml",
-            "metacards/his/history1/derived/original/f.dat",
-            "metacards/his/history1/derived/overview/e.dat",
-            "metacards/his/history1/content/a.dat",
-            "metacards/his/history2/metacard/history2.xml",
-            "metacards/his/history2/derived/original/i.dat",
-            "metacards/his/history2/derived/overview/h.dat",
-            "metacards/his/history2/content/a.dat");
-
-    importFile(fileToImport);
-
-    ArgumentCaptor<Long> completedCaptor = ArgumentCaptor.forClass(Long.class);
-    ArgumentCaptor<Long> totalCaptor = ArgumentCaptor.forClass(Long.class);
-
-    verify(unzipStatus, Mockito.atLeastOnce())
-        .update(completedCaptor.capture(), totalCaptor.capture());
-
-    assertThat(getLastValue(completedCaptor), is(100L));
-    assertThat(getLastValue(totalCaptor), is(100L));
-  }
-
-  private long getLastValue(ArgumentCaptor<Long> captor) {
-    return captor.getAllValues().get(captor.getAllValues().size() - 1);
   }
 
   @Test
@@ -228,8 +184,6 @@ public class ImporterTest {
     assertMetacardWasUpdatedInCatalogFramework(metacard);
 
     assertContentFilesWereCreatedInStorageProvider(new ExpectedStorageProvider(metacard, "a.dat"));
-
-    assertStatusUpdated(1);
   }
 
   @Test
@@ -249,8 +203,6 @@ public class ImporterTest {
     assertMetacardWasCreatedInCatalogFramework(metacard);
 
     assertContentFilesWereCreatedInStorageProvider(new ExpectedStorageProvider(metacard, "a.dat"));
-
-    assertStatusUpdated(1);
   }
 
   @Test
@@ -273,8 +225,6 @@ public class ImporterTest {
 
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat", "b.dat"));
-
-    assertStatusUpdated(1);
   }
 
   @Test
@@ -297,8 +247,6 @@ public class ImporterTest {
 
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat", "b.dat"));
-
-    assertStatusUpdated(1);
   }
 
   @Test
@@ -324,8 +272,6 @@ public class ImporterTest {
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat"));
-
-    assertStatusUpdated(2);
   }
 
   @Test
@@ -351,8 +297,6 @@ public class ImporterTest {
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat"));
-
-    assertStatusUpdated(2);
   }
 
   @Test
@@ -379,8 +323,6 @@ public class ImporterTest {
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat", "c.dat"));
-
-    assertStatusUpdated(2);
   }
 
   @Test
@@ -407,8 +349,6 @@ public class ImporterTest {
     assertContentFilesWereCreatedInStorageProvider(
         new ExpectedStorageProvider(metacard, "a.dat"),
         new ExpectedStorageProvider(history, "b.dat", "c.dat"));
-
-    assertStatusUpdated(2);
   }
 
   @Test
@@ -434,8 +374,6 @@ public class ImporterTest {
     assertMetacardWasUpdatedInCatalogFramework(metacard2);
 
     assertContentFilesWereCreatedInStorageProvider(new ExpectedStorageProvider(metacard2, "b.dat"));
-
-    assertStatusUpdated(2);
   }
 
   private class ExpectedStorageProvider {
@@ -645,19 +583,6 @@ public class ImporterTest {
   }
 
   private Set<String> importFile(File fileToImport) throws ImportException {
-    return importer.importArchive(fileToImport, unzipStatus, importStatus);
-  }
-
-  private void assertStatusUpdated(int expected) {
-    ArgumentCaptor<Long> completedCaptor = ArgumentCaptor.forClass(Long.class);
-    ArgumentCaptor<Long> totalCaptor = ArgumentCaptor.forClass(Long.class);
-
-    verify(importStatus, atLeast(expected))
-        .update(completedCaptor.capture(), totalCaptor.capture());
-    assertThat(
-        completedCaptor.getAllValues().get(completedCaptor.getAllValues().size() - 1),
-        is((long) expected));
-    assertThat(
-        totalCaptor.getAllValues().get(totalCaptor.getAllValues().size() - 1), is((long) expected));
+    return importer.importArchive(fileToImport, task);
   }
 }

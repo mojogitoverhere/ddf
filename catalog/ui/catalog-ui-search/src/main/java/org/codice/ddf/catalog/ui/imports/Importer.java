@@ -39,11 +39,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.activation.MimeTypeParseException;
-import javax.annotation.Nullable;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.Validate;
+import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.codice.ddf.catalog.ui.util.CatalogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,12 +62,6 @@ public class Importer {
 
   private final ImporterCatalog importerCatalog;
 
-  /** This is a Null Object Pattern implementation of Status. */
-  private static final Status NULL_STATUS =
-      (completed, total) -> {
-        // do nothing
-      };
-
   @SuppressWarnings("WeakerAccess" /* access needed for blueprint */)
   public Importer(
       InputTransformer inputTransformer,
@@ -84,31 +78,23 @@ public class Importer {
 
   /**
    * @param fileToImport the zip file to import
-   * @param unzipStatus the status of the unzipping process
-   * @param importStatus the status of the importing process
+   * @param task the task object that should be sent updates
    * @return a set of metacard identifiers that failed to import
    * @throws ImportException the import failed, a partial import was not possible
    */
-  Set<String> importArchive(
-      File fileToImport, @Nullable final Status unzipStatus, @Nullable final Status importStatus)
-      throws ImportException {
+  Set<String> importArchive(File fileToImport, Task task) throws ImportException {
 
     Validate.notNull(fileToImport, "The file to import must be non-null");
 
-    Status localUnzipStatus = Optional.ofNullable(unzipStatus).orElse(NULL_STATUS);
-    Status localImportStatus = Optional.ofNullable(importStatus).orElse(NULL_STATUS);
-
     ZipFile zipFile = getZipFile(fileToImport);
-
-    Path temporaryDirectory = unzipper.unzip(zipFile, localUnzipStatus);
+    Path temporaryDirectory = unzipper.unzip(zipFile);
 
     try {
-
       ExtractedArchive extractedArchive = new ExtractedArchive(temporaryDirectory);
 
+      long completed = 0;
       long totalWork = extractedArchive.getMetacardCount();
-
-      localImportStatus.update(0, totalWork);
+      task.update(completed, totalWork);
 
       List<MetacardImportItem> metacardImportItems = extractImportDetails(extractedArchive);
 
@@ -116,7 +102,6 @@ public class Importer {
 
       SecurityLogger.audit("Importing content from archive [{}]", fileToImport);
 
-      long completed = 0;
       for (MetacardImportItem metacardImportItem : metacardImportItems) {
         try {
           handlerFactory(metacardImportItem).handle();
@@ -137,8 +122,7 @@ public class Importer {
               "Failed to import a metacard: metacardId=[{}]",
               metacardImportItem.getMetacard().getId(),
               e);
-          // TODO (PR) what is the correct log level?
-          INGEST_LOGGER.info(
+          INGEST_LOGGER.debug(
               "Failed to import a metacard: metacardId=[{}]",
               metacardImportItem.getMetacard().getId(),
               e);
@@ -149,10 +133,11 @@ public class Importer {
               e.getMessage());
           metacardsThatFailedToImport.add(metacardImportItem.getMetacard().getId());
         } finally {
-          localImportStatus.update(++completed, totalWork);
+          completed++;
+          task.update(completed, totalWork);
         }
       }
-
+      task.finished();
       return metacardsThatFailedToImport;
     } finally {
       boolean deleteStatus = FileUtils.deleteQuietly(temporaryDirectory.toFile());

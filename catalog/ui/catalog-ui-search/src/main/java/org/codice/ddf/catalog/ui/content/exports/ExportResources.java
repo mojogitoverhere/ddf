@@ -17,7 +17,11 @@ import com.google.common.collect.ImmutableMap;
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.Result;
+import ddf.catalog.federation.FederationException;
+import ddf.catalog.operation.QueryResponse;
 import ddf.catalog.resource.ResourceNotSupportedException;
+import ddf.catalog.source.SourceUnavailableException;
+import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.MetacardTransformer;
 import ddf.security.common.audit.SecurityLogger;
@@ -36,6 +40,7 @@ import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializerFactory;
 import org.boon.json.ObjectMapper;
 import org.codice.ddf.catalog.ui.offline.ResourceZipper;
+import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.codice.ddf.commands.util.QueryResulterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +66,11 @@ public class ExportResources {
   }
 
   public Pair<String, List<String>> export(
-      String cql, MetacardTransformer metadataTransformer, ExportType exportType, String directory)
+      String cql,
+      MetacardTransformer metadataTransformer,
+      ExportType exportType,
+      String directory,
+      Task task)
       throws IOException {
 
     String filename = makeZipFileName(directory);
@@ -73,16 +82,32 @@ public class ExportResources {
         exportType,
         cql,
         filename);
-    List<String> failedIds = doExport(cql, resourceZipper, exportType, filename);
+    List<String> failedIds = doExport(cql, resourceZipper, exportType, filename, task);
     SecurityLogger.audit(
         "Export to zip file [{}] completed with {} failed result(s)", filename, failedIds.size());
     return new ImmutablePair<>(filename, failedIds);
   }
 
   private List<String> doExport(
-      String cql, ResourceZipper resourceZipper, ExportType exportType, String filename) {
+      String cql,
+      ResourceZipper resourceZipper,
+      ExportType exportType,
+      String filename,
+      Task task) {
     List<Metacard> failedMetacards = new ArrayList<>();
 
+    long current = 0;
+    long totalHits = -1;
+    try {
+      QueryResponse queryResponse =
+          catalogFramework.query(exportCatalog.getLocalResultCountQueryRequest(cql));
+      totalHits = queryResponse.getHits();
+    } catch (UnsupportedQueryException | SourceUnavailableException | FederationException e) {
+      LOGGER.debug(
+          "Could not execute query to get total result count -- job status will not show total", e);
+    }
+
+    task.update(current, totalHits);
     QueryResulterable primaryResults = exportCatalog.queryAsLocalOnly(cql);
     for (Result primaryResult : primaryResults) {
       QueryResulterable primaryAndHistoryResults =
@@ -105,11 +130,14 @@ public class ExportResources {
           failedMetacards.add(metacard);
         }
       }
+      current++;
+      task.update(current, totalHits);
     }
 
     if (!failedMetacards.isEmpty()) {
       addErrorFile(resourceZipper, failedMetacards);
     }
+    task.finished();
     return failedMetacards.stream().map(Metacard::getId).collect(Collectors.toList());
   }
 

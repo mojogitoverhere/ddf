@@ -15,14 +15,20 @@ package org.codice.ddf.catalog.ui.content.exports;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
 import com.google.common.collect.ImmutableMap;
 import ddf.catalog.transform.ExportableMetadataTransformer;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.boon.json.JsonFactory;
@@ -30,6 +36,8 @@ import org.boon.json.JsonParserAndMapper;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializerFactory;
 import org.boon.json.ObjectMapper;
+import org.codice.ddf.catalog.ui.task.TaskMonitor;
+import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -50,6 +58,10 @@ public class ExportApplication implements SparkApplication {
 
   private ExportDirectory exportDirectory;
 
+  private TaskMonitor exportMonitor = new TaskMonitor();
+
+  private ExecutorService executor = Executors.newSingleThreadExecutor();
+
   public ExportApplication(
       ExportResources exportResources,
       MetadataFormats metadataFormats,
@@ -67,7 +79,7 @@ public class ExportApplication implements SparkApplication {
           res.type(APPLICATION_JSON);
           return ImmutableMap.of("root", exportDirectory.toString());
         },
-        this::toJson);
+        JSON_MAPPER::toJson);
 
     get(
         "/resources/export/formats",
@@ -75,7 +87,7 @@ public class ExportApplication implements SparkApplication {
           res.type(APPLICATION_JSON);
           return ImmutableMap.of("formats", metadataFormats.getIds());
         },
-        this::toJson);
+        JSON_MAPPER::toJson);
 
     post(
         "/resources/export",
@@ -121,14 +133,59 @@ public class ExportApplication implements SparkApplication {
               metadataFormat,
               type);
 
-          // TODO TIB-731 do the export asynchronously
-          Pair<String, List<String>> results =
-              exportResources.export(
-                  cql, metadataTransformer.get(), type, exportDirectory.toString());
+          Task task = exportMonitor.newTask();
+          task.putDetails("cql", cql);
+          task.putDetails("metadataFormat ", metadataFormat);
+          task.putDetails("type", type);
+          task.putDetails("title", exportOptions.getTitle());
+          executor.submit(
+              () -> {
+                task.started();
+                Pair<String, List<String>> results = null;
+                try {
+                  results =
+                      exportResources.export(
+                          cql, metadataTransformer.get(), type, exportDirectory.toString(), task);
+                } catch (IOException e) {
+                  LOGGER.warn(
+                      "An exception occurred while attempting to export items. Archive may be incomplete or missing. You may wish to try the export again. If you still encounter problems ensure there is sufficient disk space available and the proper permissions are set.",
+                      e);
+                  task.failed();
+                  task.putDetails(
+                      "details",
+                      "An error occurred while exporting, please see the logs for more information");
+                  return;
+                }
 
-          return ImmutableMap.of("filename", results.getLeft(), "failed", results.getRight());
+                task.putDetails(
+                    ImmutableMap.of(
+                        "filename",
+                        new File(results.getLeft()).getName(),
+                        "failed",
+                        results.getRight()));
+              });
+
+          return Collections.singletonMap("task-id", task.getId());
         },
-        this::toJson);
+        JSON_MAPPER::toJson);
+
+    get("/resources/export/tasks", (req, res) -> exportMonitor.getTasks(), JSON_MAPPER::toJson);
+
+    get(
+        "/resources/export/task/:id",
+        (req, res) -> {
+          res.type(APPLICATION_JSON);
+          return exportMonitor.getTask(req.params(":id"));
+        },
+        JSON_MAPPER::toJson);
+
+    delete(
+        "/resources/export/task/:id",
+        (req, res) -> {
+          String id = req.params(":id");
+          exportMonitor.removeTask(id);
+          return "";
+        });
   }
 
   private Map<String, Object> error(Response res, int statusCode, String message) {
@@ -141,10 +198,6 @@ public class ExportApplication implements SparkApplication {
     return ImmutableMap.of("message", message);
   }
 
-  private String toJson(Object result) {
-    return JSON_MAPPER.toJson(result);
-  }
-
   private static class ExportOptions {
 
     private static final JsonParserAndMapper JSON_PARSER = JsonFactory.create().parser();
@@ -155,12 +208,15 @@ public class ExportApplication implements SparkApplication {
 
     private String metadataFormat;
 
+    private String title;
+
     private ExportType exportType;
 
-    private ExportOptions(String cql, String metadataFormat, ExportType exportType) {
+    private ExportOptions(String cql, String metadataFormat, ExportType exportType, String title) {
       this.cql = cql;
       this.metadataFormat = metadataFormat;
       this.exportType = exportType;
+      this.title = title;
     }
 
     public static ExportOptions fromRequest(Request request) {
@@ -168,6 +224,7 @@ public class ExportApplication implements SparkApplication {
       String cql = null;
       String metadataFormat = DEFAULT_METADATA_FORMAT;
       ExportType exportType = ExportType.INVALID;
+      String title = "No title";
 
       Object cqlRaw = parsedBody.get("cql");
       if (cqlRaw instanceof String && StringUtils.isNotBlank((String) cqlRaw)) {
@@ -185,7 +242,12 @@ public class ExportApplication implements SparkApplication {
         exportType = ExportType.fromString((String) exportTypeRaw);
       }
 
-      return new ExportOptions(cql, metadataFormat, exportType);
+      Object titleRaw = parsedBody.get("title");
+      if (titleRaw instanceof String) {
+        title = (String) titleRaw;
+      }
+
+      return new ExportOptions(cql, metadataFormat, exportType, title);
     }
 
     public String getCql() {
@@ -198,6 +260,10 @@ public class ExportApplication implements SparkApplication {
 
     public ExportType getType() {
       return this.exportType;
+    }
+
+    public String getTitle() {
+      return this.title;
     }
   }
 }
