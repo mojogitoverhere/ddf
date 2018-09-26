@@ -30,12 +30,13 @@ define([
     'component/lightbox/lightbox.view.instance',
     'component/metacard-delete/metacard-delete.view',
     'component/metacard-offline/metacard-offline.view',
+    'component/metacard-edit-offline-comment/metacard-edit-offline-comment.view',
     'component/metacard-export/metacard-export.view',
     'component/loading/loading.view',
     'js/ResultUtils',
     'component/announcement',
     'js/jquery.whenAll'
-], function (wreqr, Marionette, _, $, template, CustomElements, store, Download, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, MetacardExportView, LoadingView, ResultUtils, announcement) {
+], function (wreqr, Marionette, _, $, template, CustomElements, store, Download, router, user, sources, MenuNavigationDecorator, Decorators, lightboxInstance, MetacardDeleteView, MetacardOfflineView, MetacardEditOfflineCommentView, MetacardExportView, LoadingView, ResultUtils, announcement) {
 
     return Marionette.ItemView.extend(Decorators.decorate({
         template: template,
@@ -56,7 +57,8 @@ define([
             'click .interaction-archive': 'handleArchive',
             'click .interaction-archive-restore': 'handleRestore',
             'click .interaction-delete': 'handleDelete',
-            'click .metacard-interaction': 'handleClick'
+            'click .metacard-interaction': 'handleClick',
+            'click .interaction-edit-offline-comment': 'handleEditOfflineComment'
         },
         ui: {
         },
@@ -152,6 +154,13 @@ define([
             lightboxInstance.model.updateTitle('Move to Offline Archive');
             lightboxInstance.model.open();
             lightboxInstance.lightboxContent.show(new MetacardOfflineView({
+                model: this.model
+            }));
+        },
+        handleEditOfflineComment: function() {
+            lightboxInstance.model.updateTitle('Edit Offline Comment');
+            lightboxInstance.model.open();
+            lightboxInstance.lightboxContent.show(new MetacardEditOfflineCommentView({
                 model: this.model
             }));
         },

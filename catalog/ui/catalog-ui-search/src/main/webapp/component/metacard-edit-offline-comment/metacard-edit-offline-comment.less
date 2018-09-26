@@ -1,0 +1,32 @@
+@{customElementNamespace}metacard-edit-offline-comment {
+   overflow: auto;
+   text-align: center;
+
+   button.is-negative,
+   button.is-positive {
+     height: auto;
+     padding-left: @minimumSpacing;
+     padding-right: @minimumSpacing;
+     margin-right: @minimumSpacing;
+     margin-left: @minimumSpacing;
+   }
+
+   .confirmation {
+     width: 50%;
+     margin-left: auto;
+     margin-right: auto;
+     padding: @minimumSpacing;
+   }
+
+   textarea {
+     width: 100%;
+     height: 25%;
+     background: @card-background-color;
+     resize: none;
+   }
+
+   .selections, .offline-comment, .description {
+     margin-top: @largeSpacing;
+   }
+
+ }

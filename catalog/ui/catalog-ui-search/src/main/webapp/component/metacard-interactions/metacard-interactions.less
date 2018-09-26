@@ -32,7 +32,8 @@
   .interaction-save,
   .interaction-unsave,
   .interaction-show,
-  .interaction-share {
+  .interaction-share,
+  .interaction-edit-offline-comment {
     display: none;
   }
 
@@ -176,6 +177,19 @@
 
 @{customElementNamespace}metacard-interactions:not(.is-archive-allowed) {
   .is-archive-allowed {
+    display: none;
+  }
+}
+
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-offlined {
+  .interaction-edit-offline-comment {
+    display: block;
+  }
+}
+
+@{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
+  .interaction-edit-offline-comment {
     display: none;
   }
 }
