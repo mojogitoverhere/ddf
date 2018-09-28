@@ -14,8 +14,13 @@
 <div class="import-menu"/>
 
 <div class="import-content">
-
     <div class="import-files-container">
+        <div class="title-container">
+            <div class="import-files-title">
+                File(s) to Import
+            </div>
+            <span class="refresh fa fa-refresh is-button"/>
+        </div>
         <div class="import-file-list"/>
         <div>
             <button class="is-positive import-button disabled" data-help="Import">
@@ -26,13 +31,16 @@
 
     <div class="import-status-container">
         <div class="import-status-content">
-            <div class="import-status-title">
-                Import status
+            <div class="title-container">
+                <div class="import-status-title">
+                    Import Status
+                </div>
+                <div class="import-location"/>
+                <div class="completed-imports">
+                    Show completed imports
+                    <input class="showCompleted" type="checkbox" checked/>
+                </div>
             </div>
-            <div class="import-location">
-                (Configured import directory: {{this.root}})
-            </div>
-            <div class="completed-imports"/>
             <div class="import-status-list"/>
         </div>
     </div>

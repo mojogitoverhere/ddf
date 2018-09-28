@@ -22,6 +22,7 @@ var CustomElements = require('js/CustomElements');
 var router = require('component/router/router');
 var NavigationView = require('component/navigation/import/navigation.import.view');
 var ImportFilesView =  require('component/import-files/import-files.view');
+var ImportTasksView =  require('component/import-tasks/import-tasks.view');
 var Import = require('./import.js');
 
 module.exports = Marionette.LayoutView.extend({
@@ -29,23 +30,32 @@ module.exports = Marionette.LayoutView.extend({
     tagName: CustomElements.register('import'),
     model: new Import(),
     events: {
-        'click .import-button': 'handleImport'
+        'click .import-button': 'handleImport',
+        'click .showCompleted': 'handleShowCompleted',
+        'click .refresh': 'handleRefresh',
     },
     regions: {
         importMenu: '.import-menu',
         importFileList: '.import-file-list',
-        importStatusList: '.import-status-list'
+        importStatusList: '.import-status-list',
     },
     initialize: function(){
         this.listenTo(router, 'change', this.handleRoute);
         this.listenTo(this.model.get('selectedFiles'), 'add remove reset', this.handleSelectionChange);
+        this.listenTo(this.model, "change:root", this.handleRootChange, this);
         this.handleRoute();
     },
     handleRoute: function(){
         if (router.toJSON().name === 'openImport'){
-            this.$el.removeClass('is-hidden');
+            var self = this;
+            self.$el.removeClass('is-hidden');
+            self.model.setFiles();
+            this.timer = setInterval(function() {
+                self.model.setTasks();
+            }, 500);
         } else {
             this.$el.addClass('is-hidden');
+            clearTimeout(this.timer);
         }
     },
     handleImport: function(){
@@ -54,16 +64,15 @@ module.exports = Marionette.LayoutView.extend({
                 url: '/search/catalog/internal/import',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify(file)
+                data: JSON.stringify(file),
+                customErrorHandling: true
             })
         );
     },
     onBeforeShow: function(){
         this.importMenu.show(new NavigationView());
         this.importFileList.show(new ImportFilesView({model:this.model}));
-        if (!this.model.get('root')) {
-            this.$(".import-location").hide();
-        }
+        this.importStatusList.show(new ImportTasksView({model:this.model}));
     },
     handleSelectionChange: function() {
         if (this.model.get('selectedFiles').isEmpty()) {
@@ -71,6 +80,18 @@ module.exports = Marionette.LayoutView.extend({
         } else {
             this.$(".import-button").removeClass('disabled');
         }
+    },
+    handleRootChange: function() {
+        if (!this.model.get('root')) {
+            this.$(".import-location").hide();
+        }
+        $('.import-location').html("(Configured import directory: "  + this.model.get('root') + ")");
+    },
+    handleShowCompleted: function() {
+        this.model.set('showCompleted', !this.model.get('showCompleted'));
+    },
+    handleRefresh: function() {
+        this.model.setFiles();
     }
 });
 

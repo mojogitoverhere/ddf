@@ -9,29 +9,6 @@
     overflow: hidden;
   }
 
-  .import-status-container {
-    padding: @largeSpacing;
-    overflow: auto;
-    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
-
-    > * {
-      transition: width @coreTransitionTime linear;
-      width: 75%;
-      margin: auto;
-    }
-
-    .import-status-title {
-      display: inline-block;
-      font-size: @mediumFontSize;
-    }
-
-    .import-location {
-      display: inline-block;
-      opacity: .6;
-      font-size: @minimumFontSize;
-    }
-  }
-
   .import-files-container {
     background: @background-color;
     border-bottom: 1px solid @borderColor;
@@ -45,8 +22,21 @@
       margin: auto;
     }
 
+    .title-container {
+      height: @minimumLineSize;
+
+      * {
+        display: inline-block;
+      }
+
+      .import-status-title {
+        font-size: @mediumFontSize;
+      }
+
+    }
+
     .import-file-list {
-      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+      height: ~'calc(((100vh - 3*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
       border: 1px solid @borderColor;
     }
 
@@ -62,6 +52,55 @@
         opacity: .25;
       }
     }
+  }
+
+  .import-status-container {
+    padding: @largeSpacing;
+    overflow: hidden;
+    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
+
+    > * {
+      transition: width @coreTransitionTime linear;
+      width: 75%;
+      margin: auto;
+    }
+
+    .title-container {
+      width: 100%;
+      * {
+        display: inline-block;
+      }
+
+      .import-status-title {
+        font-size: @mediumFontSize;
+      }
+
+      .import-location {
+        opacity: @minimumOpacity;
+        font-size: @minimumFontSize;
+      }
+
+      .completed-imports {
+        opacity: @minimumOpacity;
+        font-size: @minimumFontSize;
+        float: right;
+      }
+
+      input {
+        height: 1rem;
+        float: left;
+        margin-right: 5px;
+      }
+    }
+
+
+    .import-status-list {
+      border-top: 1px solid @borderColor;
+      border-bottom: 1px solid @borderColor;
+      margin-top: @minimumSpacing;
+      max-height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+    }
+
   }
 
   @media screen and (max-width: 1500px) {
