@@ -35,6 +35,7 @@ import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.catalog.ui.config.ConfigurationApplication;
 import org.codice.ddf.catalog.ui.content.exports.ExportType;
+import org.codice.ddf.platform.util.InputValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +92,7 @@ public class OfflineResources {
       return ImmutableMap.of(metacardId, "The metacard is already offlined.");
     }
 
-    String relativeBasePath = metacardId + ".zip";
+    String relativeBasePath = getZipFileName(metacardToOffline.get());
     String absolutePathToZip = Paths.get(getOfflineRootPath(), relativeBasePath).toString();
     ResourceZipper resourceZipper;
     try {
@@ -135,6 +136,27 @@ public class OfflineResources {
       }
     }
     return ImmutableMap.of(metacardId, "");
+  }
+
+  /**
+   * Creates a zip file name using the metacard title and id.
+   *
+   * <p>The file name is in the format "title-id.zip", but only the first 7 digits of the id are
+   * used and the title is normalized to remove any invalid characters and gets truncated to ensure
+   * the full file name is no longer than 255 characters.
+   *
+   * @param metacard
+   * @return
+   */
+  private String getZipFileName(Metacard metacard) {
+    String sanitizedTitle = InputValidation.sanitizeFilename(metacard.getTitle());
+    // The zip file name can be at most 255 characters long but we also need space to append a "-"
+    // followed by the first 7 digits of the id and the ".zip" extension. This means the title can
+    // be at most 255 - (1 + 7 + 4) characters long, or 243.
+    if (sanitizedTitle.length() > 243) {
+      sanitizedTitle = sanitizedTitle.substring(0, 243);
+    }
+    return String.format("%s-%s.zip", sanitizedTitle, metacard.getId().substring(0, 7));
   }
 
   private static boolean isOfflined(Metacard metacard) {

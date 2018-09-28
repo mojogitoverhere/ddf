@@ -49,8 +49,17 @@ public class ImportDirectory {
   }
 
   private boolean isValidPath(Path path) {
-    return !path.equals(Paths.get(rootDirectory))
-        && (path.toFile().isDirectory() || !InputValidation.isBadFile(path.toString()));
+    return isValidFile(path) || isValidDirectory(path);
+  }
+
+  private boolean isValidFile(Path path) {
+    return path.toFile().isFile()
+        && !path.toFile().isHidden()
+        && !InputValidation.isBadFile(path.toString());
+  }
+
+  private boolean isValidDirectory(Path path) {
+    return path.toFile().isDirectory() && !path.equals(Paths.get(rootDirectory));
   }
 
   private int compareIgnoreCase(Path path1, Path path2) {
