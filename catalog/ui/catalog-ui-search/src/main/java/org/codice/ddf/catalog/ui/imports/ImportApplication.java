@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.boon.json.JsonFactory;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializerFactory;
@@ -101,41 +104,63 @@ public class ImportApplication implements SparkApplication {
           }
 
           String relativePath = (String) importArguments.get(IMPORT_PATH_ARG);
+          File archiveFile = Paths.get(rootPath, relativePath).toFile();
 
-          Task task = importMonitor.newTask();
-          task.putDetails("importFile", relativePath);
+          File[] filesArray = null;
+          if (archiveFile.isDirectory()) {
+            filesArray = archiveFile.listFiles((dir, name) -> name.endsWith(".zip"));
+            if (filesArray == null) {
+              throw new ImportException("No files to import in directory");
+            }
+          } else {
+            filesArray = new File[] {archiveFile};
+          }
+
+          List<Pair<File, Task>> toDo =
+              Arrays.stream(filesArray)
+                  .map(
+                      file -> {
+                        Task task = importMonitor.newTask();
+                        task.putDetails("importFile", file);
+                        return new ImmutablePair<>(file, task);
+                      })
+                  .collect(Collectors.toList());
+
           executor.submit(
               () -> {
-                task.started();
-                Set<String> failedMetacardImports = null;
-                File archiveFile = Paths.get(rootPath, relativePath).toFile();
-                try {
-                  failedMetacardImports = importer.importArchive(archiveFile, task);
-                } catch (ImportException e) {
-                  LOGGER.debug("Failed to import: relativePath=[{}]", relativePath, e);
+                for (Pair<File, Task> current : toDo) {
+                  Task task = current.getRight();
+                  File file = current.getLeft();
+                  task.started();
+                  Set<String> failedMetacardImports = null;
+                  try {
+                    failedMetacardImports = importer.importArchive(file, task);
+                  } catch (ImportException e) {
+                    LOGGER.debug("Failed to import: relativePath=[{}]", relativePath, e);
+                    SecurityLogger.audit(
+                        "Failed to import the archive [{}] and a partial import was not possible. {}",
+                        archiveFile,
+                        e.getMessage());
+                    task.failed();
+                    task.putDetails(
+                        "message",
+                        "Failed to import the archive. A partial import was not possible.");
+                    return;
+                  }
+                  if (CollectionUtils.isNotEmpty(failedMetacardImports)) {
+                    task.putDetails(
+                        new ImmutableMap.Builder<String, Object>()
+                            .put("message", "Some metacards failed to import.")
+                            .put("failed", new ArrayList<>(failedMetacardImports))
+                            .build());
+                  }
                   SecurityLogger.audit(
-                      "Failed to import the archive [{}] and a partial import was not possible. {}",
+                      "Import of archive [{}] completed with {} failed result(s)",
                       archiveFile,
-                      e.getMessage());
-                  task.failed();
-                  task.putDetails(
-                      "message",
-                      "Failed to import the archive. A partial import was not possible.");
-                  return;
+                      failedMetacardImports.size());
                 }
-                if (CollectionUtils.isNotEmpty(failedMetacardImports)) {
-                  task.putDetails(
-                      new ImmutableMap.Builder<String, Object>()
-                          .put("message", "Some metacards failed to import.")
-                          .put("failed", new ArrayList<>(failedMetacardImports))
-                          .build());
-                }
-                SecurityLogger.audit(
-                    "Import of archive [{}] completed with {} failed result(s)",
-                    archiveFile,
-                    failedMetacardImports.size());
               });
-          return Collections.singletonMap("task-id", task.getId());
+          return "";
         },
         JSON_MAPPER::toJson);
 

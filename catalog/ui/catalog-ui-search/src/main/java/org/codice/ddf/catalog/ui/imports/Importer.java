@@ -83,7 +83,6 @@ public class Importer {
    * @throws ImportException the import failed, a partial import was not possible
    */
   Set<String> importArchive(File fileToImport, Task task) throws ImportException {
-
     Validate.notNull(fileToImport, "The file to import must be non-null");
 
     ZipFile zipFile = getZipFile(fileToImport);
