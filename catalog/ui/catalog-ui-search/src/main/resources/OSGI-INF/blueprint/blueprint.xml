@@ -316,6 +316,7 @@
         <cm:managed-properties
                 persistent-id="org.codice.ddf.catalog.ui.security.import"
                 update-strategy="container-managed"/>
+        <argument ref="userApplication"/>
     </bean>
 
     <service ref="editOfflineMetacardPlugin" interface="ddf.catalog.plugin.PolicyPlugin"/>

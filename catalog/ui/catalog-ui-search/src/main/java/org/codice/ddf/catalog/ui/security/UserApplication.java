@@ -146,7 +146,7 @@ public class UserApplication implements SparkApplication {
     return isPathAllowed("/search/catalog/internal/metacards/permanentlydelete");
   }
 
-  private boolean isOfflineAllowed() {
+  boolean isOfflineAllowed() {
     return isPathAllowed("/search/catalog/internal/resource/offline");
   }
 

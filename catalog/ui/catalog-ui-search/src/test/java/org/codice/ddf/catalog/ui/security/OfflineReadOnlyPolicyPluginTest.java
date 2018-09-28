@@ -26,6 +26,7 @@ import ddf.catalog.Constants;
 import ddf.catalog.data.Attribute;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.Result;
+import ddf.catalog.data.impl.types.OfflineAttributes;
 import ddf.catalog.data.types.Offline;
 import ddf.catalog.operation.Query;
 import ddf.catalog.operation.ResourceRequest;
@@ -62,13 +63,16 @@ public class OfflineReadOnlyPolicyPluginTest {
 
   @Mock private ResourceResponse resourceResponse;
 
+  @Mock private UserApplication userApplication;
+
   private OfflineReadOnlyPolicyPlugin offlineReadOnlyPolicyPlugin;
 
   @Before
   public void setup() {
-    offlineReadOnlyPolicyPlugin = new OfflineReadOnlyPolicyPlugin();
+    offlineReadOnlyPolicyPlugin = new OfflineReadOnlyPolicyPlugin(userApplication);
     offlineReadOnlyPolicyPlugin.setImportUserAttribute(ROLE_URI);
     offlineReadOnlyPolicyPlugin.setImportUserAttributeValue(ROLE);
+    when(userApplication.isOfflineAllowed()).thenReturn(true);
   }
 
   @Test
@@ -177,6 +181,8 @@ public class OfflineReadOnlyPolicyPluginTest {
     String metacardId = "1";
     Metacard originalMetacard = mock(Metacard.class);
     when(metacard.getId()).thenReturn(metacardId);
+    mockMetacardType(originalMetacard);
+    mockMetacardType(metacard);
 
     PolicyResponse policyResponse = processPreUpdate(metacardId, originalMetacard);
 
@@ -247,7 +253,13 @@ public class OfflineReadOnlyPolicyPluginTest {
     Metacard originalMetacard = mock(Metacard.class);
     when(metacard.getId()).thenReturn(metacardId);
     when(originalMetacard.getAttribute(eq(Offline.OFFLINE_DATE))).thenReturn(mock(Attribute.class));
+    mockMetacardType(originalMetacard);
+    mockMetacardType(metacard);
     return originalMetacard;
+  }
+
+  private void mockMetacardType(Metacard metacard) {
+    when(metacard.getMetacardType()).thenReturn(new OfflineAttributes());
   }
 
   private void assertEmptyPolicyResponse(PolicyResponse policyResponse) {

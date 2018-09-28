@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.subject.Subject;
+import org.codice.ddf.catalog.ui.util.OfflineUtils;
 
 public class OfflineReadOnlyPolicyPlugin implements PolicyPlugin {
 
@@ -48,6 +49,15 @@ public class OfflineReadOnlyPolicyPlugin implements PolicyPlugin {
   @SuppressWarnings("WeakerAccess" /* needed for metatype */)
   public void setImportUserAttributeValue(String importUserAttributeValue) {
     this.importUserAttributeValue = importUserAttributeValue;
+  }
+
+  private final OfflineUtils offlineUtils = new OfflineUtils();
+
+  private final UserApplication userApplication;
+
+  @SuppressWarnings("WeakerAccess" /* needed for blueprint */)
+  public OfflineReadOnlyPolicyPlugin(UserApplication userApplication) {
+    this.userApplication = userApplication;
   }
 
   boolean isAllowedToEdit(Subject subject) {
@@ -67,8 +77,16 @@ public class OfflineReadOnlyPolicyPlugin implements PolicyPlugin {
         .filter(metacard1 -> StringUtils.isNotEmpty(importUserAttribute))
         .filter(metacard1 -> StringUtils.isNotEmpty(importUserAttributeValue))
         .filter(this::isOffline)
+        .filter(metacard1 -> isEditRestricted(metacard1, metacard))
         .map(metacard1 -> createPolicy())
         .orElseGet(this::noOpPolicyResponse);
+  }
+
+  private boolean isEditRestricted(Metacard originalMetacard, Metacard newMetacard) {
+    if (userApplication.isOfflineAllowed()) {
+      return !offlineUtils.isOfflineCommentOnlyUpdate(originalMetacard, newMetacard);
+    }
+    return true;
   }
 
   @Override
