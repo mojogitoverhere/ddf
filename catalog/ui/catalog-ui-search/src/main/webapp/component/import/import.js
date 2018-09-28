@@ -117,11 +117,7 @@ module.exports = Backbone.AssociatedModel.extend({
         var created = task.details.created;
         var started = task.started;
         var progress = "--";
-        var info = "";
-
-        if (task.details.message) {
-            var info = name + ": " + task.details.message;
-        }
+        var info = task.details.message;
 
         if (task.total) {
             if (task.current) {

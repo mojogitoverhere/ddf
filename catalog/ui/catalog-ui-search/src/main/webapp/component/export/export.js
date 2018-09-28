@@ -29,6 +29,23 @@ var Searches = Backbone.Collection.extend({
     model: Search
 });
 
+var Task = Backbone.Model.extend({
+    defaults: {
+        title: undefined,
+        file: undefined,
+        started: undefined,
+        state: undefined,
+        progress: undefined,
+        info: undefined,
+        created: undefined,
+        sortOrder: 0
+    }
+});
+
+var Tasks = Backbone.Collection.extend({
+    model: Task
+});
+
 module.exports = Backbone.AssociatedModel.extend({
     relations: [
         {
@@ -42,20 +59,26 @@ module.exports = Backbone.AssociatedModel.extend({
             type: Backbone.Many,
             key: 'selectedSearches',
             relatedModel: Search
+        },
+        {
+            type: Backbone.Many,
+            key: 'tasks',
+            relatedModel: Task,
+            CollectionType: Tasks
         }
     ],
     defaults: {
         searches: [],
         selectedSearches: [],
         exportLocation: undefined,
-        formatValues: []
+        formatValues: [],
+        tasks: [],
+        showCompleted: true
     },
     initialize: function() {
-        this.setExportLocation();
-        if (this.get("exportLocation")) {
-            this.setSearches();
-        }
-        this.setFormatEnumValues();
+        this.update();
+        this.get('tasks').comparator = 'sortOrder';
+        this.setTasks();
     },
     getSelectedSearches: function() {
         return this.get('selectedSearches');
@@ -83,13 +106,21 @@ module.exports = Backbone.AssociatedModel.extend({
                 return b['metacard.modified'] - a['metacard.modified'];
             });
             data.forEach( workspace => {
-                var queries = workspace.queries.sort(function(a,b) {
-                    return a.title.toLowerCase() > b.title.toLowerCase();
-                });
-                queries.forEach( query => {
-                    var date = (new Date(workspace['metacard.modified'])).toString().slice(0,24);
-                    self.get('searches').push({searchid: query.id, workspace: workspace.title, title: query.title, cql: query.cql, updated: date});
-                });
+                if (workspace.queries) {
+                    var queries = workspace.queries.sort(function (a, b) {
+                        return a.title.toLowerCase() > b.title.toLowerCase();
+                    });
+                    queries.forEach(query => {
+                        var date = (new Date(workspace['metacard.modified'])).toString().slice(0, 24);
+                        self.get('searches').push({
+                            searchid: query.id,
+                            workspace: workspace.title,
+                            title: query.title,
+                            cql: query.cql,
+                            updated: date
+                        });
+                    });
+                }
             });
         });
     },
@@ -116,7 +147,73 @@ module.exports = Backbone.AssociatedModel.extend({
             async: false
         }).success(function (data) {
             self.set("exportLocation", data.root);
+        }).error(function (data) {
+            self.set("exportLocation", undefined);
         });
+    },
+    setTasks: function() {
+        var self = this;
+        $.ajax({
+            url: "/search/catalog/internal/resources/export/tasks",
+            type: "GET",
+            contentType: "application/json",
+            customErrorHandling: true
+        }).success(function(data) {
+            self.set({tasks: []});
+            data.forEach(task => self.addTask(task) );
+            if (!self.get('showCompleted')) self.set('tasks', self.get('tasks').filter(task => task.get('state') !== "Complete"));
+        })
+    },
+    addTask: function(task) {
+        var state = "";
+        var title = task.details.title;
+        var progress = (task.current ? task.current : "0") + " out of " + (task.total ? task.total : "?") + " items";
+        var sortOrder = 0;
+        var name = task.details.filename ? task.details.filename : "--";
+        var created = task.details.created;
+        var started = task.started;
+        var info = task.details.message;
+
+        if (started) {
+            started = new Date(started).toString().slice(0,24);
+            if (task.finished) {
+                if (task.failed) {
+                    state = "Failed";
+                    sortOrder = 3;
+                    progress = "--";
+                } else {
+                    state = "Complete";
+                    sortOrder = 4;
+                }
+            } else {
+                state = "In Progress...";
+                sortOrder = 1;
+            }
+        } else {
+            state = "Queued";
+            sortOrder = 2;
+            progress = "--";
+            started = "--";
+        }
+        this.get('tasks').add({
+            state: state,
+            title: title,
+            sortOrder: sortOrder,
+            file: name,
+            created: created,
+            started: started,
+            progress: progress,
+            info: info
+        });
+    },
+    update: function() {
+        this.setFormatEnumValues();
+        this.setExportLocation();
+        if (this.get("exportLocation")) {
+            this.setSearches();
+        } else {
+            this.set("searches", []);
+        }
     }
 });
 

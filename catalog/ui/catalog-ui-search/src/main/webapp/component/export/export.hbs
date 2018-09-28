@@ -18,7 +18,7 @@
     <div class="export-search-container">
         <div class="export-title-container">
             <div class="export-title">
-                Content to Export
+                Local Content to Export
             </div>
             <div class="export-custom-title is-button">
                 Custom Export Settings
@@ -46,13 +46,16 @@
 
     <div class="export-status-container">
         <div class="export-status-content">
-            <div class="export-status-title">
-                Export status
+            <div class="title-container">
+                <div class="export-status-title">
+                Export Status
             </div>
-            <div class="export-location">
-                (Configured export directory: {{this.exportLocation}})
+                <div class="export-location"/>
+                <div class="completed-exports">
+                    Show completed exports
+                    <input class="showCompleted" type="checkbox" checked/>
+                </div>
             </div>
-            <div class="completed-exports"/>
             <div class="export-status-list"/>
         </div>
     </div>

@@ -84,6 +84,8 @@ module.exports = Marionette.LayoutView.extend({
     handleRootChange: function() {
         if (!this.model.get('root')) {
             this.$(".import-location").hide();
+        } else {
+            this.$(".import-location").show();
         }
         $('.import-location').html("(Configured import directory: "  + this.model.get('root') + ")");
     },

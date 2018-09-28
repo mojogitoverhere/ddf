@@ -25,6 +25,7 @@ var ExportSearchView =  require('component/export-search/export-search.view');
 var Export = require('./export.js');
 var Property = require('component/property/property');
 var PropertyView = require('component/property/property.view');
+var ExportTasksView =  require('component/export-tasks/export-tasks.view');
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
@@ -32,13 +33,15 @@ module.exports = Marionette.LayoutView.extend({
     tagName: CustomElements.register('export'),
     events: {
         'click .export-button': 'handleExport',
-        'click .export-custom-title': 'handleCustom'
+        'click .export-custom-title': 'handleCustom',
+        'click .showCompleted': 'handleShowCompleted'
     },
     regions: {
         exportMenu: '.export-menu',
         exportSearchList: '.export-search-list',
         formatInput: '.export-custom-format',
-        typeInput: '.export-custom-type'
+        typeInput: '.export-custom-type',
+        exportStatusList: '.export-status-list'
     },
     initialize: function() {
         this.listenTo(router, 'change', this.handleRoute);
@@ -46,10 +49,22 @@ module.exports = Marionette.LayoutView.extend({
         this.handleRoute();
     },
     handleRoute: function() {
-        if (router.toJSON().name === 'openExport'){
+        var self = this;
+        if (router.toJSON().name === 'openExport') {
             this.$el.removeClass('is-hidden');
+            this.model.update();
+            if (self.model.get("exportLocation")) {
+                $('.export-location').html("(Configured export directory: "  + self.model.get('exportLocation') + ")");
+                this.$(".export-location").show();
+            } else {
+                this.$(".export-location").hide();
+            }
+            self.timer = setInterval(function() {
+                self.model.setTasks();
+            }, 500);
         } else {
-            this.$el.addClass('is-hidden');
+            self.$el.addClass('is-hidden');
+            clearTimeout(self.timer);
         }
     },
     handleCustom: function() {
@@ -84,9 +99,7 @@ module.exports = Marionette.LayoutView.extend({
         });
         this.typeInput.show(new PropertyView({model: this.typeModel}));
         this.typeInput.currentView.turnOnLimitedWidth();
-        if (!this.model.get('exportLocation')) {
-            this.$(".export-location").hide();
-        }
+        this.exportStatusList.show(new ExportTasksView({model:this.model}));
     },
     handleSelectionChange: function() {
         if (this.model.get('selectedSearches').isEmpty()) {
@@ -102,6 +115,8 @@ module.exports = Marionette.LayoutView.extend({
             transformerId = "xml";
         }
         this.model.getSelectedSearches().forEach(function(search) {
+            var workspace = search.get("workspace");
+            var title = workspace ? workspace  : workspace + " - " + search.get("title");
             $.ajax({
                 url: '/search/catalog/internal/resources/export',
                 type: 'POST',
@@ -109,10 +124,14 @@ module.exports = Marionette.LayoutView.extend({
                 data: JSON.stringify({
                     "cql": search.get("cql"),
                     "metadataFormat": transformerId,
-                    "type": exportType
+                    "type": exportType,
+                    "title": title
                 })
             })
         });
+    },
+    handleShowCompleted: function() {
+        this.model.set('showCompleted', !this.model.get('showCompleted'));
     }
 });
 

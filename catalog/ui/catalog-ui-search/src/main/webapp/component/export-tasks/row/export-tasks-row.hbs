@@ -1,4 +1,4 @@
- {{!--
+{{!--
 /**
  * Copyright (c) Codice Foundation
  *
@@ -11,22 +11,21 @@
  *
  **/
  --}}
-<td colspan="4">
-
-    {{#if this.exportLocation}}
-        <span class="fa fa-exclamation-triangle error" />
-        An error occurred fetching the available searches.
-    {{else}}
-        {{#is this.exportLocation undefined}}
-            <span class="fa fa-exclamation-triangle error" />
-            An error occurred fetching the export location.
-        {{/is}}
-
-        {{#is this.exportLocation ""}}
-            <span class="fa fa-exclamation-triangle error" />
-            The export directory is not configured. Please contact your administrator.
-        {{/is}}
+<td>
+    {{this.title}}
+</td>
+<td>
+    {{this.file}}
+</td>
+<td>
+    {{this.started}}
+</td>
+<td>
+    {{this.state}}
+    {{#if this.info}}
+        <span class="info fa fa-info-circle"/>
     {{/if}}
-
-
+</td>
+<td>
+    {{this.progress}}
 </td>
