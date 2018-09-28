@@ -155,6 +155,13 @@ public class ExportApplication implements SparkApplication {
                       "details",
                       "An error occurred while exporting, please see the logs for more information");
                   return;
+                } catch (ExportException e) {
+                  LOGGER.debug(
+                      "Query used for export could not find any results to export. Query=(%s)",
+                      cql, e);
+                  task.failed();
+                  task.putDetails("details", e.getMessage());
+                  return;
                 }
 
                 task.putDetails(

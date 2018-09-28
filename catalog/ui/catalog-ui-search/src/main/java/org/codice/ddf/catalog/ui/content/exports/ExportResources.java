@@ -71,7 +71,7 @@ public class ExportResources {
       ExportType exportType,
       String directory,
       Task task)
-      throws IOException {
+      throws IOException, ExportException {
 
     String filename = makeZipFileName(directory);
     ResourceZipper resourceZipper =
@@ -89,24 +89,24 @@ public class ExportResources {
   }
 
   private List<String> doExport(
-      String cql,
-      ResourceZipper resourceZipper,
-      ExportType exportType,
-      String filename,
-      Task task) {
+      String cql, ResourceZipper resourceZipper, ExportType exportType, String filename, Task task)
+      throws ExportException {
     List<Metacard> failedMetacards = new ArrayList<>();
 
     long current = 0;
     long totalHits = -1;
+   QueryResponse queryResponse  = null;
     try {
-      QueryResponse queryResponse =
+      queryResponse =
           catalogFramework.query(exportCatalog.getLocalResultCountQueryRequest(cql));
       totalHits = queryResponse.getHits();
     } catch (UnsupportedQueryException | SourceUnavailableException | FederationException e) {
       LOGGER.debug(
           "Could not execute query to get total result count -- job status will not show total", e);
     }
-
+    if (queryResponse == null || queryResponse.getResults().isEmpty()) {
+      throw new ExportException("No results found for query. Please ensure your query is correct.");
+    }
     task.update(current, totalHits);
     QueryResulterable primaryResults = exportCatalog.queryAsLocalOnly(cql);
     for (Result primaryResult : primaryResults) {
