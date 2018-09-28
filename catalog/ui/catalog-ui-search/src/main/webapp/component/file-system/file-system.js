@@ -49,6 +49,9 @@ export default Backbone.AssociatedModel.extend({
   setAvailable() {
     // override
   },
+  getLocation: function() {
+    return this.get("location");
+  },
   setLocation() {
     // override
   },

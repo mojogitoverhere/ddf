@@ -37,14 +37,12 @@ module.exports = AvailableView.extend({
     this.model.setAvailable();
   },
   handleImport() {
-    this.model.getSelected().forEach(file =>
         $.ajax({
             url: '/search/catalog/internal/import',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(file),
+            data: JSON.stringify(this.model.getSelected().map(item => item.getLocation())),
             customErrorHandling: true
         })
-    );
   }
 });

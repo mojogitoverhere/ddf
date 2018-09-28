@@ -94,72 +94,21 @@ public class ImportApplication implements SparkApplication {
 
           Map<String, Object> importArguments = JSON_MAPPER.parser().parseMap(req.body());
 
-          if (!(importArguments.get(IMPORT_PATH_ARG) instanceof String)
-              && StringUtils.isNotEmpty((String) importArguments.get(IMPORT_PATH_ARG))) {
+          if (!(importArguments.get(IMPORT_PATH_ARG) instanceof List)
+              || ((List) importArguments.get(IMPORT_PATH_ARG)).isEmpty()) {
             res.status(400);
             return Collections.singletonMap(
                 "message",
                 String.format(
-                    "The required argument '%s' must be a non-empty string.", IMPORT_PATH_ARG));
+                    "The required argument '%s' must be a non-empty list of strings.",
+                    IMPORT_PATH_ARG));
           }
+          List<String> imports = (List<String>) importArguments.get(IMPORT_PATH_ARG);
 
-          String relativePath = (String) importArguments.get(IMPORT_PATH_ARG);
-          File archiveFile = Paths.get(rootPath, relativePath).toFile();
-
-          File[] filesArray = null;
-          if (archiveFile.isDirectory()) {
-            filesArray = archiveFile.listFiles((dir, name) -> name.endsWith(".zip"));
-            if (filesArray == null) {
-              throw new ImportException("No files to import in directory");
-            }
-          } else {
-            filesArray = new File[] {archiveFile};
+          for (String path : imports) {
+            File archiveFile = Paths.get(rootPath, path).toFile();
+            importArchive(path, archiveFile);
           }
-
-          List<Pair<File, Task>> toDo =
-              Arrays.stream(filesArray)
-                  .map(
-                      file -> {
-                        Task task = importMonitor.newTask();
-                        task.putDetails("importFile", file);
-                        return new ImmutablePair<>(file, task);
-                      })
-                  .collect(Collectors.toList());
-
-          executor.submit(
-              () -> {
-                for (Pair<File, Task> current : toDo) {
-                  Task task = current.getRight();
-                  File file = current.getLeft();
-                  task.started();
-                  Set<String> failedMetacardImports = null;
-                  try {
-                    failedMetacardImports = importer.importArchive(file, task);
-                  } catch (ImportException e) {
-                    LOGGER.debug("Failed to import: relativePath=[{}]", relativePath, e);
-                    SecurityLogger.audit(
-                        "Failed to import the archive [{}] and a partial import was not possible. {}",
-                        archiveFile,
-                        e.getMessage());
-                    task.failed();
-                    task.putDetails(
-                        "message",
-                        "Failed to import the archive. A partial import was not possible.");
-                    return;
-                  }
-                  if (CollectionUtils.isNotEmpty(failedMetacardImports)) {
-                    task.putDetails(
-                        new ImmutableMap.Builder<String, Object>()
-                            .put("message", "Some metacards failed to import.")
-                            .put("failed", new ArrayList<>(failedMetacardImports))
-                            .build());
-                  }
-                  SecurityLogger.audit(
-                      "Import of archive [{}] completed with {} failed result(s)",
-                      archiveFile,
-                      failedMetacardImports.size());
-                }
-              });
           return "";
         },
         JSON_MAPPER::toJson);
@@ -180,6 +129,63 @@ public class ImportApplication implements SparkApplication {
           String id = req.params(":id");
           importMonitor.removeTask(id);
           return "";
+        });
+  }
+
+  private void importArchive(String relativePath, File archiveFile) throws ImportException {
+    File[] filesArray = null;
+    if (archiveFile.isDirectory()) {
+      filesArray = archiveFile.listFiles((dir, name) -> name.endsWith(".zip"));
+      if (filesArray == null) {
+        throw new ImportException("No files to import in directory");
+      }
+    } else {
+      filesArray = new File[] {archiveFile};
+    }
+
+    List<Pair<File, Task>> toDo =
+        Arrays.stream(filesArray)
+            .map(
+                file -> {
+                  Task task = importMonitor.newTask();
+                  task.putDetails(
+                      "importFile", file.toString().replace(importDirectory.toString(), ""));
+                  return new ImmutablePair<>(file, task);
+                })
+            .collect(Collectors.toList());
+
+    executor.submit(
+        () -> {
+          for (Pair<File, Task> current : toDo) {
+            Task task = current.getRight();
+            File file = current.getLeft();
+            task.started();
+            Set<String> failedMetacardImports = null;
+            try {
+              failedMetacardImports = importer.importArchive(file, task);
+            } catch (ImportException e) {
+              LOGGER.debug("Failed to import: relativePath=[{}]", relativePath, e);
+              SecurityLogger.audit(
+                  "Failed to import the archive [{}] and a partial import was not possible. {}",
+                  archiveFile,
+                  e.getMessage());
+              task.failed();
+              task.putDetails(
+                  "message", "Failed to import the archive. A partial import was not possible.");
+              return;
+            }
+            if (CollectionUtils.isNotEmpty(failedMetacardImports)) {
+              task.putDetails(
+                  new ImmutableMap.Builder<String, Object>()
+                      .put("message", "Some metacards failed to import.")
+                      .put("failed", new ArrayList<>(failedMetacardImports))
+                      .build());
+            }
+            SecurityLogger.audit(
+                "Import of archive [{}] completed with {} failed result(s)",
+                archiveFile,
+                failedMetacardImports.size());
+          }
         });
   }
 
