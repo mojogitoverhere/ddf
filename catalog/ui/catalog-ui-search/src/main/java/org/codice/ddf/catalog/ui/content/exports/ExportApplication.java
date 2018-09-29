@@ -32,7 +32,6 @@ import java.util.concurrent.Executors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.boon.json.JsonFactory;
-import org.boon.json.JsonParserAndMapper;
 import org.boon.json.JsonParserFactory;
 import org.boon.json.JsonSerializerFactory;
 import org.boon.json.ObjectMapper;
@@ -40,7 +39,6 @@ import org.codice.ddf.catalog.ui.task.TaskMonitor;
 import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
 import spark.Response;
 import spark.servlet.SparkApplication;
 
@@ -97,82 +95,13 @@ public class ExportApplication implements SparkApplication {
             return error(res, 500, "The configured export directory must exist and be writable");
           }
 
-          ExportOptions exportOptions = ExportOptions.fromRequest(req);
-          String cql = exportOptions.getCql();
-          String metadataFormat = exportOptions.getMetadataFormat();
-          ExportType type = exportOptions.getType();
+          List<ExportOptions> exportOptions =
+              JSON_MAPPER.parser().parseList(ExportOptions.class, req.body());
 
-          if (StringUtils.isBlank(cql)) {
-            return error(res, 400, "A CQL string is required");
+          for (ExportOptions exportOption : exportOptions) {
+            exportArchive(res, exportOption);
           }
-
-          if (type == ExportType.INVALID) {
-            return error(
-                res,
-                400,
-                String.format(
-                    "Invalid export type. Should be %s, %s, or %s.",
-                    ExportType.METADATA_AND_CONTENT,
-                    ExportType.METADATA_ONLY,
-                    ExportType.CONTENT_ONLY));
-          }
-
-          Optional<ExportableMetadataTransformer> metadataTransformer =
-              metadataFormats.getTransformerById(metadataFormat);
-          if (!metadataTransformer.isPresent()) {
-            return error(
-                res,
-                400,
-                String.format(
-                    "No transformer available for the [%s] metadata format.", metadataFormat));
-          }
-
-          LOGGER.trace(
-              "Doing export with cql={}, metadataFormat={}, and type={}",
-              cql,
-              metadataFormat,
-              type);
-
-          Task task = exportMonitor.newTask();
-          task.putDetails("cql", cql);
-          task.putDetails("metadataFormat ", metadataFormat);
-          task.putDetails("type", type);
-          task.putDetails("title", exportOptions.getTitle());
-          executor.submit(
-              () -> {
-                task.started();
-                Pair<String, List<String>> results = null;
-                try {
-                  results =
-                      exportResources.export(
-                          cql, metadataTransformer.get(), type, exportDirectory.toString(), task);
-                } catch (IOException e) {
-                  LOGGER.warn(
-                      "An exception occurred while attempting to export items. Archive may be incomplete or missing. You may wish to try the export again. If you still encounter problems ensure there is sufficient disk space available and the proper permissions are set.",
-                      e);
-                  task.failed();
-                  task.putDetails(
-                      "details",
-                      "An error occurred while exporting, please see the logs for more information");
-                  return;
-                } catch (ExportException e) {
-                  LOGGER.debug(
-                      "Query used for export could not find any results to export. Query=(%s)",
-                      cql, e);
-                  task.failed();
-                  task.putDetails("details", e.getMessage());
-                  return;
-                }
-
-                task.putDetails(
-                    ImmutableMap.of(
-                        "filename",
-                        new File(results.getLeft()).getName(),
-                        "failed",
-                        results.getRight()));
-              });
-
-          return Collections.singletonMap("task-id", task.getId());
+          return "";
         },
         JSON_MAPPER::toJson);
 
@@ -195,6 +124,74 @@ public class ExportApplication implements SparkApplication {
         });
   }
 
+  private Object exportArchive(Response res, ExportOptions exportOptions) {
+    String cql = exportOptions.getCql();
+    String metadataFormat = exportOptions.getMetadataFormat();
+    ExportType type = exportOptions.getType();
+
+    if (StringUtils.isBlank(cql)) {
+      return error(res, 400, "A CQL string is required");
+    }
+
+    if (type == ExportType.INVALID) {
+      return error(
+          res,
+          400,
+          String.format(
+              "Invalid export type. Should be %s, %s, or %s.",
+              ExportType.METADATA_AND_CONTENT, ExportType.METADATA_ONLY, ExportType.CONTENT_ONLY));
+    }
+
+    Optional<ExportableMetadataTransformer> metadataTransformer =
+        metadataFormats.getTransformerById(metadataFormat);
+    if (!metadataTransformer.isPresent()) {
+      return error(
+          res,
+          400,
+          String.format("No transformer available for the [%s] metadata format.", metadataFormat));
+    }
+
+    LOGGER.trace(
+        "Doing export with cql={}, metadataFormat={}, and type={}", cql, metadataFormat, type);
+
+    Task task = exportMonitor.newTask();
+    task.putDetails("cql", cql);
+    task.putDetails("metadataFormat ", metadataFormat);
+    task.putDetails("type", type);
+    task.putDetails("title", exportOptions.getTitle());
+    executor.submit(
+        () -> {
+          task.started();
+          Pair<String, List<String>> results = null;
+          try {
+            results =
+                exportResources.export(
+                    cql, metadataTransformer.get(), type, exportDirectory.toString(), task);
+          } catch (IOException e) {
+            LOGGER.warn(
+                "An exception occurred while attempting to export items. Archive may be incomplete or missing. You may wish to try the export again. If you still encounter problems ensure there is sufficient disk space available and the proper permissions are set.",
+                e);
+            task.failed();
+            task.putDetails(
+                "details",
+                "An error occurred while exporting, please see the logs for more information");
+            return;
+          } catch (ExportException e) {
+            LOGGER.debug(
+                "Query used for export could not find any results to export. Query=(%s)", cql, e);
+            task.failed();
+            task.putDetails("details", e.getMessage());
+            return;
+          }
+
+          task.putDetails(
+              ImmutableMap.of(
+                  "filename", new File(results.getLeft()).getName(), "failed", results.getRight()));
+        });
+
+    return Collections.singletonMap("task-id", task.getId());
+  }
+
   private Map<String, Object> error(Response res, int statusCode, String message) {
     res.status(statusCode);
     res.header(CONTENT_TYPE, APPLICATION_JSON);
@@ -205,57 +202,17 @@ public class ExportApplication implements SparkApplication {
     return ImmutableMap.of("message", message);
   }
 
-  private static class ExportOptions {
-
-    private static final JsonParserAndMapper JSON_PARSER = JsonFactory.create().parser();
+  static class ExportOptions {
 
     private static final String DEFAULT_METADATA_FORMAT = "xml";
 
-    private String cql;
+    private String cql = null;
 
-    private String metadataFormat;
+    private String metadataFormat = DEFAULT_METADATA_FORMAT;
 
-    private String title;
+    private String title = "No title";
 
-    private ExportType exportType;
-
-    private ExportOptions(String cql, String metadataFormat, ExportType exportType, String title) {
-      this.cql = cql;
-      this.metadataFormat = metadataFormat;
-      this.exportType = exportType;
-      this.title = title;
-    }
-
-    public static ExportOptions fromRequest(Request request) {
-      Map<String, Object> parsedBody = JSON_PARSER.parseMap(request.body());
-      String cql = null;
-      String metadataFormat = DEFAULT_METADATA_FORMAT;
-      ExportType exportType = ExportType.INVALID;
-      String title = "No title";
-
-      Object cqlRaw = parsedBody.get("cql");
-      if (cqlRaw instanceof String && StringUtils.isNotBlank((String) cqlRaw)) {
-        cql = (String) cqlRaw;
-      }
-
-      Object metadataFormatRaw = parsedBody.get("metadataFormat");
-      if (metadataFormatRaw instanceof String
-          && StringUtils.isNotBlank((String) metadataFormatRaw)) {
-        metadataFormat = (String) metadataFormatRaw;
-      }
-
-      Object exportTypeRaw = parsedBody.get("type");
-      if (exportTypeRaw instanceof String) {
-        exportType = ExportType.fromString((String) exportTypeRaw);
-      }
-
-      Object titleRaw = parsedBody.get("title");
-      if (titleRaw instanceof String) {
-        title = (String) titleRaw;
-      }
-
-      return new ExportOptions(cql, metadataFormat, exportType, title);
-    }
+    private ExportType type = ExportType.INVALID;
 
     public String getCql() {
       return this.cql;
@@ -266,11 +223,27 @@ public class ExportApplication implements SparkApplication {
     }
 
     public ExportType getType() {
-      return this.exportType;
+      return this.type;
     }
 
     public String getTitle() {
       return this.title;
+    }
+
+    public void setCql(String cql) {
+      this.cql = cql;
+    }
+
+    public void setMetadataFormat(String metadataFormat) {
+      this.metadataFormat = metadataFormat;
+    }
+
+    public void setTitle(String title) {
+      this.title = title;
+    }
+
+    public void setType(ExportType type) {
+      this.type = type;
     }
   }
 }

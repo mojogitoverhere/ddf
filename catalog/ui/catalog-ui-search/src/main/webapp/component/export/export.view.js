@@ -131,22 +131,23 @@ module.exports = Marionette.LayoutView.extend({
     if (transformerId == "backup") {
       transformerId = "xml";
     }
-    this.model.getSelected().forEach(function(search) {
+    const searches = this.model.getSelected().map(function(search) {
       var workspace = search.get("workspace");
       var title = workspace
-        ? workspace
-        : workspace + " - " + search.get("title");
-      $.ajax({
-        url: "/search/catalog/internal/resources/export",
-        type: "POST",
-        contentType: "application/json",
-        data: JSON.stringify({
+          ? workspace
+          : workspace + " - " + search.get("title");
+      return {
           cql: search.get("cql"),
           metadataFormat: transformerId,
           type: exportType,
           title: title
-        })
-      });
+        }
+    });
+    $.ajax({
+      url: "/search/catalog/internal/resources/export",
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(searches)
     });
   },
 });
