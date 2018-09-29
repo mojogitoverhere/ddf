@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import ddf.catalog.transform.ExportableMetadataTransformer;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,19 +123,20 @@ public class ExportApplication implements SparkApplication {
         });
   }
 
-  private Object exportArchive(Response res, ExportOptions exportOptions) {
+  private void exportArchive(Response res, ExportOptions exportOptions) {
     String cql = exportOptions.getCql();
     String metadataFormat = exportOptions.getMetadataFormat();
     ExportType type = exportOptions.getType();
 
+    Task task = exportMonitor.newTask();
     if (StringUtils.isBlank(cql)) {
-      return error(res, 400, "A CQL string is required");
+      task.putDetails("details", "A CQL string is required");
+      return;
     }
 
     if (type == ExportType.INVALID) {
-      return error(
-          res,
-          400,
+      task.putDetails(
+          "details",
           String.format(
               "Invalid export type. Should be %s, %s, or %s.",
               ExportType.METADATA_AND_CONTENT, ExportType.METADATA_ONLY, ExportType.CONTENT_ONLY));
@@ -145,16 +145,14 @@ public class ExportApplication implements SparkApplication {
     Optional<ExportableMetadataTransformer> metadataTransformer =
         metadataFormats.getTransformerById(metadataFormat);
     if (!metadataTransformer.isPresent()) {
-      return error(
-          res,
-          400,
+      task.putDetails(
+          "details",
           String.format("No transformer available for the [%s] metadata format.", metadataFormat));
     }
 
     LOGGER.trace(
         "Doing export with cql={}, metadataFormat={}, and type={}", cql, metadataFormat, type);
 
-    Task task = exportMonitor.newTask();
     task.putDetails("cql", cql);
     task.putDetails("metadataFormat ", metadataFormat);
     task.putDetails("type", type);
@@ -188,8 +186,6 @@ public class ExportApplication implements SparkApplication {
               ImmutableMap.of(
                   "filename", new File(results.getLeft()).getName(), "failed", results.getRight()));
         });
-
-    return Collections.singletonMap("task-id", task.getId());
   }
 
   private Map<String, Object> error(Response res, int statusCode, String message) {

@@ -95,10 +95,9 @@ public class ExportResources {
 
     long current = 0;
     long totalHits = -1;
-   QueryResponse queryResponse  = null;
+    QueryResponse queryResponse = null;
     try {
-      queryResponse =
-          catalogFramework.query(exportCatalog.getLocalResultCountQueryRequest(cql));
+      queryResponse = catalogFramework.query(exportCatalog.getLocalResultCountQueryRequest(cql));
       totalHits = queryResponse.getHits();
     } catch (UnsupportedQueryException | SourceUnavailableException | FederationException e) {
       LOGGER.debug(
