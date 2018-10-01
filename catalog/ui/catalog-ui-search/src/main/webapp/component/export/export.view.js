@@ -143,6 +143,9 @@ module.exports = Marionette.LayoutView.extend({
           title: title
         }
     });
+    if (searches.length === 0) {
+            return;
+    }
     $.ajax({
       url: "/search/catalog/internal/resources/export",
       type: "POST",

@@ -95,7 +95,10 @@ public class ImportApplication implements SparkApplication {
           Map<String, Object> importArguments = JSON_MAPPER.parser().parseMap(req.body());
 
           if (!(importArguments.get(IMPORT_PATH_ARG) instanceof List)
-              || ((List) importArguments.get(IMPORT_PATH_ARG)).isEmpty()) {
+              || ((List<String>) importArguments.get(IMPORT_PATH_ARG)).isEmpty()
+              || ((List<String>) importArguments.get(IMPORT_PATH_ARG))
+                  .stream()
+                  .anyMatch(StringUtils::isEmpty)) {
             res.status(400);
             return Collections.singletonMap(
                 "message",
@@ -106,8 +109,12 @@ public class ImportApplication implements SparkApplication {
           List<String> imports = (List<String>) importArguments.get(IMPORT_PATH_ARG);
 
           for (String path : imports) {
-            File archiveFile = Paths.get(rootPath, path).toFile();
-            importArchive(path, archiveFile);
+            try {
+              File archiveFile = Paths.get(rootPath, path).toFile();
+              importArchive(path, archiveFile);
+            } catch (ImportException e) {
+              LOGGER.debug("Could not import specified file", e);
+            }
           }
           return "";
         },
@@ -137,6 +144,11 @@ public class ImportApplication implements SparkApplication {
     if (archiveFile.isDirectory()) {
       filesArray = archiveFile.listFiles((dir, name) -> name.endsWith(".zip"));
       if (filesArray == null) {
+        Task task = importMonitor.newTask();
+        task.started();
+        task.failed();
+        task.putDetails("message", "No files to import in directory");
+        task.putDetails("importFile", relativePath);
         throw new ImportException("No files to import in directory");
       }
     } else {
