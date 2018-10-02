@@ -13,8 +13,8 @@
 /*jslint nomen:false, -W064 */
 
 // for webpack dev server hot reloading
-if (module.hot){
-    module.hot.accept(function() {
+if (module.hot) {
+    module.hot.accept(function () {
         // we don't want to refresh the page when using the webpack dev server
     });
 }
@@ -37,9 +37,16 @@ require([
     'js/HandlebarsHelpers',
     'js/ApplicationHelpers',
     'js/Autocomplete',
-], function(_, Backbone, Marionette, hbs, announcement) {
+    'js/extensions/backbone.listenTo.js',
+    'js/extensions/marionette.onFirstRender',
+    'js/extensions/marionette.renderer.render',
+    'js/extensions/marionette.ItemView.attachElContent',
+    'js/extensions/marionette.View.isMarionetteComponent',
+    'js/extensions/marionette.View.remove',
+    'js/extensions/backbone.collection.indexOfId'
+], function (_, Backbone, Marionette, hbs, announcement) {
 
-    $(window.document).ajaxError(function(event, jqxhr, settings, throwError) {
+    $(window.document).ajaxError(function (event, jqxhr, settings, throwError) {
         var message;
         console.error(event, jqxhr, settings, throwError);
 
@@ -73,35 +80,27 @@ require([
     });
     //in here we drop in any top level patches, etc.
     var toJSON = Backbone.Model.prototype.toJSON;
-    Backbone.Model.prototype.toJSON = function(options) {
+    Backbone.Model.prototype.toJSON = function (options) {
         var originalJSON = toJSON.call(this, options);
         if (options && options.additionalProperties !== undefined) {
             var backboneModel = this;
-            options.additionalProperties.forEach(function(property) {
+            options.additionalProperties.forEach(function (property) {
                 originalJSON[property] = backboneModel[property];
             });
         }
         return originalJSON;
     };
     var clone = Backbone.Model.prototype.clone;
-    Backbone.Model.prototype.clone = function() {
+    Backbone.Model.prototype.clone = function () {
         var cloneRef = clone.call(this);
         cloneRef._cloneOf = this.id || this.cid;
         return cloneRef;
     };
     var associationsClone = Backbone.AssociatedModel.prototype.clone;
-    Backbone.AssociatedModel.prototype.clone = function() {
+    Backbone.AssociatedModel.prototype.clone = function () {
         var cloneRef = associationsClone.call(this);
         cloneRef._cloneOf = this.id || this.cid;
         return cloneRef;
-    };
-    Marionette.Renderer.render = function(template, data, view) {
-        data._view = view;
-        if (typeof template === 'function') {
-            return template(data);
-        } else {
-            return hbs.compile(template)(data);
-        }
     };
 
     require('js/ApplicationStart');

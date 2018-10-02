@@ -73,7 +73,6 @@ define([
             } else {
                 this.listenTo(query, 'change:result', this.resultAdded);
             }
-            this.listenTo(store.get('content'), 'change:query', this.highlight);
         },
         updateQuery: function() {
             if (!this.isDestroyed){

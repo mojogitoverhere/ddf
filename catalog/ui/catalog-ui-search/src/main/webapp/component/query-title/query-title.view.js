@@ -34,6 +34,15 @@ define([
             if (options.model === undefined) {
                 this.setDefaultModel();
             }
+            this.listenTo(this.model, 'change:title', this.updateTitle);
+        },
+        onRender() {
+            this.updateTitle();
+        },
+        updateTitle: function() {
+            if (this.model && this.$el.find('input').val() !== this.model.get('title')) {
+                this.$el.find('input').val(this.model.get('title'))
+            }
         },
         onDomRefresh: function() {
             if (!this.model._cloneOf) {

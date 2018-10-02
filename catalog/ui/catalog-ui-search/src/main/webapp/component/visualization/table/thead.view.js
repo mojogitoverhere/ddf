@@ -16,16 +16,57 @@
 var wreqr = require('wreqr');
 var _ = require('underscore');
 var $ = require('jquery');
-var template = require('./thead.hbs');
 var Marionette = require('marionette');
 var CustomElements = require('js/CustomElements');
 var Common = require('js/Common');
 var user = require('component/singletons/user-instance');
 var properties = require('properties');
 var metacardDefinitions = require('component/singletons/metacard-definitions');
+import * as React from 'react'
+
+const Cell = ({ hidden, sortable, id, label}) => {
+    return (
+        <th
+            className={`${hidden ? 'is-hidden-column ' : ''} ${sortable ? 'is-sortable ' : ''}`}
+            data-propertyid={id}
+            data-propertytext={`${label ? label : id}`}
+        >
+            <span
+                className="column-text"
+                title={`${label ? label : id}`}
+            >
+                {label ? label : id}
+            </span>
+            <span
+                className="fa fa-sort-asc"
+            >
+            </span>
+            <span
+                className="fa fa-sort-desc"    
+            >
+
+            </span>
+        </th>
+    )
+}
 
 module.exports = Marionette.ItemView.extend({
-    template: template,
+    template(data) {
+        return (
+            <React.Fragment>
+                {data.map(({ hidden, sortable, id, label }) => {
+                    return (
+                        <Cell
+                            hidden={hidden}
+                            sortable={sortable}
+                            id={id}
+                            label={label}
+                        />
+                    )
+                })}
+            </React.Fragment>
+        )
+    },
     className: 'is-thead',
     tagName: CustomElements.register('result-thead'),
     events: {

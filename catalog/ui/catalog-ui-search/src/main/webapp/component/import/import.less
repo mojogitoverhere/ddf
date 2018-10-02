@@ -5,7 +5,7 @@
   .import-content {
     display: inline-block;
     width: 100%;
-    height: ~'calc(100vh - 2*@{minimumLineSize})';
+    height: ~'calc(100% - 2*@{minimumLineSize})';
     overflow: hidden;
   }
 
@@ -13,7 +13,7 @@
     background: @background-color;
     border-bottom: 1px solid @borderColor;
     padding: @largeSpacing;
-    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
+    height: 50%;
     overflow: hidden;
 
     > * {
@@ -36,7 +36,7 @@
     }
 
     .import-file-list {
-      height: ~'calc(((100vh - 3*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+      height: ~'calc(100% - 2*@{minimumButtonSize})';
       border: 1px solid @borderColor;
     }
 
@@ -57,50 +57,12 @@
   .import-status-container {
     padding: @largeSpacing;
     overflow: hidden;
-    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
-
+    height: 50%;
     > * {
       transition: width @coreTransitionTime linear;
       width: 75%;
       margin: auto;
     }
-
-    .title-container {
-      width: 100%;
-      * {
-        display: inline-block;
-      }
-
-      .import-status-title {
-        font-size: @mediumFontSize;
-      }
-
-      .import-location {
-        opacity: @minimumOpacity;
-        font-size: @minimumFontSize;
-      }
-
-      .completed-imports {
-        opacity: @minimumOpacity;
-        font-size: @minimumFontSize;
-        float: right;
-      }
-
-      input {
-        height: 1rem;
-        float: left;
-        margin-right: 5px;
-      }
-    }
-
-
-    .import-status-list {
-      border-top: 1px solid @borderColor;
-      border-bottom: 1px solid @borderColor;
-      margin-top: @minimumSpacing;
-      max-height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
-    }
-
   }
 
   @media screen and (max-width: 1500px) {

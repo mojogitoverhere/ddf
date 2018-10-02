@@ -43,6 +43,12 @@ define([
             }
             this.listenTo(this.model, 'change:currentWorkspace', this.updateIndicator);
             this.listenTo(this.model, 'change:currentWorkspace', this.handleSaved);
+            this.listenTo(this.model, 'change:currentWorkspace', this.updateTitle);
+        },
+        updateTitle: function(workspace) {
+            if (workspace && workspace.changed.currentWorkspace) {
+                this.$el.find('input').val(this.model.get('currentWorkspace').get('title'))
+            }
         },
         onBeforeShow: function(){
             this.updateIndicator();

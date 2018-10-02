@@ -5,7 +5,7 @@
   .export-content {
     display: inline-block;
     width: 100%;
-    height: ~'calc(100vh - 2*@{minimumLineSize})';
+    height: ~'calc(100% - 2*@{minimumLineSize})';
     overflow: hidden;
   }
 
@@ -13,7 +13,7 @@
     background: @background-color;
     border-bottom: 1px solid @borderColor;
     padding: @largeSpacing;
-    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
+    height: 50%;
     overflow: hidden;
 
     > * {
@@ -45,6 +45,7 @@
 
       .warning{
         color: yellow;
+        margin-right: @minimumSpacing !important;
       }
 
       .export-custom-warning {
@@ -55,23 +56,8 @@
     }
 
     .export-search-list {
-      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - 3*@{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
-      overflow-x: hidden;
-      border: 1px solid @borderColor;
+      height: ~'calc(100% - @{minimumButtonSize})';
       margin-top: @minimumSpacing;
-    }
-
-    button {
-      float: right;
-      padding-left: @minimumSpacing;
-      padding-right: @minimumSpacing;
-      margin-top: @minimumSpacing;
-      transition: opacity @coreTransitionTime linear;
-
-      &.disabled {
-        pointer-events: none;
-        opacity: .25;
-      }
     }
   }
 
@@ -92,13 +78,13 @@
     }
     .export-search-list {
       margin-top: 0;
-      height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - 2*@{minimumSpacing} - 2*@{largeSpacing} - 4*@{minimumButtonSize})';
+      height: ~'calc(100% - 4*@{minimumButtonSize})';
     }
   }
   .export-status-container {
     padding: @largeSpacing;
     overflow: hidden;
-    height: ~'calc((100vh - 2*@{minimumLineSize}) / 2)';
+    height: 50%;
     > * {
       transition: width @coreTransitionTime linear;
       width: 75%;

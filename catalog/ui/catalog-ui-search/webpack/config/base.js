@@ -4,13 +4,16 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 var LessPluginCleanCSS = require('less-plugin-clean-css');
 
 var resolve = function (place) {
-  return path.resolve(__dirname, '../../', place)
+    return path.resolve(__dirname, '../../', place)
 };
+
+const nodeResolve = place => require.resolve(place)
 
 module.exports = {
     devtool: 'source-map',
     context: resolve('./src/main/webapp/'),
     entry: [
+        nodeResolve('babel-polyfill'),
         resolve('./src/main/webapp/js/ApplicationSetup.js')
     ],
     output: {
@@ -115,7 +118,7 @@ module.exports = {
                 loader: 'url-loader'
             },
             {
-                 test: /\.(css|less)$/,
+                test: /\.(css|less)$/,
                 loader: "style!css?sourceMap!less?sourceMap"
             }
         ],

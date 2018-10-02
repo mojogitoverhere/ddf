@@ -74,7 +74,14 @@ define([
                 extraRoom = '2.75rem';
             }
             if (this.hasFiltering()){
-                this.componentToShow.el.style.maxHeight = 'calc('+bottomRoom+'px - 1.875rem - 2.75rem - 1.25rem - '+extraRoom+')';
+                this.componentToShow.$el.css(
+                    'max-height',
+                    'calc(' +
+                      bottomRoom +
+                      'px - 1.875rem - 2.75rem - 1.25rem - ' +
+                      extraRoom +
+                      ')'
+                  )
             }
         },
         updatePosition: function () {

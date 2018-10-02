@@ -296,7 +296,7 @@
                             <npmVersion>4.1.2</npmVersion>
                         </configuration>
                     </execution>
-                    <execution>
+                    <!-- <execution>
                         <id>npm test</id>
                         <goals>
                             <goal>npm</goal>
@@ -306,7 +306,7 @@
                             <skip>${skipTests}</skip>
                             <arguments>test</arguments>
                         </configuration>
-                    </execution>
+                    </execution> -->
                     <execution>
                         <id>grunt build</id>
                         <goals>

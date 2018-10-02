@@ -13,18 +13,75 @@
  *
  **/
 /*global require*/
-var template = require('./query-status-row.hbs');
+import * as React from 'react'
 var Marionette = require('marionette');
 var CustomElements = require('js/CustomElements');
+
+const topColumn = (hasReturned, successful, messages) => {
+    if (hasReturned) {
+        if (successful) {
+            return ''
+        } else {
+            return <span className="fa fa-warning" title={messages}></span>
+        }
+    } else {
+        return ''
+    }
+}
+
+const possibleColumn = (hasReturned, successful, hits, messages) => {
+    if (hasReturned) {
+        if (successful) {
+            return hits
+        } else {
+            return <span className="fa fa-warning" title={messages}></span>
+        }
+    } else {
+        return <span className="fa fa-circle-o-notch fa-spin" title="Waiting for source to return"></span>
+    }
+}
+
+const timeColumn = (hasReturned, successful, elapsed, messages) => {
+    if (hasReturned) {
+        if (successful) {
+            return elapsed
+        } else {
+            return <span className="fa fa-warning" title={messages}></span>
+        }
+    } else {
+        return <span className="fa fa-circle-o-notch fa-spin" title="Waiting for source to return"></span>
+    }
+}
 
 module.exports = Marionette.ItemView.extend({
     className: 'is-tr',
     tagName: CustomElements.register('query-status-row'),
-    template: template,
+    template(data) {
+        const { id, hasReturned, successful, anyHasReturned, anyHasNotReturned, elapsed, hits, messages, top } = data
+        return (
+            <React.Fragment>
+                <td>
+                    {id}
+                    {topColumn(hasReturned, successful, messages)}
+                </td>
+                <td>
+                    {anyHasReturned ? top : ''}
+                    {topColumn(hasReturned, successful, messages)}
+                    {anyHasNotReturned ? <span className="fa fa-circle-o-notch fa-spin" title="Waiting for source to return"></span> : ''}
+                </td>
+                <td>
+                    {possibleColumn(hasReturned, successful, hits, messages)}
+                </td>
+                <td>
+                    {timeColumn(hasReturned, successful, elapsed, messages)}
+                </td>
+            </React.Fragment>
+        )
+    },
     modelEvents: {
         'change': 'render'
     },
-    serializeData: function(){
+    serializeData: function () {
         var modelJSON = this.model.toJSON();
         modelJSON.fromremote = modelJSON.top - modelJSON.fromcache;
         modelJSON.elapsed = modelJSON.elapsed / 1000;

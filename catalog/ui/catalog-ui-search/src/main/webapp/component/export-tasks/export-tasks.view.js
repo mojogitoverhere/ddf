@@ -13,18 +13,38 @@
  *
  **/
 /*global require*/
-var TableView = require('component/table/table.view');
-var HeaderView = require('./header/export-tasks-header.view');
-var BodyView = require('./body/export-tasks-body.view');
+const Marionette = require('backbone.marionette')
+import * as React from 'react'
+  
+import ExportTasks from './export-tasks.jsx'
+const $ = require('jquery')
+const CustomElements = require('js/CustomElements')
+var ConfirmationView = require("component/confirmation/confirmation.view");
 
-module.exports = TableView.extend({
-    className: 'export-tasks',
-    getHeaderView: function(){
-        return new HeaderView();
+module.exports = Marionette.ItemView.extend({
+    tagName: CustomElements.register("export-tasks"),
+    events: {
+        "click .info": "getInfo"
+      },
+    template() {
+        const tasks = this.model.get('tasks').toJSON()
+        return (
+            <ExportTasks location={this.model.get('location')} list={tasks} showCompleted={this.model.get('showCompleted')}
+                onShowCompletedChange={this.onShowCompletedChange.bind(this)}
+            />
+        )
     },
-    getBodyView: function(){
-        return new BodyView({
-            collection: this.model.get('tasks')
+    onShowCompletedChange(event) {
+        this.model.set('showCompleted', event.target.checked)
+    },
+    onFirstRender() {
+        this.listenTo(this.model, "change:location change:tasks add:tasks remove:tasks reset:tasks change:showCompleted", this.render);
+    },
+    getInfo: function(e) {
+        const info = $(e.target).data('info')
+        ConfirmationView.generateConfirmation({
+          prompt: info,
+          yes: "Okay"
         });
-    }
+      }
 });

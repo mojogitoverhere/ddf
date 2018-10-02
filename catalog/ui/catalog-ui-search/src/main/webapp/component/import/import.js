@@ -11,155 +11,123 @@
  **/
 /*global require*/
 
-var Backbone = require('backbone');
-var $ = require('jquery');
+var Backbone = require("backbone");
+var $ = require("jquery");
+import FileSystem from "../file-system";
 
 var File = Backbone.Model.extend({
-    defaults: {
-        path: undefined,
-        size: undefined
-    }
+  defaults: {
+    path: undefined,
+    size: undefined
+  }
 });
 
 var Files = Backbone.Collection.extend({
-    model: File
+  model: File
 });
 
 var Task = Backbone.Model.extend({
-    defaults: {
-        name: undefined,
-        started: undefined,
-        state: undefined,
-        progress: undefined,
-        info: undefined,
-        created: undefined,
-        sortOrder: 0
-    }
+  defaults: {
+    name: undefined,
+    started: undefined,
+    state: undefined,
+    progress: undefined,
+    info: undefined,
+    created: undefined,
+    sortOrder: 0
+  }
 });
 
 var Tasks = Backbone.Collection.extend({
-    model: Task
+  model: Task
 });
 
-module.exports = Backbone.AssociatedModel.extend({
-    relations: [
-        {
-            type: Backbone.Many,
-            key: 'files',
-            relatedModel: File,
-            CollectionType: Files
-        },
-        {
-            type: Backbone.Many,
-            key: 'selectedFiles',
-            relatedModel: File
-        },
-        {
-            type: Backbone.Many,
-            key: 'tasks',
-            relatedModel: Task,
-            CollectionType: Tasks
-        }
-    ],
-    defaults: {
-        root: undefined,
-        files: [],
-        selectedFiles: [],
-        tasks: [],
-        showCompleted: true
+module.exports = FileSystem.extend({
+  relations: [
+    {
+      type: Backbone.Many,
+      key: "available",
+      relatedModel: File,
+      CollectionType: Files
     },
-    initialize: function(){
-        this.get('tasks').comparator = 'sortOrder';
-        this.setFiles();
-        this.setTasks();
+    {
+      type: Backbone.Many,
+      key: "selected",
+      relatedModel: File
     },
-    getSelectedFiles: function(){
-        return this.get('selectedFiles');
-    },
-    clearSelectedFiles: function(){
-        this.getSelectedFiles().reset();
-    },
-    addSelectedFile: function(file){
-        this.getSelectedFiles().add(file);
-    },
-    removeSelectedFile: function(file){
-        this.getSelectedFiles().remove(file);
-    },
-    setFiles: function() {
-        var self = this;
-        $.ajax({
-            url: "/search/catalog/internal/resources/import/available",
-            type: "GET",
-            contentType: "application/json",
-            customErrorHandling: true
-        }).success(function(data) {
-            self.set({root: data.root});
-            self.set({files: data.files});
-        });
-    },
-    setTasks: function() {
-        var self = this;
-        $.ajax({
-            url: "/search/catalog/internal/resources/import/tasks",
-            type: "GET",
-            contentType: "application/json",
-            customErrorHandling: true
-        }).success(function(data) {
-            self.set({tasks: []});
-            data.forEach(task => self.addTask(task) );
-            if (!self.get('showCompleted')) self.set('tasks', self.get('tasks').filter(task => task.get('state') !== "Complete"));
-        })
-    },
-    addTask: function(task) {
-        var state = "";
-        var sortOrder = 0;
-        var name = task.details.importFile;
-        var created = task.details.created;
-        var started = task.started;
-        var progress = "--";
-        var info = task.details.message;
-
-        if (task.total) {
-            if (task.current) {
-                progress = task.current + " out of " + task.total + " items";
-            } else {
-                progress = "0 out of " + task.total + " items";
-            }
-        } else {
-            progress = "Unzipping..."
-        }
-
-        if (started) {
-            started = new Date(started).toString().slice(0,24);
-            if (task.finished) {
-                if (task.failed) {
-                    state = "Failed";
-                    progress = "--";
-                    sortOrder = 3;
-                } else {
-                    state = "Complete";
-                    sortOrder = 4;
-                }
-            } else {
-                state = "In Progress...";
-                sortOrder = 1;
-            }
-        } else {
-            state = "Queued";
-            sortOrder = 2;
-            progress = "--";
-            started = "--";
-        }
-
-        this.get('tasks').add({
-            state: state,
-            sortOrder: sortOrder,
-            name: name,
-            created: created,
-            started: started,
-            progress: progress,
-            info: info
-        });
+    {
+      type: Backbone.Many,
+      key: "tasks",
+      relatedModel: Task,
+      CollectionType: Tasks
     }
-});
+  ],
+  setAvailable: function() {
+    var self = this;
+    $.ajax({
+      url: "/search/catalog/internal/resources/import/available",
+      type: "GET",
+      contentType: "application/json",
+      customErrorHandling: true
+    }).success(function(data) {
+      self.set({ location: data.root });
+      self.set({
+        available: data.files.map(file => {
+          file.id = file.path;
+          return file;
+        })
+      });
+    });
+  },
+  setTasksUrl: "/search/catalog/internal/resources/import/tasks",
+  transformTask(task) {
+    var state = "";
+    var sortOrder = 0;
+    var name = task.details.importFile;
+    var created = task.details.created;
+    var started = task.started;
+    var progress = "--";
+    var info = task.details.message;
 
+    if (task.total) {
+      if (task.current) {
+        progress = task.current + " out of " + task.total + " items";
+      } else {
+        progress = "0 out of " + task.total + " items";
+      }
+    } else {
+      progress = "Unzipping...";
+    }
+    if (started) {
+      started = new Date(started).toString().slice(0, 24);
+      if (task.finished) {
+        if (task.failed) {
+          state = "Failed";
+          progress = "--";
+          sortOrder = 3;
+        } else {
+          state = "Complete";
+          sortOrder = 4;
+        }
+      } else {
+        state = "In Progress...";
+        sortOrder = 1;
+      }
+    } else {
+      state = "Queued";
+      sortOrder = 2;
+      progress = "--";
+      started = "--";
+    }
+    return {
+      state: state,
+      sortOrder: sortOrder,
+      name: name,
+      id: task.id,
+      created: created,
+      started: started,
+      progress: progress,
+      info: info
+    };
+  }
+});

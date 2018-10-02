@@ -1,3 +1,43 @@
-@{customElementNamespace}table.export-tasks {
-  max-height: ~'calc(((100vh - 2*@{minimumLineSize}) / 2) - @{minimumSpacing} - 2*@{largeSpacing} - @{minimumButtonSize})';
+@{customElementNamespace}export-tasks {
+  .customElement;
+
+  > .title-container {
+      height: @minimumButtonSize;
+      white-space: nowrap;
+      > * {
+        display: inline-block;
+      }
+  
+        .impexportort-status-title {
+          font-size: @mediumFontSize;
+        }
+  
+        .export-location {
+          margin-left: @minimumSpacing;
+          opacity: @minimumOpacity;
+          font-size: @minimumFontSize;
+        }
+  
+        .completed-exports {
+          opacity: @minimumOpacity;
+          font-size: @minimumFontSize;
+          float: right;
+        }
+
+        .showCompleted {
+          cursor: pointer;
+        }
+  
+        input {
+          height: 1rem;
+          float: left;
+          margin-right: 5px;
+        }
+  }
+  > .tasks-container {
+      height: ~'calc(100% - @{minimumButtonSize})';
+      .info {
+          margin-left: @minimumSpacing;
+      }
+  }
 }

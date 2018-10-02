@@ -43,13 +43,13 @@
     <div class="geo-types col-lg-10">
         <div class="btn-group btn-group-xs margin-bottom-large" data-toggle="buttons">
             <label id="latlon" class="btn {{#is locationType 'latlon'}}active{{/is}}">
-                <input type="radio" name="latLonButton" value="latlon">
+                <input type="radio" name="latLonButton">
                 <i class="fa fa-circle"></i>
                 <i class="fa fa-circle-o"></i>
                 Lat / Lon
             </label>
             <label id="usng" class="btn {{#is locationType 'usng'}}active{{/is}}">
-                <input type="radio" name="usngButton" value="usng">
+                <input type="radio" name="usngButton">
                 <i class="fa fa-circle"></i>
                 <i class="fa fa-circle-o"></i>
                 USNG / MGRS
@@ -58,8 +58,8 @@
     </div>
 
     <div id="lineTab{{cid}}" class="tab-pane {{#if line}}active{{/if}}">
-        <input type="hidden" name="line" value="">
-        <input type="hidden" name="lineWidth" value="{{lineWidth}}">
+        <input type="hidden" name="line">
+        <input type="hidden" name="lineWidth">
 
         <div class="col-lg-10">
             <div id="linediv" class="input-group input-group-sm">
@@ -69,7 +69,7 @@
 
             <div class="input-group input-group-sm for-line">
                 <span class="input-group-addon">Width&nbsp;</span>
-                <input class="form-control" id="lineWidthValue" type="number" min="0.000001" step="any" placeholder="" value="{{lineWidth}}"/>
+                <input class="form-control" id="lineWidthValue" type="number" min="0.000001" step="any" placeholder=""/>
                             <span class="input-group-btn">
                                 <select id="lineUnits" name="lineUnits" class="input-group-addon">
                                     <option value="meters" selected="selected">meters</option>
@@ -84,7 +84,7 @@
     </div>
 
     <div id="pointradius{{cid}}" class="tab-pane {{#if lat includeZero=true}}active{{/if}}">
-        <input type="hidden" name="radius" value="{{radius}}">
+        <input type="hidden" name="radius">
 
         <div class="col-lg-10">
             <div id="latdiv" class="input-group input-group-sm">
@@ -105,7 +105,7 @@
 
             <div class="input-group input-group-sm for-radius">
                 <span class="input-group-addon">Radius&nbsp;</span>
-                <input class="form-control" id="radiusValue" type="number" min="0.000001" step="any" placeholder="" value="{{radius}}"/>
+                <input class="form-control" id="radiusValue" type="number" min="0.000001" step="any" placeholder=""/>
                             <span class="input-group-btn">
                                 <select id="radiusUnits" name="radiusUnits" class="input-group-addon">
                                     <option value="meters" selected="selected">meters</option>
@@ -120,7 +120,7 @@
     </div>
 
     <div id="polygonTab{{cid}}" class="tab-pane {{#if polygon}}active{{/if}}">
-        <input type="hidden" name="polygon" value="">
+        <input type="hidden" name="polygon">
 
         <div class="col-lg-10">
             <div id="polygondiv" class="input-group input-group-sm">
@@ -131,7 +131,7 @@
     </div>
 
     <div id="boundingbox{{cid}}" class="tab-pane {{#if bbox}}active{{/if}}">
-        <input type="hidden" name="bbox" value="">
+        <input type="hidden" name="bbox">
 
         <div class="col-lg-10">
             <div id="westdiv" class="input-group input-group-sm">

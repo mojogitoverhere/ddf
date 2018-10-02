@@ -120,6 +120,9 @@ define([
         _resizeHandler: function () {
             var view = this;
             var menu = view.$el.find('> .tabs-list')[0];
+            if (menu === undefined) {
+                return;
+            }
             var expandedList = menu.querySelector('.tabs-expanded');
             if (view._hasMergeableTabs() && expandedList.scrollWidth > expandedList.clientWidth) {
                 view._widthWhenCollapsed().push(expandedList.scrollWidth);

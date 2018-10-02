@@ -1,0 +1,18 @@
+@{customElementNamespace}export-available {
+    .customElement;
+
+    .virtual-table-row {
+        cursor: pointer;
+    }
+
+    .list {
+        height: ~'calc(100% - @{minimumButtonSize})'
+    }
+
+    button {
+        float: right;
+        padding: 0px @minimumSpacing !important;
+        margin-top: @minimumSpacing;
+        transition: opacity .25s linear;
+    }
+}

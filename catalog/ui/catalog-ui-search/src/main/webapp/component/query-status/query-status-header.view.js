@@ -13,12 +13,29 @@
  *
  **/
 /*global require*/
-var template = require('./query-status-header.hbs');
+import * as React from 'react'
 var Marionette = require('marionette');
 var CustomElements = require('js/CustomElements');
 
 module.exports = Marionette.ItemView.extend({
     className: 'is-thead',
-    template: template,
+    template() {
+        return (
+            <React.Fragment>
+                <th>
+                    Source
+                </th>
+                <th data-help="This is the number of results available based on the current sorting.">
+                    Available
+                </th>
+                <th data-help="This is the total number of results (hits) that matched your search.">
+                    Possible
+                </th>
+                <th data-help="This is the time (in seconds) that it took for the search to run.">
+                    Time (s)
+                </th>
+            </React.Fragment>
+        )
+    },
     tagName: CustomElements.register('query-status-header')
 });

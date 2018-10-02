@@ -32,12 +32,6 @@ module.exports = merge.smart(base, {
         'stack-source-map/register',
         'console-polyfill'
     ],
-    module: {
-        loaders: [{
-            test: /\.jsx$/,
-            loaders: ['react-hot']
-        }]
-    },
     plugins: [
         new webpack.NoErrorsPlugin(),
         new webpack.NamedModulesPlugin(),

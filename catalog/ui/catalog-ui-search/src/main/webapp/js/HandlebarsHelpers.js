@@ -357,9 +357,9 @@ define([
           },
           ifUrl: function(value, options){
             if (value && value.toString().substring(0, 4) === 'http'){
-                return options.fn(this);
+                return options ? options.fn(this) : true;
             } else {
-                return options.inverse(this);
+                return options ? options.inverse(this) : false;
             }
           },
             bindInput: function(options){
@@ -413,4 +413,6 @@ define([
             Handlebars.registerHelper(helper, helpers[helper]);
         }
     }
+
+    return helpers;
 });
