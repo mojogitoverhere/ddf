@@ -21,7 +21,7 @@
 
         <AD description="The directory where all bulk export zip files will be placed."
             name="Export Directory" id="exportDirectory" required="true" type="String"
-            default=""/>
+            default="${ddf.home}"/>
 
     </OCD>
 

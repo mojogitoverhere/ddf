@@ -15,19 +15,23 @@ package org.codice.ddf.catalog.ui.content.exports;
 
 import java.io.File;
 import java.nio.file.Paths;
+import org.codice.ddf.configuration.PropertyResolver;
 import spark.utils.StringUtils;
 
 public class ExportDirectory {
 
-  private String exportDirectory;
+  private String exportDirectory = System.getProperty("ddf.home");
 
   public void setExportDirectory(String exportDirectory) {
-    this.exportDirectory = exportDirectory;
+    this.exportDirectory =
+        StringUtils.isBlank(exportDirectory)
+            ? System.getProperty("ddf.home")
+            : PropertyResolver.resolveProperties(exportDirectory);
   }
 
   @Override
   public String toString() {
-    return exportDirectory == null ? "" : exportDirectory;
+    return exportDirectory;
   }
 
   public boolean existsAndIsWritable() {

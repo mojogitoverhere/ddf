@@ -129,7 +129,7 @@ public class ConfigurationApplication implements SparkApplication {
 
   private String queryFeedbackEmailDestination;
 
-  private String offlineRootPath;
+  private String offlineRootPath = System.getProperty("ddf.home");
 
   public List<String> getAttributeAliases() {
     return attributeAliases
@@ -650,7 +650,9 @@ public class ConfigurationApplication implements SparkApplication {
   }
 
   public String getOfflineRootPath() {
-    return offlineRootPath;
+    return StringUtils.isNotBlank(offlineRootPath)
+        ? offlineRootPath
+        : System.getProperty("ddf.home");
   }
 
   public void setOfflineRootPath(String offlineRootPath) {

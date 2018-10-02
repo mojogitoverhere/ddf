@@ -213,7 +213,7 @@
             name="Offline Root Path"
             description="The root path for storing offline resources."
             type="String"
-            default=""
+            default="${ddf.home}"
             required="true"/>
 
     </OCD>

@@ -15,7 +15,10 @@
 
 <blueprint xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
            xmlns:jaxrs="http://cxf.apache.org/blueprint/jaxrs"
-           xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+           xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.2.0">
+
+    <ext:property-placeholder/>
 
     <service interface="ddf.catalog.data.MetacardType">
         <bean class="ddf.catalog.data.impl.types.OfflineAttributes"/>
@@ -60,6 +63,7 @@
                 update-strategy="container-managed"/>
         <property name="branding" ref="webBranding"/>
         <property name="httpProxy" ref="httpProxyService"/>
+        <property name="offlineRootPath" value="${ddf.home}"/>
     </bean>
 
     <service interface="ddf.catalog.data.MetacardType">
@@ -266,7 +270,7 @@
         <cm:managed-properties
                 persistent-id="org.codice.ddf.catalog.ui.content.exports.ExportDirectory"
                 update-strategy="container-managed"/>
-        <property name="exportDirectory" value=""/>
+        <property name="exportDirectory" value="${ddf.home}"/>
     </bean>
 
     <reference-list id="metadataTransformers"
