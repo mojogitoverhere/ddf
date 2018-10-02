@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -103,7 +104,7 @@ public class ExportResources {
       LOGGER.debug(
           "Could not execute query to get total result count -- job status will not show total", e);
     }
-    if (queryResponse == null || queryResponse.getResults().isEmpty()) {
+    if (queryResponse == null || CollectionUtils.isEmpty(queryResponse.getResults())) {
       throw new ExportException("No results found for query. Please ensure your query is correct.");
     }
     task.update(current, totalHits);
