@@ -137,7 +137,7 @@ public class ImportApplication implements SparkApplication {
     File[] filesArray = null;
     if (archiveFile.isDirectory()) {
       filesArray = archiveFile.listFiles((dir, name) -> name.endsWith(".zip"));
-      if (filesArray == null) {
+      if (filesArray == null || filesArray.length == 0) {
         Task task = importMonitor.newTask();
         task.started();
         task.failed();
