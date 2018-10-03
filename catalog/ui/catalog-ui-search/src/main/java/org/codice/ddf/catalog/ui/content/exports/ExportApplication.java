@@ -130,13 +130,13 @@ public class ExportApplication implements SparkApplication {
 
     Task task = exportMonitor.newTask();
     if (StringUtils.isBlank(cql)) {
-      task.putDetails("details", "A CQL string is required");
+      task.putDetails("message", "A CQL string is required");
       return;
     }
 
     if (type == ExportType.INVALID) {
       task.putDetails(
-          "details",
+          "message",
           String.format(
               "Invalid export type. Should be %s, %s, or %s.",
               ExportType.METADATA_AND_CONTENT, ExportType.METADATA_ONLY, ExportType.CONTENT_ONLY));
@@ -146,7 +146,7 @@ public class ExportApplication implements SparkApplication {
         metadataFormats.getTransformerById(metadataFormat);
     if (!metadataTransformer.isPresent()) {
       task.putDetails(
-          "details",
+          "message",
           String.format("No transformer available for the [%s] metadata format.", metadataFormat));
     }
 
@@ -171,14 +171,14 @@ public class ExportApplication implements SparkApplication {
                 e);
             task.failed();
             task.putDetails(
-                "details",
+                "message",
                 "An error occurred while exporting, please see the logs for more information");
             return;
           } catch (ExportException e) {
             LOGGER.debug(
                 "Query used for export could not find any results to export. Query=(%s)", cql, e);
             task.failed();
-            task.putDetails("details", e.getMessage());
+            task.putDetails("message", e.getMessage());
             return;
           }
 
