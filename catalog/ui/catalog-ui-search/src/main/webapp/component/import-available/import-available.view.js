@@ -41,7 +41,7 @@ module.exports = AvailableView.extend({
             url: '/search/catalog/internal/import',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(this.model.getSelected().map(item => item.getLocation())),
+            data: JSON.stringify(this.model.getSelected().map(item => item.get('path'))),
             customErrorHandling: true
         })
   }

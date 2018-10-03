@@ -92,13 +92,9 @@ public class ImportApplication implements SparkApplication {
             return ImmutableMap.of("message", "The import directory has not been configured.");
           }
 
-          Map<String, Object> importArguments = JSON_MAPPER.parser().parseMap(req.body());
+          List<String> imports = JSON_MAPPER.parser().parseList(String.class, req.body());
 
-          if (!(importArguments.get(IMPORT_PATH_ARG) instanceof List)
-              || ((List<String>) importArguments.get(IMPORT_PATH_ARG)).isEmpty()
-              || ((List<String>) importArguments.get(IMPORT_PATH_ARG))
-                  .stream()
-                  .anyMatch(StringUtils::isEmpty)) {
+          if (imports.isEmpty() || imports.stream().anyMatch(StringUtils::isEmpty)) {
             res.status(400);
             return Collections.singletonMap(
                 "message",
@@ -106,8 +102,6 @@ public class ImportApplication implements SparkApplication {
                     "The required argument '%s' must be a non-empty list of strings.",
                     IMPORT_PATH_ARG));
           }
-          List<String> imports = (List<String>) importArguments.get(IMPORT_PATH_ARG);
-
           for (String path : imports) {
             try {
               File archiveFile = Paths.get(rootPath, path).toFile();
