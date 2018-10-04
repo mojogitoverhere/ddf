@@ -139,8 +139,29 @@ define([
         },
         handleDownload: function() {
             var self = this;
-            this.model.forEach(function(result) {
-                self.doDirectDownload(result);
+            $.ajax({
+                url: '/search/catalog/internal/datausage/remaining',
+                type: "GET",
+                contentType: "application/json",
+            }).success(function(dataUsageRemaining) {
+                var undownloadable = [];
+                self.model.forEach(function(result) {
+                    var resourceSizeAttribute = result.get('metacard').get('properties').get('resource-size');
+                    var resourceSize = resourceSizeAttribute ? parseInt(resourceSizeAttribute) : 0;
+                    if (resourceSize > dataUsageRemaining) {
+                        undownloadable.push(result.get('metacard').get('properties').get('id'));
+                    } else {
+                        dataUsageRemaining -= resourceSize;
+                        self.doDirectDownload(result);
+                    }
+                });
+                if (undownloadable.length > 0) {
+                    announcement.announce({
+                        title: 'Download Usage Limit Exceeded',
+                        message: 'Some of your download requests could not be completed. Please contact your Administrator.',
+                        type: 'error'
+                    });
+                }
             });
         },
         doDirectDownload: function(result) {

@@ -13,6 +13,7 @@
  */
 package org.codice.ddf.persistence.attributes.internal;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -36,6 +37,8 @@ public class AttributesStoreImpl implements AttributesStore {
   private static final String EMPTY_USERNAME_ERROR = "Empty username specified";
 
   private static final long NO_DATA_LIMIT = -1L;
+
+  private final Map<String, Long> dataUsageCache = new HashMap<>();
 
   public AttributesStoreImpl(PersistentStore persistentStore) {
     this.persistentStore = persistentStore;
@@ -91,6 +94,7 @@ public class AttributesStoreImpl implements AttributesStore {
         dataUsage += newDataUsage;
 
         LOGGER.debug("Updating user {} data usage to {}", username, dataUsage);
+        dataUsageCache.put(username, dataUsage);
         persistentStore.add(
             PersistentStore.USER_ATTRIBUTE_TYPE,
             toPersistentItem(username, dataUsage, getDataLimitByUser(username)));
@@ -112,6 +116,7 @@ public class AttributesStoreImpl implements AttributesStore {
         readWriteLock.writeLock().lock();
 
         LOGGER.debug("Updating user {} data usage to {}", username, dataUsage);
+        dataUsageCache.put(username, dataUsage);
         persistentStore.add(
             PersistentStore.USER_ATTRIBUTE_TYPE,
             toPersistentItem(username, dataUsage, NO_DATA_LIMIT));
@@ -164,6 +169,7 @@ public class AttributesStoreImpl implements AttributesStore {
         readWriteLock.writeLock().lock();
 
         LOGGER.debug("Resetting Data usage for user : {}", username);
+        dataUsageCache.put(username, 0L);
         persistentStore.add(
             PersistentStore.USER_ATTRIBUTE_TYPE, toPersistentItem(username, 0L, dataLimit));
       } finally {
@@ -188,6 +194,13 @@ public class AttributesStoreImpl implements AttributesStore {
   }
 
   private long getCurrentDataUsageByUserNoLock(final String username) throws PersistenceException {
+
+    Long dataUsageMapValue = dataUsageCache.get(username);
+    if (dataUsageMapValue != null) {
+      LOGGER.debug("User {} data usage {} ", username, dataUsageMapValue);
+      return dataUsageMapValue;
+    }
+
     long currentDataUsage = 0L;
     List<Map<String, Object>> attributesList;
     attributesList =
@@ -200,6 +213,9 @@ public class AttributesStoreImpl implements AttributesStore {
 
       LOGGER.debug("User {} data usage {} ", username, String.valueOf(currentDataUsage));
     }
+
+    dataUsageCache.put(username, currentDataUsage);
+
     return currentDataUsage;
   }
 

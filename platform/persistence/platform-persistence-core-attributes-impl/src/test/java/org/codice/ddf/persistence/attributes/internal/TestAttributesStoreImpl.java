@@ -64,13 +64,28 @@ public class TestAttributesStoreImpl {
     attributesStore = new AttributesStoreImpl(persistentStore);
   }
 
+  /**
+   * Make sure that subsequent calls to get the data usage do not hit the persistent store more than
+   * once and returns the same value.
+   *
+   * @throws PersistenceException
+   */
+  @Test
+  public void testGetCachedDataUsage() throws PersistenceException {
+    configureSimplePeristentStore();
+
+    long firstUsageValue = attributesStore.getCurrentDataUsageByUser(USER);
+
+    long secondUsageValue = attributesStore.getCurrentDataUsageByUser(USER);
+
+    verify(persistentStore).get(anyString(), anyString());
+
+    assertThat(firstUsageValue, is(secondUsageValue));
+  }
+
   @Test
   public void testGetDataUsage() throws PersistenceException {
-    attributesList = new ArrayList<>();
-    Map<String, Object> attributes = new HashMap<>();
-    attributes.put(DATA_USAGE_LONG, LONG_1);
-    attributesList.add(attributes);
-    when(persistentStore.get(anyString(), anyString())).thenReturn(attributesList);
+    configureSimplePeristentStore();
 
     long usage = attributesStore.getCurrentDataUsageByUser(USER);
 
@@ -253,5 +268,13 @@ public class TestAttributesStoreImpl {
     assertThat(itemArg.getValue().getLongProperty(AttributesStore.DATA_USAGE_KEY), is(0L));
     assertThat(
         itemArg.getValue().getLongProperty(AttributesStore.DATA_USAGE_LIMIT_KEY), is(LONG_1));
+  }
+
+  private void configureSimplePeristentStore() throws PersistenceException {
+    attributesList = new ArrayList<>();
+    Map<String, Object> attributes = new HashMap<>();
+    attributes.put(DATA_USAGE_LONG, LONG_1);
+    attributesList.add(attributes);
+    when(persistentStore.get(anyString(), anyString())).thenReturn(attributesList);
   }
 }
