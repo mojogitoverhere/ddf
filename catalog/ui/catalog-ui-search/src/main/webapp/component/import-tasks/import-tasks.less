@@ -4,10 +4,14 @@
     > .title-container {
         height: @minimumButtonSize;
         white-space: nowrap;
-        > * {
+        * {
           display: inline-block;
         }
-    
+
+          .left {
+            width:  ~'calc(100% - 8*@{minimumButtonSize})';
+          }
+
           .import-status-title {
             font-size: @mediumFontSize;
           }
@@ -16,18 +20,35 @@
             margin-left: @minimumSpacing;
             opacity: @minimumOpacity;
             font-size: @minimumFontSize;
+            width: ~'calc(100% - 8*@{minimumButtonSize})';
+
+            .import-dir {
+              min-width: 10px;
+              max-width: 100%;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              white-space: nowrap;
+              vertical-align:top;
+            }
           }
     
           .completed-imports {
             opacity: @minimumOpacity;
             font-size: @minimumFontSize;
+            width:  ~'calc(8*@{minimumButtonSize})';
             float: right;
           }
 
           .showCompleted {
             cursor: pointer;
+            margin-right: @mediumSpacing;
+            float: right;
           }
-    
+
+          .clearCompleted {
+            float: right;
+          }
+
           input {
             height: 1rem;
             float: left;
@@ -36,6 +57,8 @@
     }
     > .tasks-container {
         height: ~'calc(100% - @{minimumButtonSize})';
+        border: 1px solid @borderColor;
+
         .info {
             margin-left: @minimumSpacing;
         }

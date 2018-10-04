@@ -28,19 +28,28 @@ function render(props) {
     const { list, showCompleted, onShowCompletedChange, location } = props;
     return <React.Fragment>
         <div className="title-container">
-            <div className="export-status-title">
-                Export Status
-                            </div>
-            <div className="export-location">
-                {location ? ` (Configured export directory: ${location})` : ''}
+            <div className="left">
+                <div className="export-status-title">
+                    Export Status
+                </div>
+                <div className="export-location">
+                    {location ? ` (Configured export directory: ` : ''}
+                    <div className="export-dir" title={location}>
+                        {location ? `${location}` : ''}
+                    </div>
+                    {location ? `)` : ''}
+                </div>
             </div>
-            <div className="completed-exports">
-                <label className="showCompleted">
-                    Show completed exports
-                    <input className="showCompleted"
-                    type="checkbox"
-                    checked={showCompleted}
-                    onChange={onShowCompletedChange} />
+            <div className="completed-exports right">
+                <label className="clearCompleted is-button" title="Clear completed and failed exports">
+                    <span className="fa fa-eraser"></span>
+                    Clear finished tasks
+                </label>
+                <label className="showCompleted is-button">
+                    Show completed
+                    <input type="checkbox"
+                           checked={showCompleted}
+                           onChange={onShowCompletedChange} />
                 </label>
             </div>
         </div>

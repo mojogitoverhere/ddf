@@ -24,7 +24,8 @@ var ConfirmationView = require("component/confirmation/confirmation.view");
 module.exports = Marionette.ItemView.extend({
     tagName: CustomElements.register("export-tasks"),
     events: {
-        "click .info": "getInfo"
+        "click .info": "getInfo",
+        "click .clearCompleted": "clearCompleted"
       },
     template() {
         const tasks = this.model.get('tasks').toJSON()
@@ -46,5 +47,8 @@ module.exports = Marionette.ItemView.extend({
           prompt: info,
           yes: "Okay"
         });
-      }
+    },
+    clearCompleted: function() {
+        this.model.clearCompleted();
+    }
 });

@@ -131,6 +131,13 @@ public class ImportApplication implements SparkApplication {
           importMonitor.removeTask(id);
           return "";
         });
+
+    delete(
+        "/resources/import/tasks",
+        (req, res) -> {
+          importMonitor.clearFinishedTasks();
+          return "";
+        });
   }
 
   private void importArchive(String relativePath, File archiveFile) throws ImportException {

@@ -28,19 +28,28 @@ function render(props) {
     const { list, showCompleted, onShowCompletedChange, location } = props;
     return <React.Fragment>
         <div className="title-container">
-            <div className="import-status-title">
-                Import Status
-                            </div>
-            <div className="import-location">
-                {location ? ` (Configured import directory: ${location})` : ''}
+            <div className="left">
+                <div className="import-status-title">
+                    Import Status
+                </div>
+                <div className="import-location">
+                    {location ? ` (Configured import directory: ` : ''}
+                    <div className="import-dir" title={location}>
+                        {location ? `${location}` : ''}
+                    </div>
+                    {location ? `)` : ''}
+                </div>
             </div>
             <div className="completed-imports">
-                <label className="showCompleted">
-                    Show completed imports
-                    <input className="showCompleted"
-                    type="checkbox"
-                    checked={showCompleted}
-                    onChange={onShowCompletedChange} />
+                <label className="clearCompleted is-button" title="Clear completed and failed imports">
+                    <span className="fa fa-eraser"></span>
+                    Clear finished tasks
+                </label>
+                <label className="showCompleted is-button">
+                    Show completed
+                    <input type="checkbox"
+                           checked={showCompleted}
+                           onChange={onShowCompletedChange} />
                 </label>
             </div>
         </div>

@@ -121,6 +121,12 @@ public class ExportApplication implements SparkApplication {
           exportMonitor.removeTask(id);
           return "";
         });
+    delete(
+        "/resources/export/tasks",
+        (req, res) -> {
+          exportMonitor.clearFinishedTasks();
+          return "";
+        });
   }
 
   private void exportArchive(Response res, ExportOptions exportOptions) {

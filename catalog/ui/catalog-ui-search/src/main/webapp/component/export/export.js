@@ -191,5 +191,13 @@ module.exports = FileSystem.extend({
       progress: progress,
       info: info
     };
+  },
+  clearCompleted: function() {
+      $.ajax({
+          url: "/search/catalog/internal/resources/export/tasks",
+          type: "DELETE",
+          customErrorHandling: true,
+          contentType: "application/json"
+      });
   }
 });

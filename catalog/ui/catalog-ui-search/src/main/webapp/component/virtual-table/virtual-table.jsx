@@ -119,7 +119,7 @@ class VirtualTable extends React.PureComponent {
               rowHeight={this._cache.rowHeight}
               rowCount={list.length}
               rowGetter={({ index }) => list[index]}
-              gridClassName="is-list"
+              gridClassName="is-list table-body"
               rowClassName={this.getRowClassName}
               noRowsRenderer={emptyRender || getDefaultEmptyRender(emptyText)}
               onRowClick={onRowClick}

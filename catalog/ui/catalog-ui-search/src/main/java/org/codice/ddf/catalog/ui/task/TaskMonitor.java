@@ -94,6 +94,11 @@ public class TaskMonitor {
     tasks.remove(id);
   }
 
+  /** Deletes tasks that are completed */
+  public void clearFinishedTasks() {
+    tasks.values().removeIf(task -> task.isFinished());
+  }
+
   public static class Task {
     private String id = UUID.randomUUID().toString();
 
