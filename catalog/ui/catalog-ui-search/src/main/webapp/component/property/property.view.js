@@ -42,7 +42,8 @@ define([
         },
         modelEvents: {
             'change:hasChanged': 'handleRevert',
-            'change:isEditing': 'handleEdit'
+            'change:isEditing': 'handleEdit',
+            'change:isDisabled': 'handleDisabled'
         },
         regions: {
             propertyValue: '.property-value'
@@ -58,6 +59,7 @@ define([
             this.handleValidation();
             this.handleLabel();
             this.handleOnlyEditing();
+            this.handleDisabled();
         },
         onBeforeShow: function() {
             this.propertyValue.show(new BulkInputView({
@@ -84,6 +86,9 @@ define([
         },
         handleValue: function(){
             this.$el.find('input').val(this.model.getValue());
+        },
+        handleDisabled: function(){
+            this.$el.toggleClass('is-disabled', this.model.isDisabled());
         },
         turnOnEditing: function(){
             if (!this.model.get('readOnly')) {

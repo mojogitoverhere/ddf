@@ -10,7 +10,7 @@
         .left {
           width:  ~'calc(100% - 8*@{minimumButtonSize})';
         }
-  
+
         .export-status-title {
           font-size: @mediumFontSize;
         }
@@ -42,6 +42,10 @@
           cursor: pointer;
           margin-right: @mediumSpacing;
           float: right;
+
+          > input:focus {
+            outline: none;
+          }
         }
 
         .clearCompleted {

@@ -23,6 +23,7 @@ var Export = require("./export.js");
 var Property = require("component/property/property");
 var PropertyView = require("component/property/property.view");
 var ExportTasksView = require("component/export-tasks/export-tasks.view");
+var ConfirmationView = require("component/confirmation/confirmation.view");
 import * as React from "react";
 
 module.exports = Marionette.LayoutView.extend({
@@ -41,14 +42,21 @@ module.exports = Marionette.LayoutView.extend({
                 <span className="fa fa-caret-down not-custom" />
               </div>
             </div>
-
             <div className="export-custom-container">
-              <div className="export-custom-type input" />
-              <div className="export-custom-format input" />
-              <div className="export-custom-warning">
-                <span className="fa fa-exclamation warning" />
-                Please note, only the export format titled “Backup Format” is
-                able to be reimported <b>without data loss</b>.
+              <div className="export-full-fidelity">
+                <label><input type="radio" name="export" id="full-fidelity" value="full-fidelity" defaultChecked />Full-Fidelity</label>
+                <div className="export-custom-warning">
+                  <span className="fa fa-exclamation warning" />
+                  Only <b>Full-Fidelity</b> exports are
+                  able to be reimported <b>without data loss</b>.
+                </div>
+              </div>
+              <div className="export-custom">
+                <label><input type="radio" name="export" id="custom" value="custom" />Custom</label>
+                <div className="export-custom-options">
+                  <div className="export-custom-type input" />
+                  <div className="export-custom-format input" />
+                </div>
               </div>
             </div>
 
@@ -65,7 +73,8 @@ module.exports = Marionette.LayoutView.extend({
   tagName: CustomElements.register("export"),
   events: {
     "click .export-button": "handleExport",
-    "click .export-custom-title": "handleCustom"
+    "click .export-custom-title": "handleCustom",
+    "change input[type=radio]": "handleExportSettings"
   },
   regions: {
     exportMenu: ".export-menu",
@@ -95,15 +104,26 @@ module.exports = Marionette.LayoutView.extend({
     this.$el.toggleClass("is-custom");
     $(window).resize()
   },
+  handleExportSettings: function() {
+    var isFullFidelity = $("#full-fidelity")[0].checked;
+    if (isFullFidelity === true) {
+      this.formatModel.set("isDisabled", true);
+      this.typeModel.set("isDisabled", true);
+    } else {
+      this.formatModel.set("isDisabled", false);
+      this.typeModel.set("isDisabled", false);
+    }
+  },
   onBeforeShow: function() {
     this.exportMenu.show(new NavigationView());
     this.exportSearchList.show(new ExportAvailableView({ model: this.model, handleExport: this.handleExport.bind(this) }));
     this.formatModel = new Property({
       label: "Export Format",
-      value: ["backup"],
+      value: ["xml"],
       showLabel: true,
       id: "format",
       isEditing: true,
+      isDisabled: true,
       enum: this.model.get("formatValues")
     });
     this.formatInput.show(new PropertyView({ model: this.formatModel }));
@@ -115,27 +135,24 @@ module.exports = Marionette.LayoutView.extend({
       id: "type",
       isEditing: true,
       limitedWidth: true,
+      isDisabled: true,
       enum: [
         { label: "Metadata and Content", value: "METADATA_AND_CONTENT" },
         { label: "Metadata Only", value: "METADATA_ONLY" },
         { label: "Content Only", value: "CONTENT_ONLY" }
       ]
     });
+    this.listenTo(this.typeModel, "change:value", function() {
+      this.formatModel.set("isDisabled", this.typeModel.get("value")[0] === "CONTENT_ONLY");
+    });
     this.typeInput.show(new PropertyView({ model: this.typeModel }));
     this.typeInput.currentView.turnOnLimitedWidth();
     this.exportStatusList.show(new ExportTasksView({ model: this.model }));
   },
-  handleExport: function() {
-    var transformerId = this.formatInput.currentView.model.getValue()[0];
-    var exportType = this.typeInput.currentView.model.getValue()[0];
-    if (transformerId == "backup") {
-      transformerId = "xml";
-    }
+  doExport: function(transformerId, exportType) {
     const searches = this.model.getSelected().map(function(search) {
       var workspace = search.get("workspace");
-      var title = workspace
-          ? workspace
-          : workspace + " - " + search.get("title");
+      var title = workspace === "FULL CATALOG" ? workspace : workspace + " - " + search.get("title");
       return {
           cql: search.get("cql"),
           metadataFormat: transformerId,
@@ -152,5 +169,29 @@ module.exports = Marionette.LayoutView.extend({
       contentType: "application/json",
       data: JSON.stringify(searches)
     });
+  },
+  handleExport: function() {
+    var transformerId = this.formatInput.currentView.model.getValue()[0];
+    var exportType = this.typeInput.currentView.model.getValue()[0];
+    var isFullFidelity = $("#full-fidelity")[0].checked;
+    if (isFullFidelity === true) {
+      transformerId = "xml";
+      exportType = "METADATA_AND_CONTENT";
+    }
+    if (!(transformerId === "xml" && exportType === "METADATA_AND_CONTENT")) {
+      this.listenTo(ConfirmationView.generateConfirmation({
+              prompt: 'Only full-fidelity exports are able to be reimported without any data loss. Are you sure you want to export using a custom format?',
+              no: 'Cancel',
+              yes: 'Export'
+          }),
+          'change:choice',
+          function(confirmation) {
+            if (confirmation.get('choice')) {
+              this.doExport(transformerId, exportType);
+            }
+          }.bind(this));
+    } else {
+      this.doExport(transformerId, exportType);
+    }
   },
 });

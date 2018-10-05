@@ -116,7 +116,6 @@ module.exports = FileSystem.extend({
   },
   setFormatEnumValues: function() {
     var self = this;
-    self.get("formatValues").push({ label: "Backup Format", value: "backup" });
     $.ajax({
       url: "/search/catalog/internal/resources/export/formats",
       type: "GET",

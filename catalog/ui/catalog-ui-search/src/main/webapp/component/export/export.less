@@ -23,6 +23,12 @@
     }
 
     .export-title-container {
+      border-bottom: 1px solid @borderColor;
+      height: ~'calc(@{largeSpacing} + @{minimumSpacing})';
+
+      .export-title {
+        font-size: @mediumFontSize;
+      }
       > * {
         display: inline-block;
       }
@@ -33,18 +39,53 @@
 
       .export-custom-title {
         float: right;
+
+        span {
+          margin-left: @minimumSpacing;
+        }
       }
     }
 
     .export-custom-container {
       height: 0%;
       display: none;
-      > * {
+      padding: @minimumSpacing;
+
+      input[type="radio"] {
+        vertical-align: middle;
+        margin-top: 0px;
+        margin-right: @minimumSpacing;
+      }
+
+      input[type="radio"]:focus {
+        box-shadow: none !important;
+      }
+
+      label {
+        cursor: pointer;
+      }
+
+      .export-full-fidelity {
+        vertical-align: top;
         display: inline-block;
+        width: 35%;
+      }
+
+      .export-custom {
+         vertical-align: top;
+         display: inline-block;
+         width: 65%;
+
+         .export-custom-options {
+
+            > * {
+              display: inline-block;
+            }
+         }
       }
 
       .input {
-        width: 25%;
+        width: 50%;
       }
 
       .warning{
@@ -53,15 +94,18 @@
       }
 
       .export-custom-warning {
-        width: ~'calc(50% - 10px)';
-        padding-left: @largeSpacing;
         vertical-align: middle;
+        margin: @minimumSpacing;
+
+        span {
+          margin-right: @minimumSpacing;
+        }
       }
     }
 
     .export-search-list {
       height: ~'calc(100% - @{minimumButtonSize})';
-      margin-top: @minimumSpacing;
+      margin-top: 0px;
     }
   }
 
@@ -70,19 +114,23 @@
   }
 
   &.is-custom {
+
     .is-custom {
       display: inline-block;
     }
+
     .not-custom {
       display: none;
     }
+
     .export-custom-container {
       display: block;
-      height: ~'calc(3*@{minimumButtonSize})';
+      height: ~'calc(2*@{minimumSpacing} + @{mediumSpacing} + 3*@{minimumButtonSize})';
     }
+
     .export-search-list {
       margin-top: 0;
-      height: ~'calc(100% - 4*@{minimumButtonSize})';
+      height: ~'calc(100% - 2*@{largeSpacing} - @{mediumSpacing} - 3*@{minimumButtonSize})';
     }
   }
   .export-status-container {
@@ -116,6 +164,10 @@
         float: left;
         margin-right: 5px;
       }
+
+      input:focus {
+        box-shadow: none;
+      }
     }
     .export-status-list {
       border-top: 1px solid @borderColor;
@@ -134,5 +186,9 @@
 
     }
   }
+}
 
+@{customElementNamespace}property {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
 }
