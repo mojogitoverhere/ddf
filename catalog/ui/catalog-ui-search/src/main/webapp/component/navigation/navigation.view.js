@@ -18,6 +18,8 @@ var template = require('./navigation.hbs');
 var CustomElements = require('CustomElements');
 var NavigationLeftView = require('component/navigation-left/navigation-left.view');
 var NavigationRightView = require('component/navigation-right/navigation-right.view');
+const Download = require('js/Download')
+const Downloads = Download.getDownloads();
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
@@ -27,6 +29,9 @@ module.exports = Marionette.LayoutView.extend({
         navigationMiddle: '.navigation-middle',
         navigationRight: '.navigation-right'
     },
+    events: {
+        'click > .download-paused button': 'triggerClose'
+    },
     showNavigationMiddle: function(){
         //override in extensions
     },
@@ -34,5 +39,17 @@ module.exports = Marionette.LayoutView.extend({
         this.navigationLeft.show(new NavigationLeftView());
         this.showNavigationMiddle();
         this.navigationRight.show(new NavigationRightView());
+    },
+    initialize() {
+        this.listenTo(Downloads, 'change:autoDownload', this.handleAutoDownload);
+        this.handleAutoDownload();
+    },
+    // escape hatch in case there's a bug for when this is shown
+    triggerClose() {
+        this.$el.removeClass('show-warning');
+    },
+    handleAutoDownload() {
+        const showWarning = Downloads.get('processing') !== undefined && Downloads.get('autoDownload') === false;
+        this.$el.toggleClass('show-warning', showWarning);
     }
 });

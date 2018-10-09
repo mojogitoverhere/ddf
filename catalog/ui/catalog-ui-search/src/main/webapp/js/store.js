@@ -19,8 +19,11 @@ define([
     'js/model/Workspace',
     'component/content/content',
     'wreqr',
-    'component/router/router'
-], function ($, Backbone, poller, _, Workspace, Content, wreqr, router) {
+    'component/router/router',
+    'js/Download'
+], function ($, Backbone, poller, _, Workspace, Content, wreqr, router, Download) {
+
+    const Downloads = Download.getDownloads();
 
     return new (Backbone.Model.extend({
         initialize: function () {
@@ -41,6 +44,11 @@ define([
 
                 if (unsaved.length > 0) {
                     return 'Do you really want to close? Unsaved workspaces: ' + unsaved.join(', ');
+                }
+                const processingDownload = Downloads.get('processing')
+                if (processingDownload !== undefined) {
+                    const queuedDownloads = Downloads.get('queue').toJSON().map(download => download.filename).join(',')
+                    return `Do you really want to close?  Queued downloads:  ${processingDownload}, ${queuedDownloads}`;
                 }
             }.bind(this);
 

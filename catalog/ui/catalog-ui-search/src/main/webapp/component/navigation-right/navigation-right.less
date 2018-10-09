@@ -45,6 +45,18 @@
         vertical-align: top;
     }
 
+    .item-downloads {
+        opacity: 0;
+        transform: translateY(-100%);
+        transition: opacity @coreTransitionTime ease-in-out;
+    }
+}
+
+@{customElementNamespace}navigation-right.has-downloads {
+    .item-downloads {
+        transform: translateY(0%);
+        opacity: @minimumOpacity;
+    }
 }
 
 @{customElementNamespace}navigation-right.is-guest {

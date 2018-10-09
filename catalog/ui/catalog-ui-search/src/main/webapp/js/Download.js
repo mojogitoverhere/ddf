@@ -13,29 +13,148 @@
  *
  **/
 
-module.exports = {
-    fromData: function(filename, type, data) {
-        var blob = new Blob([data], {type: type}, filename);
-        if(window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveBlob(blob, filename);
-        } else {
-            var elem = window.document.createElement('a');
-            elem.href = window.URL.createObjectURL(blob);
-            elem.download = filename;
-            document.body.appendChild(elem);
-            elem.click();
-            window.URL.revokeObjectURL(elem.href);
-            document.body.removeChild(elem);
-        }
-    },
-    fromUrl: function(filename, url) {
-        // NOTE: if the response from the URL contains a Content-Disposition header
-        // with a "filename" attribute, that will take precedence over this filename variable.
-        var link = document.createElement("a");
-        link.download = filename;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+const Backbone = require("backbone");
+require("backboneassociations");
+const announcement = require("component/announcement");
+const Common = require("js/Common");
+const _ = require("underscore");
+const announceDownload = _.debounce(() => {
+  announcement.announce({
+    title: "Download(s) Queued",
+    type: "info",
+    message: `File(s) added to download queue.  Please click the spinner in the main navigation bar for information on currently queued downloads.`
+  });
+}, 200);
+
+const Download = Backbone.AssociatedModel.extend({
+  defaults() {
+    return {
+      filename: "",
+      callback: undefined,
+      id: Common.generateUUID()
+    };
+  }
+});
+
+let timeoutId = undefined;
+
+// autoDownload means saved files are set to go to a predefined location, so no dialogs
+let Downloads = new (Backbone.AssociatedModel.extend({
+  defaults() {
+    return {
+      processing: undefined,
+      queue: [],
+      autoDownload: true
+    };
+  },
+  relations: [
+    {
+      type: Backbone.Many,
+      key: "queue",
+      relatedModel: Download
     }
+  ],
+  initialize() {
+    this.listenTo(this.get("queue"), "add", announceDownload);
+    this.listenTo(this.get("queue"), "add", this.processQueue);
+    this.listenTo(this, "change:processing", this.processQueue);
+  },
+  addToQueue(filename, callback) {
+    this.get("queue").add({ filename, callback });
+  },
+  initiateDownload() {
+    const next = this.get("queue").shift();
+    if (next) {
+      this.set("processing", next.get("filename"));
+      next.get("callback")();
+    }
+  },
+  processQueue() {
+    const processing = this.get("processing");
+    console.log(processing);
+    if (processing === undefined) {
+      this.initiateDownload();
+    }
+  },
+  finishDownload() {
+    clearTimeout(timeoutId);
+    window.onblur = undefined;
+    window.onfocus = undefined;
+    this.set({
+      processing: undefined,
+      autoDownload: true
+    });
+  }
+}))();
+
+const onBlur = () => {
+  Downloads.set("autoDownload", false);
+};
+
+const onFocus = () => {
+  Downloads.finishDownload();
 }
+
+const afterDownload = () => {
+  clearTimeout(timeoutId)
+  timeoutId = setTimeout(() => {
+    if (Downloads.get("autoDownload")) {
+      Downloads.finishDownload();
+    }
+  }, 1000);
+};
+
+const fromData = (filename, type, data) => {
+  var blob = new Blob([data], { type: type }, filename);
+  if (window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveBlob(blob, filename);
+  } else {
+    var elem = window.document.createElement("a");
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    window.URL.revokeObjectURL(elem.href);
+    document.body.removeChild(elem);
+  }
+  afterDownload();
+};
+
+const fromUrl = (filename, url) => {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.responseType = "blob";
+  xhr.onerror = function(e) {
+    announcement.announce({
+      title: "Download failed",
+      message: "Download failed",
+      type: "error"
+    });
+    afterDownload();
+  };
+  xhr.onload = function(e) {
+    if (this.status == 200) {
+      // get binary data as a response
+      var blob = this.response;
+      window.onblur = onBlur;
+      window.onfocus = onFocus;
+      fromData(filename, undefined, blob);
+    } else {
+      afterDownload();
+    }
+  };
+
+  xhr.send();
+};
+
+module.exports = {
+  fromData: function(filename, type, data) {
+    Downloads.addToQueue(filename, fromData.bind(null, filename, type, data));
+  },
+  fromUrl: function(filename, url) {
+    Downloads.addToQueue(filename, fromUrl.bind(null, filename, url));
+  },
+  getDownloads() {
+    return Downloads;
+  }
+};

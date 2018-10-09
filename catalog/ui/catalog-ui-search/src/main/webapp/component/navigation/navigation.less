@@ -9,6 +9,23 @@
   white-space: nowrap;
   border-bottom: 1px solid @borderColor;
 
+  > .download-paused {
+    button {
+      width: @minimumButtonSize;
+    }
+    transform: translateY(-100%);
+    transition: transform @coreTransitionTime ease-in-out;
+    padding: 0px @largeSpacing;
+    text-align: center;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    height: 100%;
+    line-height: 2*@minimumLineSize;
+    width: 100%;
+    background: @warning-color;
+  }
+
   > .navigation-left,
   > .navigation-middle,
   > .navigation-right {
@@ -36,4 +53,10 @@
     text-overflow: ellipsis;
   }
 
+}
+
+@{customElementNamespace}navigation.show-warning {
+  > .download-paused {
+    transform: translateY(0%);
+  }
 }

@@ -24,12 +24,15 @@ var SlideoutViewInstance = require('component/singletons/slideout.view-instance.
 var SlideoutRightViewInstance = require('component/singletons/slideout.right.view-instance.js');
 var user = require('component/singletons/user-instance');
 var notifications = require('component/singletons/user-notifications');
+const Download = require('js/Download')
+const DownloadsView = require('component/downloads/downloads.view')
 
 module.exports = Marionette.ItemView.extend({
     template: template,
     tagName: CustomElements.register('navigation-right'),
     model: user,
     events: {
+        'click .item-downloads': 'toggleDownloads',
         'click .item-help': 'toggleHelp',
         'click .item-settings': 'toggleUserSettings',
         'click .item-alerts': 'toggleAlerts',
@@ -39,10 +42,21 @@ module.exports = Marionette.ItemView.extend({
     onRender: function(){
         this.handleUser();
         this.handleUnseenNotifications();
+        this.handleDownloads();
         this.listenTo(notifications, 'change add remove reset update', this.handleUnseenNotifications);
+        this.listenTo(Download.getDownloads(), 'change:processing', this.handleDownloads);
+    },
+    handleDownloads() {
+        this.$el.toggleClass('has-downloads', Download.getDownloads().get('processing') !== undefined)
     },
     handleUser: function(){
         this.$el.toggleClass('is-guest', this.model.get('user').isGuestUser());
+    },
+    toggleDownloads() {
+        SlideoutRightViewInstance.updateContent(new DownloadsView({
+            model: Download.getDownloads()
+        }));
+        SlideoutRightViewInstance.open();
     },
     toggleAlerts: function(e){
         SlideoutRightViewInstance.updateContent(new UserNotifications());
