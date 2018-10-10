@@ -32,8 +32,7 @@
   .interaction-save,
   .interaction-unsave,
   .interaction-show,
-  .interaction-share,
-  .interaction-edit-offline-comment {
+  .interaction-share {
     display: none;
   }
 
@@ -43,22 +42,6 @@
     .is-bold();
     padding: 5px;
     margin-left: 15px;
-  }
-
-  .is-restore-allowed {
-    display: block;
-  }
-
-  .is-perm-delete-allowed {
-    display: block;
-  }
-
-  .is-offline-allowed {
-    display: block;
-  }
-
-  .is-archive-allowed {
-    display: block;
   }
 }
 
@@ -113,7 +96,8 @@
 .is-editing-restricted @{customElementNamespace}metacard-interactions,
 @{customElementNamespace}metacard-interactions.is-revision,
 @{customElementNamespace}metacard-interactions.is-remote,
-@{customElementNamespace}metacard-interactions.is-deleted {
+@{customElementNamespace}metacard-interactions.is-deleted,
+@{customElementNamespace}metacard-interactions:not(.is-archive-allowed) {
   .interaction-archive {
     display: none;
   }
@@ -125,7 +109,8 @@
 @{customElementNamespace}metacard-interactions.is-workspace,
 @{customElementNamespace}metacard-interactions.is-mixed,
 @{customElementNamespace}metacard-interactions.is-revision,
-@{customElementNamespace}metacard-interactions.is-remote {
+@{customElementNamespace}metacard-interactions.is-remote,
+@{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
   .interaction-archive-restore {
     display: none;
   }
@@ -134,18 +119,33 @@
 // restricted if revisions or remote items are in the list
 .is-editing-restricted @{customElementNamespace}metacard-interactions,
 @{customElementNamespace}metacard-interactions.is-revision,
-@{customElementNamespace}metacard-interactions.is-remote {
+@{customElementNamespace}metacard-interactions.is-remote,
+@{customElementNamespace}metacard-interactions:not(.is-perm-delete-allowed) {
   .interaction-delete {
     display: none;
   }
 }
 
-// restricted if revisions, remote items, deleted items, or already offlined items are in the list
+// restricted if revisions, remote items, workspaces, or already offlined items are in the list
 .is-editing-restricted @{customElementNamespace}metacard-interactions,
 @{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-workspace,
 @{customElementNamespace}metacard-interactions.is-remote,
-@{customElementNamespace}metacard-interactions.is-offlined {
+@{customElementNamespace}metacard-interactions.is-offlined,
+@{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
   .interaction-offline {
+    display: none;
+  }
+}
+
+// restricted if revisions, remote items, online items or workspaces items are in the list
+.is-editing-restricted @{customElementNamespace}metacard-interactions,
+@{customElementNamespace}metacard-interactions.is-revision,
+@{customElementNamespace}metacard-interactions.is-workspace,
+@{customElementNamespace}metacard-interactions.is-remote,
+@{customElementNamespace}metacard-interactions:not(.is-offline-allowed),
+@{customElementNamespace}metacard-interactions:not(.is-offlined) {
+  .interaction-edit-offline-comment {
     display: none;
   }
 }
@@ -157,39 +157,3 @@
  }
 }
 
-@{customElementNamespace}metacard-interactions:not(.is-restore-allowed) {
-  .is-restore-allowed {
-    display: none;
-  }
-}
-
-@{customElementNamespace}metacard-interactions:not(.is-perm-delete-allowed) {
-  .is-perm-delete-allowed {
-    display: none;
-  }
-}
-
-@{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
-  .is-offline-allowed {
-    display: none;
-  }
-}
-
-@{customElementNamespace}metacard-interactions:not(.is-archive-allowed) {
-  .is-archive-allowed {
-    display: none;
-  }
-}
-
-.is-editing-restricted @{customElementNamespace}metacard-interactions,
-@{customElementNamespace}metacard-interactions.is-offlined {
-  .interaction-edit-offline-comment {
-    display: block;
-  }
-}
-
-@{customElementNamespace}metacard-interactions:not(.is-offline-allowed) {
-  .interaction-edit-offline-comment {
-    display: none;
-  }
-}
