@@ -62,6 +62,9 @@ module.exports = FileSystem.extend({
       CollectionType: Tasks
     }
   ],
+  initialize: function () {
+      this.get('tasks').comparator = 'sortOrder';
+  },
   setAvailable: function() {
     var self = this;
     $.ajax({

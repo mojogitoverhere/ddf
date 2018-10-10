@@ -73,6 +73,7 @@ module.exports = FileSystem.extend({
   initialize() {
     FileSystem.prototype.initialize.call(this)
     this.setFormatEnumValues()
+    this.get('tasks').comparator = 'sortOrder';
   },
   setAvailable: function() {
     var self = this;
