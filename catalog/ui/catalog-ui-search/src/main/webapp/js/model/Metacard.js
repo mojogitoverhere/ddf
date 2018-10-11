@@ -549,7 +549,7 @@ define([
                 return this.get('metacard').get('properties').get('metacard-tags').indexOf('deleted') >= 0;
             },
             isOfflined: function(){
-                return this.get('metacard').get('properties').get('ext.offline-date');
+                return this.get('metacard').get('properties').get('ext.offline-date') !== undefined;
             },
             isUnwritable: function(){
                 return !this.isWritable();
