@@ -17,7 +17,7 @@
     <parent>
         <artifactId>action-core-pom</artifactId>
         <groupId>ddf.action.core</groupId>
-        <version>2.10-lts-1704.6</version>
+        <version>2.10-lts-1704.7-SNAPSHOT</version>
     </parent>
     <artifactId>action-core-api</artifactId>
     <packaging>bundle</packaging>
