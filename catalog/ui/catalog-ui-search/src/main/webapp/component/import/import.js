@@ -63,7 +63,17 @@ module.exports = FileSystem.extend({
     }
   ],
   initialize: function () {
-      this.get('tasks').comparator = 'sortOrder';
+      this.get('tasks').comparator = this.taskSort;
+  },
+  taskSort: function(a, b) {
+    if (a.get('sortOrder') > b.get('sortOrder')) {
+      return 1;
+    } else if (a.get('sortOrder') < b.get('sortOrder')) {
+      return -1;
+    } else {
+      // the tasks have the same sortOrder so sort by start time
+      return a.get('started').localeCompare(b.get('started'));
+    }
   },
   setAvailable: function() {
     var self = this;
