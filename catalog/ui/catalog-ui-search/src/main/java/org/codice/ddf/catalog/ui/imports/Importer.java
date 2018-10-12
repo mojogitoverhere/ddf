@@ -13,6 +13,7 @@
  */
 package org.codice.ddf.catalog.ui.imports;
 
+import com.google.common.annotations.VisibleForTesting;
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.Constants;
 import ddf.catalog.content.StorageException;
@@ -30,6 +31,7 @@ import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.InputTransformer;
 import ddf.mime.MimeTypeMapper;
 import ddf.mime.MimeTypeResolutionException;
+import ddf.security.Subject;
 import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.activation.MimeTypeParseException;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -45,6 +48,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.Validate;
 import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.codice.ddf.catalog.ui.util.CatalogUtils;
+import org.codice.ddf.security.common.Security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,59 +95,82 @@ public class Importer {
     try {
       ExtractedArchive extractedArchive = new ExtractedArchive(temporaryDirectory);
 
-      long completed = 0;
       long totalWork = extractedArchive.getMetacardCount();
-      task.update(completed, totalWork);
+      task.update(0, totalWork);
 
       List<MetacardImportItem> metacardImportItems = extractImportDetails(extractedArchive);
 
-      Set<String> metacardsThatFailedToImport = new HashSet<>();
-
       SecurityLogger.audit("Importing content from archive [{}]", fileToImport);
 
-      for (MetacardImportItem metacardImportItem : metacardImportItems) {
-        try {
-          handlerFactory(metacardImportItem).handle();
-          SecurityLogger.audit(
-              "Metacard [{}] was imported successfully from archive [{}]",
-              metacardImportItem.getMetacard().getId(),
-              fileToImport);
-        } catch (UnsupportedQueryException
-            | IngestException
-            | StorageException
-            | IOException
-            | SourceUnavailableException
-            | FederationException
-            | ImportException
-            | ResourceNotFoundException
-            | ResourceNotSupportedException e) {
-          LOGGER.debug(
-              "Failed to import a metacard: metacardId=[{}]",
-              metacardImportItem.getMetacard().getId(),
-              e);
-          INGEST_LOGGER.debug(
-              "Failed to import a metacard: metacardId=[{}]",
-              metacardImportItem.getMetacard().getId(),
-              e);
-          SecurityLogger.audit(
-              "Metacard [{}] failed to be imported from archive [{}]. {}",
-              metacardImportItem.getMetacard().getId(),
-              fileToImport,
-              e.getMessage());
-          metacardsThatFailedToImport.add(metacardImportItem.getMetacard().getId());
-        } finally {
-          completed++;
-          task.update(completed, totalWork);
-        }
-      }
-      task.finished();
-      return metacardsThatFailedToImport;
+      return executeAsSystem(
+          () -> performImport(fileToImport, task, totalWork, metacardImportItems));
+
     } finally {
       boolean deleteStatus = FileUtils.deleteQuietly(temporaryDirectory.toFile());
       if (!deleteStatus) {
         LOGGER.debug("Unable to delete temporary directory: dir=[{}]", temporaryDirectory);
       }
     }
+  }
+
+  private Set<String> performImport(
+      File fileToImport, Task task, long totalWork, List<MetacardImportItem> metacardImportItems) {
+    long completed = 0;
+    Set<String> metacardsThatFailedToImport = new HashSet<>();
+
+    for (MetacardImportItem metacardImportItem : metacardImportItems) {
+      try {
+        handlerFactory(metacardImportItem).handle();
+        SecurityLogger.audit(
+            "Metacard [{}] was imported successfully from archive [{}]",
+            metacardImportItem.getMetacard().getId(),
+            fileToImport);
+      } catch (UnsupportedQueryException
+          | IngestException
+          | StorageException
+          | IOException
+          | SourceUnavailableException
+          | FederationException
+          | ImportException
+          | ResourceNotFoundException
+          | ResourceNotSupportedException e) {
+        LOGGER.debug(
+            "Failed to import a metacard: metacardId=[{}]",
+            metacardImportItem.getMetacard().getId(),
+            e);
+        INGEST_LOGGER.debug(
+            "Failed to import a metacard: metacardId=[{}]",
+            metacardImportItem.getMetacard().getId(),
+            e);
+        SecurityLogger.audit(
+            "Metacard [{}] failed to be imported from archive [{}]. {}",
+            metacardImportItem.getMetacard().getId(),
+            fileToImport,
+            e.getMessage());
+        metacardsThatFailedToImport.add(metacardImportItem.getMetacard().getId());
+      } finally {
+        completed++;
+        task.update(completed, totalWork);
+      }
+    }
+    task.finished();
+    return metacardsThatFailedToImport;
+  }
+
+  /**
+   * Caution should be used with this, as it elevates the permissions to the System user.
+   *
+   * @param func What to execute as the System
+   * @param <T> Generic return type of func
+   * @return result of the callable func
+   */
+  @VisibleForTesting
+  <T> T executeAsSystem(Callable<T> func) {
+    Subject systemSubject = Security.runAsAdmin(() -> Security.getInstance().getSystemSubject());
+    if (systemSubject == null) {
+      throw new RuntimeException("Could not get systemSubject to version metacards.");
+    }
+    return systemSubject.execute(func);
   }
 
   private ZipFile getZipFile(File fileToImport) throws ImportException {

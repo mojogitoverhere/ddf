@@ -223,6 +223,10 @@ class ImporterCatalog {
       MetacardImportItem.ContentImportItem contentAndFilename,
       List<ContentItem> contentItems) {
 
+    if (contentAndFilename == null) {
+      return;
+    }
+
     BinaryContent binaryContent = contentAndFilename.getBinaryContent();
 
     contentItems.add(

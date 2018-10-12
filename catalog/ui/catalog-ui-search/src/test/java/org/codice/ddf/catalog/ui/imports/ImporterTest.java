@@ -60,10 +60,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
+import org.apache.shiro.subject.ExecutionException;
 import org.codice.ddf.catalog.ui.task.TaskMonitor.Task;
 import org.codice.ddf.catalog.ui.util.CatalogUtils;
 import org.codice.ddf.catalog.ui.util.EndpointUtil;
@@ -117,7 +119,16 @@ public class ImporterTest {
                     Collections.emptyList(),
                     attributeRegistry),
                 filterBuilder,
-                catalogFramework));
+                catalogFramework)) {
+          @Override
+          <T> T executeAsSystem(Callable<T> callable) {
+            try {
+              return callable.call();
+            } catch (Exception e) {
+              throw new ExecutionException(e);
+            }
+          }
+        };
   }
 
   @Test
@@ -184,6 +195,21 @@ public class ImporterTest {
     assertMetacardWasUpdatedInCatalogFramework(metacard);
 
     assertContentFilesWereCreatedInStorageProvider(new ExpectedStorageProvider(metacard, "a.dat"));
+  }
+
+  @Test
+  public void testOnliningOfASingleMetacardWithoutContent()
+      throws IOException, ZipException, CatalogTransformerException, ImportException,
+          IngestException, UnsupportedQueryException, SourceUnavailableException,
+          FederationException {
+
+    Metacard metacard = mockMetacardInCatalog("0123456789");
+
+    File fileToImport = createTestZip("metacards/012/0123456789/metacard/0123456789.xml");
+
+    importFile(fileToImport);
+
+    assertMetacardWasUpdatedInCatalogFramework(metacard);
   }
 
   @Test
