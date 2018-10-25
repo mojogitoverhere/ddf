@@ -112,7 +112,7 @@ public class MetacardTypeMapperFactory {
         boolean multiValued = adNode.get(MULTI_VALUED).booleanValue();
         String attributeFormat = adNode.get(ATTRIBUTE_FORMAT).textValue();
 
-        AttributeType attributeType = BasicTypes.getAttributeType(attributeFormat);
+        AttributeType attributeType = BasicTypes.getAttributeType(attributeFormat + "_TYPE");
 
         attributeDescriptors.add(
             new AttributeDescriptorImpl(
