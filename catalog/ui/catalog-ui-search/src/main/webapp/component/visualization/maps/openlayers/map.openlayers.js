@@ -78,12 +78,32 @@ function unconvertPointCoordinate(point) {
     return Openlayers.proj.transform(point, properties.projection, 'EPSG:4326');
 }
 
-module.exports = function OpenlayersMap(insertionElement, selectionInterface, notificationEl) {
+function offMap([longitude, latitude]) {
+    return longitude < -180 || longitude > 180 || latitude < -90 || latitude > 90
+}
+
+module.exports = function OpenlayersMap(insertionElement, selectionInterface, notificationEl, componentElement,
+    mapModel) {
     var overlays = {};
     var shapes = [];
     var map = createMap(insertionElement);
     listenToResize();
     setupDrawingTools(map);
+    setupTooltip(map)
+
+    function setupTooltip(map) {
+        map.on('pointermove', function(e) {
+          var point = unconvertPointCoordinate(e.coordinate)
+          if (!offMap(point)) {
+            mapModel.updateMouseCoordinates({
+              lat: point[1],
+              lon: point[0],
+            })
+          } else {
+            mapModel.clearMouseCoordinates()
+          }
+        })
+      }
 
     function setupDrawingTools(map) {
         new DrawBBox.Controller({
@@ -330,7 +350,8 @@ module.exports = function OpenlayersMap(insertionElement, selectionInterface, no
             feature.setStyle(new Openlayers.style.Style({
                 image: new Openlayers.style.Icon({
                     img: DrawingUtility.getCircle({
-                        fillColor: options.color
+                        fillColor: options.color,
+                        colors: options.colors
                     }),
                     imgSize: [22, 22]
                 })
@@ -457,7 +478,8 @@ module.exports = function OpenlayersMap(insertionElement, selectionInterface, no
                         image: new Openlayers.style.Icon({
                             img: DrawingUtility.getCircle({
                                 fillColor: options.color,
-                                strokeColor: options.isSelected ? 'black' : 'white' 
+                                strokeColor: options.isSelected ? 'black' : 'white',
+                                colors: options.colors
                             }),
                             imgSize: [22, 22]
                         })

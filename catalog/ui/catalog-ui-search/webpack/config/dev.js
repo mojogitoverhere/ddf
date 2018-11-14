@@ -10,6 +10,10 @@ var resolve = function (place) {
 
 module.exports = merge.smart(base, {
     devServer: {
+        watchOptions: {
+            ignored: /node_modules/,
+            poll: 1000,
+        },
         progress: true,
         historyApiFallback: true,
         inline: true,

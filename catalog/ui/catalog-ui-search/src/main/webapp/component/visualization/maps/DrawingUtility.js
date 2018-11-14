@@ -13,13 +13,14 @@
 //allows us to get around svg security restrictions in IE11 (see using svg in opengl)
 //make our own image and manually set dimensions because of IE: https://github.com/openlayers/openlayers/issues/3939
 var _ = require('underscore');
-var defaultColor = '#3c6dd5';
+var defaultColor = 'grey';
 
 module.exports = {
     getCircle: function(options) {
         _.defaults(options, {
             diameter: 22,
-            fillColor: defaultColor,
+            fillColor: [defaultColor],
+            colors: [],
             strokeWidth: 2,
             strokeColor: 'white'
         });
@@ -28,10 +29,19 @@ module.exports = {
         canvas.width = options.diameter;
         canvas.height = options.diameter;
         var ctx = canvas.getContext("2d");
+        const gradient = ctx.createLinearGradient(0,0,options.diameter,0);
+        if (options.colors.length > 0) {
+            options.colors.forEach((color, i) => {
+                const startPoint = i/(options.colors.length - 1) || 0;
+                gradient.addColorStop(startPoint, color);
+            })
+        } else {
+            gradient.addColorStop(0, options.fillColor)
+        }
         ctx.beginPath();
         ctx.strokeStyle = options.strokeColor;
         ctx.lineWidth = options.strokeWidth;
-        ctx.fillStyle = options.fillColor;
+        ctx.fillStyle = gradient;
         ctx.arc(radius, radius, radius - options.strokeWidth / 2, 0, 2 * Math.PI, false);
         ctx.fill();
         ctx.stroke();
@@ -40,12 +50,12 @@ module.exports = {
     getCircleWithText: function(options) {
         _.defaults(options, {
             diameter: 44,
-            fillColor: defaultColor,
             strokeWidth: 2,
             strokeColor: 'white',
             text: '',
             textColor: 'white'
         });
+        options.fillColor = [defaultColor];
         var canvas = this.getCircle(options);
         var ctx = canvas.getContext("2d");
         ctx.font = '16pt Helvetica';

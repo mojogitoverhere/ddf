@@ -90,8 +90,14 @@ define([
                 var menuWidth = this.el.clientWidth;
                 var necessaryLeft = Math.floor(clientRect.left + clientRect.width / 2 - menuWidth / 2);
                 var necessaryTop = Math.floor(clientRect.top + clientRect.height);
+                if (this.options.linkedView.options.positionOffset) {
+                    necessaryTop = necessaryTop + this.options.linkedView.options.positionOffset
+                }
                 var bottomRoom = getBottomRoom(necessaryTop, this.el);
                 var topRoom = clientRect.top;
+                if (this.options.linkedView.options.positionOffset) {
+                    topRoom = topRoom - this.options.linkedView.options.positionOffset
+                }
                 if (bottomRoom > topRoom){
                     this.$el.addClass('is-bottom').removeClass('is-top');
                     this.$el.css('left', necessaryLeft).css('top', necessaryTop);

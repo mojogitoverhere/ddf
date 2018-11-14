@@ -109,6 +109,10 @@ define([
         },
         duplicate: function(reference){
             return JSON.parse(JSON.stringify(reference));
-        }
+        },
+        wrapMapCoordinates: function(x, [min, max]) {
+            const d = max - min
+            return ((((x - min) % d) + d) % d) + min
+        },
     };
 });

@@ -77,6 +77,10 @@ define([
                 'add remove update reset', this.checkIfBlacklisted);
             this.listenTo(this.options.selectionInterface.getSelectedResults(), 'update add remove reset', this.handleSelectionChange);
             this.handleSelectionChange();
+            this.handleHideInteractions();
+        },
+        handleHideInteractions() {
+            this.$el.toggleClass('hide-interactions', this.options.hideInteractions === true);
         },
         handleSelectionChange: function() {
             var selectedResults = this.options.selectionInterface.getSelectedResults();

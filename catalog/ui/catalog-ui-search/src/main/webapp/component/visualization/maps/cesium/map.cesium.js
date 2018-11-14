@@ -32,6 +32,7 @@ var wreqr = require('wreqr');
 
 var defaultColor = '#3c6dd5';
 var eyeOffset = new Cesium.Cartesian3(0, 0, 0);
+const store = require('js/store')
 
 Cesium.BingMapsApi.defaultKey = properties.bingKey || 0;
 var imageryProviderTypes = LayerCollectionController.imageryProviderTypes;
@@ -68,6 +69,24 @@ function createMap(insertionElement) {
             mapMode2D: 0
         }
     });
+
+    // disable right click drag to zoom (context menu instead);
+    viewer.scene.screenSpaceCameraController.zoomEventTypes = [
+        Cesium.CameraEventType.WHEEL,
+        Cesium.CameraEventType.PINCH,
+    ]
+
+    viewer.screenSpaceEventHandler.setInputAction(function() {
+        if (!store.get('content').get('drawing')) {
+        $('body').mousedown()
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_DOWN)
+
+    viewer.screenSpaceEventHandler.setInputAction(function() {
+        if (!store.get('content').get('drawing')) {
+        $('body').mousedown()
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_DOWN)
 
     if (properties.terrainProvider && properties.terrainProvider.type) {
         var type = imageryProviderTypes[properties.terrainProvider.type];
@@ -148,13 +167,41 @@ function isNotVisible(cartesian3CenterOfGeometry, occluder) {
     return !occluder.isPointVisible(cartesian3CenterOfGeometry);
 }
 
-module.exports = function CesiumMap(insertionElement, selectionInterface, notificationEl) {
+module.exports = function CesiumMap(insertionElement, selectionInterface, notificationEl, componentElement, mapModel) {
     var overlays = {};
     var shapes = [];
     var map = createMap(insertionElement);
     var drawHelper = new DrawHelper(map);
     var billboardCollection = setupBillboard();
     setupDrawingTools(map);
+    setupTooltip(map, selectionInterface)
+
+    function updateCoordinatesTooltip(position) {
+        var cartesian = map.camera.pickEllipsoid(
+          position,
+          map.scene.globe.ellipsoid
+        )
+        if (Cesium.defined(cartesian)) {
+          let cartographic = Cesium.Cartographic.fromCartesian(cartesian)
+          mapModel.updateMouseCoordinates({
+            lat: cartographic.latitude * Cesium.Math.DEGREES_PER_RADIAN,
+            lon: cartographic.longitude * Cesium.Math.DEGREES_PER_RADIAN,
+          })
+        } else {
+          mapModel.clearMouseCoordinates()
+        }
+      }
+    
+      function setupTooltip(map, selectionInterface) {
+        var handler = new Cesium.ScreenSpaceEventHandler(map.scene.canvas)
+        handler.setInputAction(function(movement) {
+          $(componentElement).removeClass('has-feature')
+          if (map.scene.mode === Cesium.SceneMode.MORPHING) {
+            return
+          }
+          updateCoordinatesTooltip(movement.endPosition)
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+      }
 
     function setupDrawingTools(map) {
         new DrawBBox.Controller({
@@ -361,7 +408,8 @@ module.exports = function CesiumMap(insertionElement, selectionInterface, notifi
             );
             var billboardRef = billboardCollection.add({
                 image: DrawingUtility.getCircle({
-                    fillColor: options.color
+                    fillColor: options.color,
+                    colors: options.colors
                 }),
                 position: map.scene.globe.ellipsoid.cartographicToCartesian(cartographicPosition),
                 id: options.id,
@@ -521,7 +569,8 @@ module.exports = function CesiumMap(insertionElement, selectionInterface, notifi
             if (geometry.constructor === Cesium.Billboard) {
                 geometry.image = DrawingUtility.getCircle({
                     fillColor: options.color,
-                    strokeColor: options.isSelected ? 'black' : 'white' 
+                    strokeColor: options.isSelected ? 'black' : 'white',
+                    colors: options.colors
                 });
             } else if (geometry.constructor === Cesium.PolylineCollection) {
                 geometry._polylines.forEach(function(polyline) {

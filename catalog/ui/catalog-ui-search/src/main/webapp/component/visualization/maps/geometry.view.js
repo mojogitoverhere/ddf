@@ -99,6 +99,7 @@ var GeometryView = Marionette.ItemView.extend({
         this.geometry.push(this.options.map.addPoint(point, {
             id: this.model.id,
             color: this.model.get('metacard').get('color'),
+            colors: store.getColors(this.model),
             view: this
         }));
     },
@@ -132,6 +133,7 @@ var GeometryView = Marionette.ItemView.extend({
             this.geometry.forEach(function(geometry) {
                 this.options.map.updateGeometry(geometry, {
                     color: this.model.get('metacard').get('color'),
+                    colors: store.getColors(this.model),
                     isSelected: isSelected
                 });
             }.bind(this));

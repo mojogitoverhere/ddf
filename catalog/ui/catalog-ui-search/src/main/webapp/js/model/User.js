@@ -147,7 +147,8 @@ define([
                 columnOrder: ['title', 'created', 'modified', 'thumbnail'],
                 uploads: [],
                 fontSize: '16',
-                resultCount: properties.resultCount
+                resultCount: properties.resultCount,
+                coordinateFormat: 'degrees',
             };
         },
         relations: [

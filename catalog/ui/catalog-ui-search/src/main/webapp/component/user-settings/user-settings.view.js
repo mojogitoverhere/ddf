@@ -18,10 +18,11 @@ var template = require('./user-settings.hbs');
 var CustomElements = require('js/CustomElements');
 var ThemeSettings = require('component/theme-settings/theme-settings.view');
 var AlertSettings = require('component/alert-settings/alert-settings.view');
-var MapSettings = require('js/view/preferences/PreferencesModal.view');
+var LayersView = require('js/view/preferences/PreferencesModal.view');
 var VisualizationSettings = require('component/visualization-selector/visualization-selector.view');
 var SearchSettings = require('component/search-settings/search-settings.view');
 var HiddenSettings = require('component/user-blacklist/user-blacklist.view');
+const MapSettings = require('component/map-settings/map-settings.view')
 
 module.exports = Marionette.LayoutView.extend({
     template: template,
@@ -32,6 +33,7 @@ module.exports = Marionette.LayoutView.extend({
         'click > .user-settings-navigation .choice-theme': 'handleNavigateToTheme',
         'click > .user-settings-navigation .choice-alerts': 'handleNavigateToAlerts',
         'click > .user-settings-navigation .choice-map': 'handleNavigateToMap',
+        'click > .user-settings-navigation .choice-map-settings': 'handleNavigationToMapSettings',
         'click > .user-settings-navigation .choice-visualization': 'handleNavigateToVisualization',
         'click > .user-settings-navigation .choice-search': 'handleNavigateToSearch',
         'click > .user-settings-navigation .choice-hidden': 'handleNavigateToHidden',
@@ -58,7 +60,10 @@ module.exports = Marionette.LayoutView.extend({
         this.settingsContent.show(new SearchSettings());
     },
     handleNavigateToMap: function(){
-        this.settingsContent.show(new MapSettings());
+        this.settingsContent.show(new LayersView());
+    },
+    handleNavigationToMapSettings() {
+        this.settingsContent.show(new MapSettings())
     },
     handleNavigateToAlerts: function(){
         this.settingsContent.show(new AlertSettings());

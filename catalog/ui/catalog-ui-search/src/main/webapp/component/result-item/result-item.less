@@ -192,7 +192,24 @@
 
 }
 
-@{customElementNamespace}result-item.hide-actions {
+@{customElementNamespace}result-item.hide-interactions {
+  .result-container > .result-details {
+    width: ~'calc(100% - @{minimumButtonSize} - @{mediumSpacing} - 2*@{minimumSpacing} - 30px)';
+  }
+
+  .result-container > .result-actions {
+    display: none;
+  }
+
+  .result-container > .result-validation {
+    position: absolute;
+    right: @minimumButtonSize;
+  }
+
+  .result-container > .result-save,
+  .result-container > .result-unsave {
+    right: 0px;
+  }
 
 }
 

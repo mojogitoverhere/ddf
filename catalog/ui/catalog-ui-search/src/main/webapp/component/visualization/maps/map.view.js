@@ -26,11 +26,20 @@ var CQLUtils = require('js/CQLUtils');
 var LocationModel = require('component/location-old/location-old');
 var user = require('component/singletons/user-instance');
 
+var MapModel = require('./map.model')
+var MapInfoView = require('component/map-info/map-info.view')
+var MapContextMenuDropdown = require('component/dropdown/map-context-menu/dropdown.map-context-menu.view')
+var DropdownModel = require('component/dropdown/dropdown')
+const MapHoverDropdown = require('component/dropdown/map-hover/dropdown.map-hover.view')
+
 module.exports = Marionette.LayoutView.extend({
     tagName: CustomElements.register('map'),
     template: template,
     regions: {
-        mapDrawingPopup: '#mapDrawingPopup'
+        mapDrawingPopup: '#mapDrawingPopup',
+        mapContextMenu: '.map-context-menu',
+        mapHover: '.map-hover',
+        mapInfo: '.mapInfo',
     },
     events: {
         'click .cluster-button': 'toggleClustering'
@@ -39,13 +48,22 @@ module.exports = Marionette.LayoutView.extend({
     clusterCollectionView: undefined,
     geometryCollectionView: undefined,
     map: undefined,
+    mapModel: undefined,
     initialize: function(options) {
         if (!options.selectionInterface) {
             throw 'Selection interface has not been provided';
         }
+        this.mapModel = new MapModel()
         this.listenTo(store.get('content'), 'change:drawing', this.handleDrawing);
         this.handleDrawing();
+        this.setupMouseLeave();
     },
+    setupMouseLeave: function() {
+        this.$el.on('mouseleave', () => {
+          this.mapModel.clearMouseCoordinates()
+          this.mapHover.currentView.model.close()
+        })
+      },
     setupCollections: function() {
         if (!this.map) {
             throw 'Map has not been set.'
@@ -81,10 +99,84 @@ module.exports = Marionette.LayoutView.extend({
             this.map.zoomToSelected(this.options.selectionInterface.getSelectedResults());
         }
         this.map.onMouseMove(this.onMapHover.bind(this));
+        this.map.onRightClick(this.onRightClick.bind(this))
+        this.setupRightClickMenu()
+        this.setupMapHover()
+        this.setupMapInfo()
     },
     onMapHover: function(event, mapEvent) {
+        var metacard = this.options.selectionInterface
+            .getActiveSearchResults()
+            .get(mapEvent.mapTarget)
+        this.updateTarget(event, metacard)
+        this.$el.toggleClass(
+            'is-hovering',
+            Boolean(mapEvent.mapTarget && mapEvent.mapTarget !== 'userDrawing')
+        )
+        this.$el
+            .find('.map-hover')
+            .css('left', event.offsetX)
+            .css('top', event.offsetY)
         this.$el.toggleClass('is-hovering', Boolean(mapEvent.mapTarget && mapEvent.mapTarget !== ('userDrawing')));
     },
+    updateTarget: function(event, metacard) {
+        var target
+        var targetMetacard
+        if (metacard) {
+          target = metacard
+            .get('metacard')
+            .get('properties')
+            .get('title')
+          targetMetacard = metacard
+          this.mapHover.currentView.model.open()
+          this.mapHover.currentView.dropdownCompanion.updatePosition()
+        } else {
+          this.mapHover.currentView.model.close()
+        }
+        this.mapModel.set({
+          target: target,
+          targetMetacard: targetMetacard,
+        })
+      },
+      onRightClick: function(event, mapEvent) {
+        event.preventDefault()
+        this.$el
+          .find('.map-context-menu')
+          .css('left', event.offsetX)
+          .css('top', event.offsetY)
+        this.mapModel.updateClickCoordinates()
+        this.mapContextMenu.currentView.model.open()
+      },
+      setupMapHover() {
+        this.mapHover.show(
+          new MapHoverDropdown({
+            model: new DropdownModel(),
+            mapModel: this.mapModel,
+            selectionInterface: this.options.selectionInterface,
+            positionOffset: 30
+          })
+        )
+      },
+      setupRightClickMenu: function() {
+        this.mapContextMenu.show(
+          new MapContextMenuDropdown({
+            model: new DropdownModel(),
+            mapModel: this.mapModel,
+            selectionInterface: this.options.selectionInterface,
+            dropdownCompanionBehaviors: {
+              navigation: {},
+            },
+          })
+        )
+      },
+    setupMapInfo: function() {
+        this.mapInfo.show(
+          new MapInfoView({
+            model: this.mapModel,
+            selectionInterface: this.options.selectionInterface
+          })
+        )
+      },
     /*
         Map creation is deferred to this method, so that all resources pertaining to the map can be loaded lazily and 
         not be included in the initial page payload.
@@ -97,7 +189,8 @@ module.exports = Marionette.LayoutView.extend({
     },
     createMap: function(Map){
         this.map = Map(this.el.querySelector('#mapContainer'),
-                this.options.selectionInterface, this.mapDrawingPopup.el);
+                this.options.selectionInterface, this.mapDrawingPopup.el, this.el,
+                this.mapModel);
         this.setupCollections();
         this.setupListeners();
         this.endLoading();

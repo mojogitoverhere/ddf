@@ -171,6 +171,24 @@ define([
         },
         getCurrentQuery: function(){
             return this.get('content').getCurrentQuery();
+        },
+        getColors: function (result) {
+            const colors = [];
+            var currentWorkspace = this.getCurrentWorkspace();
+            if (currentWorkspace) {
+                currentWorkspace.get('queries').forEach(function (query) {
+                    if (query.get('result')) {
+                        var results = query.get('result').get('results').fullCollection;
+                        for (var i = 0; i<= results.length - 1; i++){
+                            if (results.models[i].get('metacard').get('properties').get('id') === result.get('metacard').get('properties').get('id')) {
+                                colors.push(query.getColor());
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+            return colors;
         }
     }))();
 });
