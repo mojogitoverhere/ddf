@@ -23,7 +23,11 @@
             name="Export Directory" id="exportDirectory" required="true" type="String"
             default="${ddf.home}"/>
 
+        <AD description="The user friendly path to show users where the exports are."
+            name="Export Directory Alias" id="exportDirectoryAlias" required="true" type="String"
+            default="${ddf.home}"/>
     </OCD>
+
 
     <Designate pid="org.codice.ddf.catalog.ui.content.exports.ExportDirectory">
         <Object ocdref="org.codice.ddf.catalog.ui.content.exports.ExportDirectory"/>

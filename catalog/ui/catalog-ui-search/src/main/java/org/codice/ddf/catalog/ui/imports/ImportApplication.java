@@ -76,8 +76,7 @@ public class ImportApplication implements SparkApplication {
   public void init() {
     get(
         "/resources/import/available",
-        (req, res) ->
-            makeAvailableImportsResponse(importDirectory.toString(), importDirectory.getPaths()),
+        (req, res) -> makeAvailableImportsResponse(),
         JSON_MAPPER::toJson);
 
     post(
@@ -207,8 +206,12 @@ public class ImportApplication implements SparkApplication {
     return file.isDirectory() && file.canRead();
   }
 
-  private Map<String, Object> makeAvailableImportsResponse(String rootDir, List<Path> paths) {
-    return ImmutableMap.of("root", rootDir, "files", makePathResponses(paths, rootDir));
+  private Map<String, Object> makeAvailableImportsResponse() {
+    return ImmutableMap.of(
+        "root",
+        importDirectory.getRootDirectoryAlias(),
+        "files",
+        makePathResponses(importDirectory.getPaths(), importDirectory.toString()));
   }
 
   private List<Map<String, String>> makePathResponses(List<Path> paths, String root) {
@@ -222,7 +225,11 @@ public class ImportApplication implements SparkApplication {
   }
 
   private String normalizePath(Path path, String root) {
-    String normalizedPath = stripRoot(path.toString(), root + File.separator);
+    String normalizedRoot = root;
+    if (!root.endsWith(File.separator)) {
+      normalizedRoot = normalizedRoot + File.separator;
+    }
+    String normalizedPath = stripRoot(path.toString(), normalizedRoot);
     if (path.toFile().isDirectory()) {
       normalizedPath = normalizedPath + File.separator;
     }
@@ -230,6 +237,9 @@ public class ImportApplication implements SparkApplication {
   }
 
   private String stripRoot(String filePath, String root) {
+    if (filePath.length() < root.length()) {
+      return filePath;
+    }
     return filePath.substring(root.length());
   }
 

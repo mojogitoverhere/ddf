@@ -74,7 +74,7 @@ public class ExportApplication implements SparkApplication {
         "/resources/export/location",
         (req, res) -> {
           res.type(APPLICATION_JSON);
-          return ImmutableMap.of("root", exportDirectory.toString());
+          return ImmutableMap.of("root", exportDirectory.getExportDirectoryAlias());
         },
         JSON_MAPPER::toJson);
 

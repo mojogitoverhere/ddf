@@ -22,6 +22,19 @@ public class ExportDirectory {
 
   private String exportDirectory = System.getProperty("ddf.home");
 
+  private String exportDirectoryAlias = "";
+
+  public void setExportDirectoryAlias(String exportDirectoryAlias) {
+    this.exportDirectoryAlias = exportDirectoryAlias;
+  }
+
+  public String getExportDirectoryAlias() {
+    if (StringUtils.isEmpty(exportDirectoryAlias)) {
+      return exportDirectory;
+    }
+    return exportDirectoryAlias;
+  }
+
   public void setExportDirectory(String exportDirectory) {
     this.exportDirectory =
         StringUtils.isBlank(exportDirectory)

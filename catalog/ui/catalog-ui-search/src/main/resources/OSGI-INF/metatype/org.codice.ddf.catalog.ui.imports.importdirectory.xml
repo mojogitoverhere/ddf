@@ -22,6 +22,9 @@
         <AD description="The directory from which archives can be chosen for import."
             name="Import Directory" id="rootDirectory" required="false" type="String"/>
 
+        <AD description="The user friendly path to show users where to place imports."
+            name="Import Directory Alias" id="rootDirectoryAlias" required="false" type="String"/>
+
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.imports.ImportDirectory">

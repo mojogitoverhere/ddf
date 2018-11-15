@@ -32,6 +32,8 @@ public class ImportDirectory {
 
   private String rootDirectory;
 
+  private String rootDirectoryAlias = "";
+
   public List<Path> getPaths() {
     if (StringUtils.isBlank(rootDirectory)) {
       return Collections.emptyList();
@@ -78,5 +80,16 @@ public class ImportDirectory {
 
     // Strip trailing slashes
     this.rootDirectory = Paths.get(rootDirectory).toString();
+  }
+
+  public String getRootDirectoryAlias() {
+    if (StringUtils.isEmpty(rootDirectoryAlias)) {
+      return rootDirectory;
+    }
+    return rootDirectoryAlias;
+  }
+
+  public void setRootDirectoryAlias(String rootDirectoryAlias) {
+    this.rootDirectoryAlias = rootDirectoryAlias;
   }
 }
