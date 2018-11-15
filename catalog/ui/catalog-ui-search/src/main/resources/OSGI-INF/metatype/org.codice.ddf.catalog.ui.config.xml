@@ -216,6 +216,14 @@
             default="${ddf.home}"
             required="true"/>
 
+        <AD id="needToKnowAttributes"
+            name="Need to know attributes"
+            description="list of attributes to use for the 'need to know' groups which well set the value"
+            type="String"
+            cardinality="10000"
+            default=""
+            required="false"/>
+
     </OCD>
 
     <Designate pid="org.codice.ddf.catalog.ui.config">

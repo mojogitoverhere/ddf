@@ -53,6 +53,8 @@ define([
                     return {
                         enumFiltering: true,
                         enum: metacardDefinitions.enums[attribute],
+                        enumCustom: true,
+                        matchcase: true,
                         validation: metacardDefinitions.validation[attribute],
                         label: properties.attributeAliases[attribute],
                         readOnly: properties.isReadOnly(attribute),
@@ -203,6 +205,8 @@ define([
                 propertyArray.push({
                     enumFiltering: true,
                     enum: metacardDefinitions.enums[property],
+                    enumCustom: true,
+                    matchcase: true,
                     validation: metacardDefinitions.validation[property],
                     label: properties.attributeAliases[property],
                     readOnly: metacardDefinitions.metacardTypes[property].readOnly,

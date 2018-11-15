@@ -131,6 +131,16 @@ public class ConfigurationApplication implements SparkApplication {
 
   private String offlineRootPath = System.getProperty("ddf.home");
 
+  private List<String> needToKnowAttributes = new ArrayList<>();
+
+  public List<String> getNeedToKnowAttributes() {
+    return needToKnowAttributes;
+  }
+
+  public void setNeedToKnowAttributes(List<String> needToKnowAttributes) {
+    this.needToKnowAttributes = needToKnowAttributes;
+  }
+
   public List<String> getAttributeAliases() {
     return attributeAliases
         .entrySet()
@@ -281,6 +291,7 @@ public class ConfigurationApplication implements SparkApplication {
     config.put("queryFeedbackEmailBodyTemplate", queryFeedbackEmailBodyTemplate);
     config.put("queryFeedbackEmailDestination", queryFeedbackEmailDestination);
     config.put("exportActionBlacklist", exportActionBlacklist);
+    config.put("needToKnowAttributes", needToKnowAttributes);
 
     return config;
   }

@@ -16,8 +16,9 @@ define([
     'backbone',
     'underscore',
     'properties',
-    'moment'
-], function ($, Backbone, _, properties, moment) {
+    'moment',
+    'component/singletons/user-instance'
+], function ($, Backbone, _, properties, moment, user) {
 
     function transformEnumResponse(metacardTypes, response) {
         return _.reduce(response, function (result, value, key) {
@@ -52,6 +53,19 @@ define([
             this.updateSortedMetacardTypes();
             this.getMetacardTypes();
             this.getDatatypeEnum();
+            this.addNeedKnowAttributes();
+        },
+        addNeedKnowAttributes() {
+            if (user.fetched) {
+                const needToKnowAttributes = properties.needToKnowAttributes || [];
+                const needToKnowEnumMap = needToKnowAttributes.reduce((blob, attribute) => {
+                    blob[attribute] = user.get('user').get('roles');
+                    return blob;
+                }, {});
+                _.extend(this.enums, needToKnowEnumMap);
+            } else {
+                this.listenToOnce(user, 'sync', this.addNeedKnowAttributes)
+            }
         },
         isHiddenTypeExceptThumbnail: function(id){
             if (id === 'thumbnail'){
