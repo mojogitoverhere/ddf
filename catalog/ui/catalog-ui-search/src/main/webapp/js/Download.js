@@ -25,6 +25,7 @@ const announceDownload = _.debounce(() => {
     message: `File(s) added to download queue.  Please click the spinner in the main navigation bar for information on currently queued downloads.`
   });
 }, 200);
+const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
 
 const Download = Backbone.AssociatedModel.extend({
   defaults() {
@@ -71,7 +72,6 @@ let Downloads = new (Backbone.AssociatedModel.extend({
   },
   processQueue() {
     const processing = this.get("processing");
-    console.log(processing);
     if (processing === undefined) {
       this.initiateDownload();
     }
@@ -120,6 +120,17 @@ const fromData = (filename, type, data) => {
   afterDownload();
 };
 
+const getFilenameFromResponse = (xhr, filename) => {
+  const disposition = xhr.getResponseHeader('Content-Disposition');
+  if (disposition && disposition.indexOf('inline') !== -1) {
+      var matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) { 
+        filename = matches[1].replace(/['"]/g, '');
+      }
+  }
+  return filename
+}
+
 const fromUrl = (filename, url) => {
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -133,6 +144,7 @@ const fromUrl = (filename, url) => {
     afterDownload();
   };
   xhr.onload = function(e) {
+    filename = getFilenameFromResponse(e.currentTarget, filename)
     if (this.status == 200) {
       // get binary data as a response
       var blob = this.response;
