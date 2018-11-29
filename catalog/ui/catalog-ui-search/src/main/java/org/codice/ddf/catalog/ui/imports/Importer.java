@@ -106,9 +106,12 @@ public class Importer {
           () -> performImport(fileToImport, task, totalWork, metacardImportItems));
 
     } finally {
-      boolean deleteStatus = FileUtils.deleteQuietly(temporaryDirectory.toFile());
-      if (!deleteStatus) {
-        LOGGER.debug("Unable to delete temporary directory: dir=[{}]", temporaryDirectory);
+      if (temporaryDirectory != null) {
+        try {
+          FileUtils.deleteDirectory(temporaryDirectory.toFile());
+        } catch (IOException e) {
+          LOGGER.debug("Unable to delete temporary directory: dir=[{}]", temporaryDirectory, e);
+        }
       }
     }
   }
