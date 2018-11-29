@@ -36,7 +36,7 @@ const Value = ({ value }) => {
                     <a href={subvalue} target="_blank">
                         {subvalue}
                     </a> :
-                    subvalue
+                    String(subvalue)
                 }
             </span>
         )
