@@ -167,6 +167,10 @@ public class ResourceZipper {
         .filter(m -> m.getResourceURI().getScheme() != null)
         .filter(m -> m.getResourceURI().getScheme().startsWith(ContentItem.CONTENT_SCHEME))
         .filter(m -> !m.getTags().contains("deleted"))
+        .filter(
+            m ->
+                !m.getTags().contains("revision")
+                    || m.getResourceURI().getSchemeSpecificPart().equals(m.getId()))
         .map(Metacard::getResourceURI);
   }
 
