@@ -42,6 +42,7 @@ define(['backbone',
                     dataType: 'json',
                     success: function(data) {
                         that.set({'users' : that.parseDataModel(data.value)});
+                        that.trigger('change:users', that);
                     }
                 });
                 $.ajax({
@@ -49,6 +50,7 @@ define(['backbone',
                     dataType: 'json',
                     success: function(data) {
                         that.set({ 'monitorLocalSources' : data.value.monitorLocalSources});
+                        that.trigger('change:monitorLocalSources', that);
                     }
                 });
             },
@@ -97,7 +99,10 @@ define(['backbone',
                     var displayLimit;
                     var displaySize;
 
-                    if(dataLimit >= GB_SIZE) {
+                    if(dataLimit === -1) {
+                        displayLimit = -1;
+                        displaySize = "MB";
+                    } else if(dataLimit >= GB_SIZE) {
                         displayLimit = (dataLimit / GB_SIZE).toFixed(1);
                         displaySize = "GB";
                     } else {

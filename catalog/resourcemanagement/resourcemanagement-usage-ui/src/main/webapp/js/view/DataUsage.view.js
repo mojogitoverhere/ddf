@@ -146,8 +146,6 @@ define([
             },
             refreshUsers : function() {
                 this.model.getUsageData();
-                this.model.trigger('change:users', this.model);
-                this.model.trigger('change:monitorLocalSources', this.model);
             },
             notifyAllData : function(e) {
                 var value = $(e.target).val();
