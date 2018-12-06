@@ -163,12 +163,22 @@ module.exports = Marionette.LayoutView.extend({
     if (searches.length === 0) {
             return;
     }
-    $.ajax({
-      url: "/search/catalog/internal/resources/export",
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(searches)
-    });
+    this.listenTo(ConfirmationView.generateConfirmation({
+        prompt: 'Large exports may take a significant amount of time. Are you sure you want to export these results?',
+        no: 'Cancel',
+        yes: 'Export'
+      }),
+      'change:choice',
+      function(confirmation) {
+        if (confirmation.get('choice')) {
+          $.ajax({
+            url: "/search/catalog/internal/resources/export",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(searches)
+          });
+        }
+      });
   },
   handleExport: function() {
     var transformerId = this.formatInput.currentView.model.getValue()[0];
