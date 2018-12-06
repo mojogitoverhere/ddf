@@ -239,6 +239,12 @@
             </exclusions>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+        </dependency>
+
         <!-- Cyclops Dependencies
         [root] com.oath.cyclops:cyclops:[10.0.0,11.0.0)
          |-> org.reactivestreams:reactive-streams:[1.0.0,2.0.0)
@@ -392,6 +398,7 @@
                             *
                         </Import-Package>
                         <Export-Package />
+                        <Karaf-Commands>org.codice.ddf.catalog.ui.offline.command.*</Karaf-Commands>
                     </instructions>
                 </configuration>
             </plugin>

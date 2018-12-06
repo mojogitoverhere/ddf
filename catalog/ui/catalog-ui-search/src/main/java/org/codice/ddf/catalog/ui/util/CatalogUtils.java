@@ -236,12 +236,12 @@ public class CatalogUtils {
       LOGGER.debug("There should have been one deleted metacard marker");
       return;
     }
-    final QueryResponse _response = response;
+    final QueryResponse response2 = response;
     try {
       executeAsSystem(
           () ->
               catalogFramework.delete(
-                  new DeleteRequestImpl(_response.getResults().get(0).getMetacard().getId())));
+                  new DeleteRequestImpl(response2.getResults().get(0).getMetacard().getId())));
     } catch (ExecutionException e) {
       LOGGER.debug("Could not delete the deleted metacard marker", e);
     }
@@ -254,12 +254,12 @@ public class CatalogUtils {
    * @param func What to execute as the System
    * @param <T> Generic return type of func
    */
-  private <T> void executeAsSystem(Callable<T> func) {
+  public static <T> T executeAsSystem(Callable<T> func) {
     Subject systemSubject = Security.runAsAdmin(() -> Security.getInstance().getSystemSubject());
     if (systemSubject == null) {
       throw new RuntimeException("Could not get systemSubject to version metacards.");
     }
-    systemSubject.execute(func);
+    return systemSubject.execute(func);
   }
 
   private void trySleep() {

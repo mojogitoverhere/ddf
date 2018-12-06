@@ -144,6 +144,8 @@ public class MetacardApplication implements SparkApplication {
   private static final QueryResponseImpl EMPTY_QUERY_RESPONSE =
       new QueryResponseImpl(new QueryRequestImpl(null), Collections.emptyList(), 0);
 
+  private static MetacardApplication instance = null;
+
   private static final Executor INTRIGUE_EXECUTOR =
       new ForkJoinPool(
           Integer.parseInt(
@@ -235,6 +237,7 @@ public class MetacardApplication implements SparkApplication {
     this.storageProvider = storageProvider;
     this.offlineResources = offlineResources;
     this.catalogUtils = catalogUtils;
+    instance = this;
   }
 
   private String getSubjectEmail() {
@@ -817,12 +820,12 @@ public class MetacardApplication implements SparkApplication {
     return results.values().stream().anyMatch(offlineStatus -> !offlineStatus.isSuccessful());
   }
 
-  private Map<String, OfflineStatus> offlineMetacards(List<String> metacardIds, String comment) {
+  public Map<String, OfflineStatus> offlineMetacards(List<String> metacardIds, String comment) {
     return metacardIds
         .stream()
         .map(metacardId -> offlineMetacard(metacardId, comment))
         .flatMap(List::stream)
-        .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+        .collect(Collectors.toMap(Pair::getLeft, Pair::getRight, (l, r) -> l));
   }
 
   private List<Pair<String, OfflineStatus>> offlineMetacard(String id, String comment) {
@@ -846,7 +849,6 @@ public class MetacardApplication implements SparkApplication {
     return Stream.of(offlineArguments.get("ids"))
         .filter(List.class::isInstance)
         .map(List.class::cast)
-        .flatMap(Collection::stream)
         .filter(String.class::isInstance)
         .map(String.class::cast)
         .collect(Collectors.toList());
@@ -1104,8 +1106,12 @@ public class MetacardApplication implements SparkApplication {
     }
   }
 
-  private static class OfflineStatus {
+  // We shouldn't do this -- but until such time we refactor out the offline logic..
+  public static MetacardApplication getInstance() {
+    return instance;
+  }
 
+  public static class OfflineStatus {
     private boolean successful;
     private String reason;
 

@@ -132,6 +132,7 @@ public class OfflineResources {
           | SourceUnavailableException
           | IngestException e) {
         LOGGER.debug("Offline failed for metacard(s)", e);
+        // TODO (RCZ) - Don't exit tloop when a single metacard fails
         return ImmutableMap.of(metacardId, "Offline failed during zip creation");
       }
     }

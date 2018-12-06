@@ -52,6 +52,8 @@ public class ConfigurationApplication implements SparkApplication {
   public static final Factory NEW_SET_FACTORY = TreeSet::new;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationApplication.class);
+  public static final String OFFLINE_ROOT_PATH_PROPERTY =
+      "org.codice.ddf.catalog.ui.config.offlinerootpath";
 
   private String format;
 
@@ -667,6 +669,7 @@ public class ConfigurationApplication implements SparkApplication {
   }
 
   public void setOfflineRootPath(String offlineRootPath) {
+    System.setProperty(OFFLINE_ROOT_PATH_PROPERTY, offlineRootPath);
     this.offlineRootPath = offlineRootPath;
   }
 }
