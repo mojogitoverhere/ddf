@@ -67,6 +67,7 @@ import ddf.catalog.operation.impl.UpdateRequestImpl;
 import ddf.catalog.source.CatalogProvider;
 import ddf.catalog.source.CatalogStore;
 import ddf.catalog.source.IngestException;
+import ddf.catalog.source.InternalIngestException;
 import ddf.catalog.source.SourceDescriptor;
 import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.source.UnsupportedQueryException;
@@ -125,6 +126,7 @@ import org.codice.ddf.catalog.ui.query.monitor.api.SubscriptionsPersistentStore;
 import org.codice.ddf.catalog.ui.util.CatalogUtils;
 import org.codice.ddf.catalog.ui.util.EndpointUtil;
 import org.codice.ddf.security.common.Security;
+import org.locationtech.spatial4j.exception.InvalidShapeException;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
 import org.slf4j.Logger;
@@ -307,8 +309,28 @@ public class MetacardApplication implements SparkApplication {
               JsonFactory.createUseJSONDates()
                   .parser()
                   .parseList(MetacardChanges.class, req.body());
-
-          UpdateResponse updateResponse = patchMetacards(metacardChanges);
+          UpdateResponse updateResponse;
+          try {
+            updateResponse = patchMetacards(metacardChanges);
+          } catch (InternalIngestException e) {
+            if (e.getCause() != null && e.getCause() instanceof InvalidShapeException) {
+              res.status(400);
+              return util.getJson(
+                  ImmutableMap.of("message", "USER INPUT ERROR: " + e.getCause().getMessage()));
+            } else if (e.getCause() != null
+                && String.valueOf(e.getCause().getMessage())
+                    .contains("do not form a closed linestring")) {
+              // This is (sort of a hack) but one that is purely defensive -- I am unsure that the
+              // above exception will actually match instanceof if we are embedding spatial4j in each
+              // bundle - so doing a string match here for the inner exception message (which is
+              // brittle - but will always work.
+              res.status(400);
+              return util.getJson(
+                  ImmutableMap.of("message", "USER INPUT ERROR: " + e.getCause().getMessage()));
+            } else {
+              throw e;
+            }
+          }
           if (updateResponse.getProcessingErrors() != null
               && !updateResponse.getProcessingErrors().isEmpty()) {
             res.status(500);
@@ -1083,6 +1105,7 @@ public class MetacardApplication implements SparkApplication {
   }
 
   private static class OfflineStatus {
+
     private boolean successful;
     private String reason;
 

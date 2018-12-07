@@ -38,7 +38,7 @@ var GeometryView = Marionette.ItemView.extend({
         if (geometry.length > 0) {
             this.geometry = [];
             _.forEach(geometry, function(property){
-                 this.handleGeometry(wkx.Geometry.parse(property).toGeoJSON());
+                 this.handleGeometry(wkx.Geometry.parse(property.toUpperCase()).toGeoJSON());
             }.bind(this));
             this.updateSelected = _.debounce(this.updateSelected, 100, {trailing: true, leading: true});
             this.updateSelected();

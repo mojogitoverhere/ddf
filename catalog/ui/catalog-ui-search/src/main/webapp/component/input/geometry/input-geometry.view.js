@@ -71,8 +71,8 @@ function checkGeometryCoordinateOrdering(geometry){
 
 function checkForm(model){
     try {
-        var test = wkx.Geometry.parse(model.getValue());
-        if (test.toWkt() === convertUserValueToWKT(model.getValue())) {
+        var test = wkx.Geometry.parse(model.getValue().toUpperCase());
+        if (test.toWkt() === convertUserValueToWKT(model.getValue().toUpperCase())) {
             return true;
         } else {
             return false;
@@ -84,7 +84,7 @@ function checkForm(model){
 
 function checkLonLatOrdering(model){
     try {
-        var test = wkx.Geometry.parse(model.getValue());
+        var test = wkx.Geometry.parse(model.getValue().toUpperCase());
         return checkGeometryCoordinateOrdering(test.toGeoJSON());
     } catch (err){
         return false;
@@ -97,7 +97,7 @@ module.exports = InputView.extend({
             InputView.prototype.initialize.call(this);
         },
         getCurrentValue: function(){
-            return this.$el.find('input').val();
+            return this.$el.find('input').val().toUpperCase();
         },
         handleValidation: function(){
             var validForm = checkForm(this.model);
