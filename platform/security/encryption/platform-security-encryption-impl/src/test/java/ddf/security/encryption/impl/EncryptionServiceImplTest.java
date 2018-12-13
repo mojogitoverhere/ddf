@@ -13,11 +13,6 @@
  */
 package ddf.security.encryption.impl;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -102,14 +97,6 @@ public class EncryptionServiceImplTest {
   }
 
   @Test
-  public void testWrappingAndEncrypting() {
-    final EncryptionServiceImpl encryptionService = new EncryptionServiceImpl();
-    final String wrappedEncryptedValue = encryptionService.encryptValue("test");
-    assertThat(wrappedEncryptedValue, startsWith("ENC"));
-    assertThat(wrappedEncryptedValue, endsWith(")"));
-  }
-
-  @Test
   public void testUnwrapDecryptNull() throws Exception {
     final String wrappedEncryptedValue = null;
 
@@ -147,14 +134,5 @@ public class EncryptionServiceImplTest {
     LOGGER.debug("Unwrapped decrypted value is: {}", decryptedValue);
 
     assertEquals(wrappedEncryptedValue, decryptedValue);
-  }
-
-  @Test
-  public void testEncryptValueWithEmptyAndNull() {
-    final EncryptionServiceImpl encryptionService = new EncryptionServiceImpl();
-    String encryptedNull = encryptionService.encryptValue(null);
-    assertThat(encryptedNull, is(nullValue()));
-    String encryptedEmpty = encryptionService.encryptValue("");
-    assertThat(encryptedEmpty, is(nullValue()));
   }
 }
