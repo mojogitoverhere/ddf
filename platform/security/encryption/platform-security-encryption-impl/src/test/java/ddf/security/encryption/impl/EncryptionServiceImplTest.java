@@ -15,7 +15,6 @@ package ddf.security.encryption.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -156,6 +155,6 @@ public class EncryptionServiceImplTest {
     String encryptedNull = encryptionService.encryptValue(null);
     assertThat(encryptedNull, is(nullValue()));
     String encryptedEmpty = encryptionService.encryptValue("");
-    assertThat(encryptedEmpty, equalTo(""));
+    assertThat(encryptedEmpty, is(nullValue()));
   }
 }

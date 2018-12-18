@@ -90,6 +90,12 @@ public final class HttpSolrClientFactory implements SolrClientFactory {
     this.solrPasswordUpdate = solrPasswordUpdate;
   }
 
+  @VisibleForTesting
+  HttpSolrClientFactory() {
+    solrPasswordUpdate = null;
+    encryptionService = null;
+  }
+
   /**
    * Gets the default Solr server secure HTTP address.
    *

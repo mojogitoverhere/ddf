@@ -161,16 +161,13 @@ public class SolrPasswordUpdateImpl implements SolrPasswordUpdate {
       passwordSavedSuccessfully = true;
       String msg =
           String.format(
-              "Updated encrypted Solr password in properties file %s.", systemPropertyFilename);
+              "\"Updated encrypted Solr password in properties file %s.", systemPropertyFilename);
       SecurityLogger.audit(msg);
       LOGGER.info(msg);
     } catch (IOException e) {
-      String msgFail =
-          String.format(
-              "Exception while writing to %s. Solr password was changed, but new password was not saved. The application cannot communicate with Solr until the password is restored.",
-              systemPropertyFilename);
-      LOGGER.error(msgFail);
-      SecurityLogger.audit(msgFail);
+      LOGGER.error(
+          "Exception while writing to {}. Solr password was changed, but new password was not saved.",
+          systemPropertyFilename);
     }
     return null;
   }
@@ -183,17 +180,11 @@ public class SolrPasswordUpdateImpl implements SolrPasswordUpdate {
         LOGGER.info("New password was set in Solr server.");
         SecurityLogger.audit("New password was set in Solr server by the Solr password updater.");
       } else {
-        String errorMsg =
-            String.format(
-                "Solr password update failed with status code %s.", solrResponse.getStatusCode());
-        LOGGER.error(errorMsg);
-        SecurityLogger.audit(errorMsg);
+        LOGGER.error(
+            "Solr password update failed with status code {}.", solrResponse.getStatusCode());
       }
-    } catch (Exception e) {
-      String exceptionMsg =
-          String.format("Solr administration request failed because %s", e.getMessage());
-      LOGGER.info(exceptionMsg);
-      SecurityLogger.audit(exceptionMsg);
+    } catch (IOException e) {
+      LOGGER.info("Solr administration request failed.", e);
     }
   }
 

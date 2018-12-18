@@ -36,7 +36,7 @@ public interface EncryptionService extends PasswordEncryptor {
    * @return encrypted text wrapped in a leading "ENC(" and trailing ")".
    */
   @Nullable
-  String encryptValue(@Nullable String unwrappedPlaintext);
+  String encryptValue(String unwrappedPlaintext);
 
   /**
    * Unwraps an encrypted value in the "ENC(*)" format. Inputs that are not wrapped are returned as
