@@ -43,6 +43,7 @@ import org.codice.ddf.persistence.PersistentItem;
 import org.codice.ddf.persistence.PersistentStore;
 import org.codice.solr.client.solrj.SolrClient;
 import org.codice.solr.factory.SolrClientFactory;
+import org.codice.solr.factory.impl.SolrClientFactoryImpl;
 import org.codice.solr.query.SolrQueryFilterVisitor;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
@@ -69,7 +70,7 @@ public class PersistentStoreImpl implements PersistentStore {
   private final int commitNrtCommitWithinMs =
       Math.max(NumberUtils.toInt(accessProperty(SOLR_COMMIT_NRT_COMMITWITHINMS, "1000")), 0);
 
-  public PersistentStoreImpl(SolrClientFactory clientFactory) {
+  public PersistentStoreImpl(SolrClientFactoryImpl clientFactory) {
     this.clientFactory = clientFactory;
   }
 

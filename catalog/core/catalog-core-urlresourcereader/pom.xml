@@ -32,6 +32,10 @@
             <artifactId>catalog-core-commons</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.codice.thirdparty</groupId>
+            <artifactId>tika-bundle</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
         </dependency>

@@ -15,7 +15,12 @@
 
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
 
-    <reference id="solrFactory" interface="org.codice.solr.factory.SolrClientFactory"/>
+    <reference id="encryptionService" interface="ddf.security.encryption.EncryptionService"/>
+    <reference id="solrPasswordUpdate" interface="ddf.platform.solr.security.SolrPasswordUpdate" />
+    <bean id="solrFactory" class="org.codice.solr.factory.impl.SolrClientFactoryImpl">
+        <argument ref="encryptionService"/>
+        <argument ref="solrPasswordUpdate"/>
+    </bean>
 
     <bean id="persistentStore" class="org.codice.ddf.persistence.internal.PersistentStoreImpl">
         <argument ref="solrFactory" />

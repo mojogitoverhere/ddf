@@ -25,6 +25,30 @@
     <artifactId>persistence-core-impl</artifactId>
     <name>DDF :: Persistence :: Core :: Internal Implementation</name>
     <packaging>bundle</packaging>
+    <dependencyManagement>
+        <dependencies>
+            <!--
+                Important: version 2.1.4 of restlet is being used to address security vulnerabilities CVE-2013-4221 and
+                CVE-2013-4271. As these are Solr transitive dependencies, the restlet dependencies should be removed
+                when the version of Solr is updated (see DDF-1110).
+            -->
+            <dependency>
+                <groupId>org.restlet.jee</groupId>
+                <artifactId>org.restlet</artifactId>
+                <version>2.1.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.restlet.jee</groupId>
+                <artifactId>org.restlet.ext.servlet</artifactId>
+                <version>2.1.4</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons.fileupload.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>ddf.platform.solr</groupId>
@@ -33,8 +57,14 @@
         </dependency>
         <dependency>
             <groupId>ddf.platform.solr</groupId>
-            <artifactId>solr-query</artifactId>
+            <artifactId>solr-dependencies</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.platform.solr</groupId>
+            <artifactId>solr-password</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ddf.persistence.core</groupId>
@@ -42,14 +72,69 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.solr</groupId>
-            <artifactId>solr-solrj</artifactId>
-            <version>${solr.version}</version>
+            <groupId>ddf.platform.solr</groupId>
+            <artifactId>solr-query</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>${opengis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-opengis</artifactId>
+            <version>${opengis.version}</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-cql</artifactId>
             <version>${opengis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.security.encryption</groupId>
+            <artifactId>security-encryption-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.platform</groupId>
+            <artifactId>platform-configuration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ddf.platform.util</groupId>
+            <artifactId>platform-util</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ddf.platform.solr</groupId>
+            <artifactId>solr-xpath</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>solr-core</artifactId>
+                    <groupId>org.apache.solr</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -72,9 +157,87 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Embed-Dependency>
-                            solr-query
+                            platform-util,
+                            commons-codec,
+                            commons-collections4,
+                            solr-factory,
+                            solr-query,
+                            solr-dependencies,
+                            solr-xpath
                         </Embed-Dependency>
-                        <Export-Package/>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Private-Package>
+                            org.codice.ddf.persistence.internal
+                        </Private-Package>
+                        <Import-Package>
+                            !com.google.common.geometry,
+                            com.google.common.*,
+                            com.vividsolutions.jts.geom,
+                            com.vividsolutions.jts.io,
+                            ddf.platform.solr.security,
+                            ddf.security.encryption,
+                            javax.crypto,
+                            javax.crypto.spec,
+                            javax.management,
+                            javax.management.openmbean,
+                            javax.management.remote,
+                            javax.naming,
+                            javax.naming.directory,
+                            javax.naming.ldap,
+                            javax.net,
+                            javax.net.ssl,
+                            javax.script,
+                            javax.security.auth,
+                            javax.security.auth.callback,
+                            javax.security.auth.kerberos,
+                            javax.security.auth.login,
+                            javax.security.auth.spi,
+                            javax.security.auth.x500,
+                            javax.security.sasl,
+                            javax.servlet,
+                            javax.xml.bind,
+                            javax.xml.namespace,
+                            javax.xml.parsers,
+                            javax.xml.stream,
+                            javax.xml.transform,
+                            javax.xml.transform.dom,
+                            javax.xml.transform.sax,
+                            javax.xml.transform.stream,
+                            javax.xml.xpath,
+                            org.apache.commons.logging,
+                            org.codice.ddf.cxf.client,
+                            org.codice.ddf.persistence;version=1.0.0-SNAPSHOT,
+                            org.codice.ddf.platform.util.uuidgenerator,
+                            org.geotools.factory,
+                            org.geotools.filter,
+                            org.geotools.filter.capability,
+                            org.geotools.filter.visitor,
+                            org.geotools.referencing.crs,
+                            org.geotools.temporal.object,
+                            org.geotools.util,
+                            org.geotools.util.logging,
+                            org.ietf.jgss,
+                            org.opengis.feature.simple,
+                            org.opengis.feature.type,
+                            org.opengis.filter,
+                            org.opengis.filter.capability,
+                            org.opengis.filter.expression,
+                            org.opengis.filter.identity,
+                            org.opengis.filter.spatial,
+                            org.opengis.filter.temporal,
+                            org.opengis.parameter,
+                            org.opengis.temporal,
+                            org.osgi.framework,
+                            org.osgi.service.blueprint,
+                            org.slf4j,
+                            org.w3c.dom,
+                            org.xml.sax,
+                            org.xml.sax.ext,
+                            org.xml.sax.helpers,
+                            org.geotools.filter.text.cql2,
+                            org.geotools.filter.text.ecql,
+                            !jline
+                        </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -92,7 +255,7 @@
                             <rules>
                                 <ArtifactSizeEnforcerRule
                                     implementation="org.codice.maven.artifactsize.ArtifactSizeEnforcerRule">
-                                    <maxArtifactSize>4_MB</maxArtifactSize>
+                                    <maxArtifactSize>55.3_MB</maxArtifactSize>
                                 </ArtifactSizeEnforcerRule>
                             </rules>
                         </configuration>

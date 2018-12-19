@@ -106,7 +106,8 @@ public class SolrFilterDelegate extends FilterDelegate<SolrQuery> {
           ValidationRule.repairConvexHull.name());
 
   private static final SpatialContext SPATIAL_CONTEXT =
-      SpatialContextFactory.makeSpatialContext(SPATIAL_CONTEXT_ARGUMENTS, null);
+      SpatialContextFactory.makeSpatialContext(
+          SPATIAL_CONTEXT_ARGUMENTS, SolrFilterDelegate.class.getClassLoader());
 
   private static final ShapeReader WKT_READER = SPATIAL_CONTEXT.getFormats().getWktReader();
 

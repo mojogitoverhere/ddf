@@ -39,6 +39,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-standardframework</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.codice.ddf.registry</groupId>
             <artifactId>registry-common</artifactId>
             <version>${project.version}</version>
@@ -51,6 +56,10 @@
             <groupId>ddf.security</groupId>
             <artifactId>ddf-security-common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.admin.core</groupId>
+            <artifactId>admin-core-api</artifactId>
         </dependency>
         <dependency>
             <groupId>ddf.platform.util</groupId>
