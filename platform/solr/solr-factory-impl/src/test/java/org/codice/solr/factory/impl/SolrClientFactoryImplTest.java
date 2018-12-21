@@ -30,8 +30,6 @@ public class SolrClientFactoryImplTest {
 
   @Mock private SolrClient mockClient;
 
-  @Mock private HttpSolrClientFactory mockHttpSolrClientFactory;
-
   // Used to keep and assert on the SolrClientFactory instance newClient would be called on
   private SolrClientFactory solrClientFactory;
 
@@ -43,16 +41,14 @@ public class SolrClientFactoryImplTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void newClientWithNullCoreName() {
-    SolrClientFactoryImpl factory =
-        new SolrClientFactoryImpl(mockHttpSolrClientFactory, newClientFunction);
+    SolrClientFactoryImpl factory = new SolrClientFactoryImpl(newClientFunction);
     factory.newClient(null);
   }
 
   @Test
   public void newEmbeddedSolrClient() {
     System.setProperty("solr.client", "EmbeddedSolrServer");
-    SolrClientFactoryImpl factory =
-        new SolrClientFactoryImpl(mockHttpSolrClientFactory, newClientFunction);
+    SolrClientFactoryImpl factory = new SolrClientFactoryImpl(newClientFunction);
 
     SolrClient client = factory.newClient("core");
     assertThat(solrClientFactory, is(instanceOf(EmbeddedSolrFactory.class)));
@@ -62,19 +58,17 @@ public class SolrClientFactoryImplTest {
   @Test
   public void newHttpSolrClient() {
     System.setProperty("solr.client", "HttpSolrClient");
-    SolrClientFactoryImpl factory =
-        new SolrClientFactoryImpl(mockHttpSolrClientFactory, newClientFunction);
+    SolrClientFactoryImpl factory = new SolrClientFactoryImpl(newClientFunction);
 
     SolrClient client = factory.newClient("core");
-    assertThat(solrClientFactory, is(mockHttpSolrClientFactory));
+    assertThat(solrClientFactory, is(instanceOf(HttpSolrClientFactory.class)));
     assertThat(client, is(mockClient));
   }
 
   @Test
   public void newCloudSolrClient() {
     System.setProperty("solr.client", "CloudSolrClient");
-    SolrClientFactoryImpl factory =
-        new SolrClientFactoryImpl(mockHttpSolrClientFactory, newClientFunction);
+    SolrClientFactoryImpl factory = new SolrClientFactoryImpl(newClientFunction);
 
     SolrClient client = factory.newClient("core");
     assertThat(solrClientFactory, is(instanceOf(SolrCloudClientFactory.class)));
@@ -84,11 +78,10 @@ public class SolrClientFactoryImplTest {
   @Test
   public void newClientWithUnknownClientType() {
     System.setProperty("solr.client", "Unknown");
-    SolrClientFactoryImpl factory =
-        new SolrClientFactoryImpl(mockHttpSolrClientFactory, newClientFunction);
+    SolrClientFactoryImpl factory = new SolrClientFactoryImpl(newClientFunction);
 
     SolrClient client = factory.newClient("core");
-    assertThat(solrClientFactory, is(mockHttpSolrClientFactory));
+    assertThat(solrClientFactory, is(instanceOf(HttpSolrClientFactory.class)));
     assertThat(client, is(mockClient));
   }
 }

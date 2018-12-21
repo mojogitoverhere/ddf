@@ -11,10 +11,23 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package ddf.platform.solr.security;
+package org.codice.ddf.commands.solr;
 
-public interface SolrPasswordUpdate {
+import org.apache.http.HttpResponse;
 
-  /** Begin the passsword update process */
-  void updateSolrPassword();
+public class ResponseWrapper {
+
+  HttpResponse response;
+
+  public ResponseWrapper(HttpResponse response) {
+    this.response = response;
+  }
+
+  public int getStatusCode() {
+    return response.getStatusLine().getStatusCode();
+  }
+
+  public String getStatusPhrase() {
+    return response.getStatusLine().getReasonPhrase();
+  }
 }
