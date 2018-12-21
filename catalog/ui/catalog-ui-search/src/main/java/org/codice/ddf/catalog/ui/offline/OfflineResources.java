@@ -29,6 +29,8 @@ import ddf.catalog.transform.MetacardTransformer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -120,6 +122,7 @@ public class OfflineResources {
       OfflineContentProcessor contentDeleter,
       String comment,
       String outputPath) {
+    Map<String, String> failed = new HashMap<>();
     for (Metacard metacard : metacards) {
       try {
         resourceZipper.add(metacard, ExportType.METADATA_AND_CONTENT);
@@ -131,12 +134,23 @@ public class OfflineResources {
           | StorageException
           | SourceUnavailableException
           | IngestException e) {
-        LOGGER.debug("Offline failed for metacard(s)", e);
-        // TODO (RCZ) - Don't exit tloop when a single metacard fails
-        return ImmutableMap.of(metacardId, "Offline failed during zip creation");
+        LOGGER.debug(
+            "Offline failed for metacard(s). {} - {}", metacard.getId(), metacard.getTitle(), e);
+        failed.put(metacard.getId(), String.format("(%s) %s", metacard.getTitle(), e.getMessage()));
       }
     }
-    return ImmutableMap.of(metacardId, "");
+
+    HashMap<String, String> result = new HashMap<>();
+    result.put(metacardId, "");
+    result.putAll(failed);
+
+    if (!failed.isEmpty()) {
+      LOGGER.info(
+          "Some metacards may not have offlined successfully. Set log levels to debug for more info"
+              + "(log:set DEBUG org.codice.ddf.catalog.ui.offline).");
+    }
+
+    return Collections.unmodifiableMap(result);
   }
 
   /**
@@ -145,9 +159,6 @@ public class OfflineResources {
    * <p>The file name is in the format "title-id.zip", but only the first 7 digits of the id are
    * used and the title is normalized to remove any invalid characters and gets truncated to ensure
    * the full file name is no longer than 255 characters.
-   *
-   * @param metacard
-   * @return
    */
   private String getZipFileName(Metacard metacard) {
     String sanitizedTitle = InputValidation.sanitizeFilename(metacard.getTitle());
