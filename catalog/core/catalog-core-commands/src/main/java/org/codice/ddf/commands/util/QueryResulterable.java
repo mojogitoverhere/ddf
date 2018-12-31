@@ -21,6 +21,7 @@ import ddf.catalog.operation.SourceResponse;
 import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.source.UnsupportedQueryException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,11 +40,14 @@ import java.util.stream.StreamSupport;
  * querying
  */
 public class QueryResulterable implements Iterable<Result> {
+
   private final CatalogFramework catalog;
 
   private final Function<Integer, QueryRequest> filter;
 
   private final int pageSize;
+
+  public volatile long hits = -1;
 
   /**
    * For paging through a single filter with a default pageSize of 64
@@ -87,6 +91,7 @@ public class QueryResulterable implements Iterable<Result> {
   }
 
   class ResultQueryIterator implements Iterator<Result> {
+
     private int pageIndex = 1;
 
     private boolean finished = false;
@@ -131,10 +136,14 @@ public class QueryResulterable implements Iterable<Result> {
         // Avoid caching all results while dumping with native query mode
         props.put("mode", "native");
         response = catalog.query(filter.apply(index));
+        if (response != null) {
+          hits = response.getHits() > 0 ? response.getHits() : hits;
+        }
       } catch (UnsupportedQueryException | SourceUnavailableException | FederationException e) {
         throw new CatalogCommandRuntimeException(e);
       }
-      List<Result> queryResults = response.getResults();
+      List<Result> queryResults =
+          response != null ? response.getResults() : Collections.emptyList();
       this.results = queryResults.iterator();
 
       int size = queryResults.size();

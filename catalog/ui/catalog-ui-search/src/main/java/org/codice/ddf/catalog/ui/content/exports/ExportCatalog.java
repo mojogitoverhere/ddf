@@ -76,7 +76,7 @@ public class ExportCatalog {
   private QueryRequest createLocalOnlyQuery(Filter filter, int index) {
     return new QueryRequestImpl(
         new QueryImpl(
-            filter, index, PAGE_SIZE, SortBy.NATURAL_ORDER, false, TimeUnit.MINUTES.toMillis(1)),
+            filter, index, PAGE_SIZE, SortBy.NATURAL_ORDER, true, TimeUnit.MINUTES.toMillis(1)),
         false,
         Collections.singleton(catalogFramework.getId()),
         new HashMap<>());

@@ -110,6 +110,7 @@ public class ExportResources {
     task.update(current, totalHits);
     QueryResulterable primaryResults = exportCatalog.queryAsLocalOnly(cql);
     for (Result primaryResult : primaryResults) {
+      totalHits = primaryResults.hits;
       QueryResulterable primaryAndHistoryResults =
           exportCatalog.getLocalHistory(primaryResult.getMetacard().getId());
       for (Result primaryOrHistory : primaryAndHistoryResults) {
@@ -134,6 +135,7 @@ public class ExportResources {
       task.update(current, totalHits);
     }
 
+    task.update(current, current);
     if (!failedMetacards.isEmpty()) {
       addErrorFile(resourceZipper, failedMetacards);
     }

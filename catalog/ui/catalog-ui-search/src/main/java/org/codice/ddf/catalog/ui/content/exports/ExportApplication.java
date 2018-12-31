@@ -186,8 +186,16 @@ public class ExportApplication implements SparkApplication {
             task.failed();
             task.putDetails("message", e.getMessage());
             return;
+          } catch (Exception e) {
+            LOGGER.info("An unknown error occurred", e);
+            throw e;
           }
 
+          if (task.getCurrent() != task.getTotal() && !task.getDetails().containsKey("message")) {
+            task.putDetails(
+                "message",
+                "The number of results may have changed during export. This may happen when a system is in use while exporting. Please check the resulting export for an errors file.");
+          }
           task.putDetails(
               ImmutableMap.of(
                   "filename", new File(results.getLeft()).getName(), "failed", results.getRight()));
