@@ -13,8 +13,6 @@
  */
 package ddf.catalog.source.solr;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -35,7 +33,6 @@ import ddf.catalog.data.impl.BasicTypes;
 import ddf.catalog.data.impl.MetacardImpl;
 import ddf.catalog.data.impl.MetacardTypeImpl;
 import ddf.catalog.data.types.Validation;
-import ddf.catalog.source.solr.json.MetacardTypeMapperFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -140,9 +137,6 @@ public class DynamicSchemaResolver {
   private Function<TinyTree, TinyBinary> tinyBinaryFunction;
 
   private static int metadataMaximumBytes;
-
-  private static final ObjectMapper METACARD_TYPE_MAPPER =
-      MetacardTypeMapperFactory.newObjectMapper();
 
   static {
     ClassLoader tccl = Thread.currentThread().getContextClassLoader();
@@ -654,17 +648,34 @@ public class DynamicSchemaResolver {
     }
 
     byte[] bytes = (byte[]) doc.getFirstValue(SchemaFields.METACARD_TYPE_OBJECT_FIELD_NAME);
+
+    ByteArrayInputStream bais = null;
+    ObjectInputStream in = null;
     try {
-      cachedMetacardType = METACARD_TYPE_MAPPER.readValue(bytes, MetacardType.class);
+
+      bais = new ByteArrayInputStream(bytes);
+
+      in = new ObjectInputStream(bais);
+
+      cachedMetacardType = (MetacardType) in.readObject();
+
     } catch (IOException e) {
+
       LOGGER.info("IO exception loading cached metacard type", e);
+
       throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE);
+    } catch (ClassNotFoundException e) {
+      LOGGER.info("Class exception loading cached metacard type", e);
+
+      throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE);
+    } finally {
+      IOUtils.closeQuietly(bais);
+      IOUtils.closeQuietly(in);
     }
 
     metacardTypeNameToSerialCache.put(mTypeFieldName, bytes);
     metacardTypesCache.put(mTypeFieldName, cachedMetacardType);
     addToFieldsCache(cachedMetacardType.getAttributeDescriptors());
-
     return cachedMetacardType;
   }
 
@@ -724,9 +735,19 @@ public class DynamicSchemaResolver {
   }
 
   private byte[] serialize(MetacardType anywhereMType) throws MetacardCreationException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
     try {
-      return METACARD_TYPE_MAPPER.writeValueAsBytes(anywhereMType);
-    } catch (JsonProcessingException e) {
+      ObjectOutputStream out = new ObjectOutputStream(baos);
+      out.writeObject(anywhereMType);
+
+      byte[] bytes = baos.toByteArray();
+
+      baos.close();
+      out.close();
+
+      return bytes;
+    } catch (IOException e) {
       throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE, e);
     }
   }
