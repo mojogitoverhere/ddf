@@ -14,14 +14,6 @@
 package ddf.catalog.source.solr.provider;
 
 import static ddf.catalog.Constants.EXPERIMENTAL_FACET_RESULTS_KEY;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.ALL_RESULTS;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.ONE_HIT;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.getFilterBuilder;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.numericalDescriptors;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.queryAndVerifyCount;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.quickQuery;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -54,9 +46,7 @@ import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
-import ddf.catalog.source.solr.SolrCatalogProvider;
 import ddf.catalog.source.solr.SolrMetacardClientImpl;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +73,7 @@ import org.opengis.filter.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SolrProviderQuery {
+public class SolrProviderQuery extends SolrProviderTestBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrProviderQuery.class);
 
@@ -93,12 +83,8 @@ public class SolrProviderQuery {
 
   private static final String DEFAULT_TEST_WILDCARD = "*";
 
-  private static SolrCatalogProvider provider;
-
   @BeforeClass
   public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-
     GeoTools.addFactoryIteratorProvider(
         new FactoryIteratorProvider() {
           @Override
@@ -125,18 +111,18 @@ public class SolrProviderQuery {
 
   @Test
   public void testQueryHasLuceneSpecialCharacters() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
             new MockMetacard(Library.getFlagstaffRecord()),
             new MockMetacard(Library.getTampaRecord()));
-    create(list, provider);
+    create(list);
 
     // if + is escaped, this query will be an implicit OR otherwise both both terms would be
     // required
     Filter txtFilter =
-        getFilterBuilder()
+        filterBuilder
             .attribute(Metacard.ANY_TEXT)
             .like()
             .text("+Flag?taff +" + Library.TAMPA_QUERY_PHRASE);
@@ -153,25 +139,24 @@ public class SolrProviderQuery {
   @Test
   public void testQueryMissingField() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     // TXT FORMAT
-    Filter txtFilter = getFilterBuilder().attribute("missingField").like().text("*");
+    Filter txtFilter = filterBuilder.attribute("missingField").like().text("*");
 
     SourceResponse response = provider.query(quickQuery(txtFilter));
 
     assertEquals(0, response.getResults().size());
 
     // DATE FORMAT
-    Filter dateFilter = getFilterBuilder().attribute("missingField").before().date(new Date());
+    Filter dateFilter = filterBuilder.attribute("missingField").before().date(new Date());
 
     response = provider.query(quickQuery(dateFilter));
 
     assertEquals(0, response.getResults().size());
 
     // GEO FORMAT
-    Filter geoFilter =
-        getFilterBuilder().attribute("missingField").intersecting().wkt("POINT ( 1 0 ) ");
+    Filter geoFilter = filterBuilder.attribute("missingField").intersecting().wkt("POINT ( 1 0 ) ");
 
     response = provider.query(quickQuery(geoFilter));
 
@@ -179,7 +164,7 @@ public class SolrProviderQuery {
 
     // NUMERICAL FORMAT
     Filter numericalFilter =
-        getFilterBuilder().attribute("missingField").greaterThanOrEqualTo().number(23L);
+        filterBuilder.attribute("missingField").greaterThanOrEqualTo().number(23L);
 
     response = provider.query(quickQuery(numericalFilter));
 
@@ -189,16 +174,16 @@ public class SolrProviderQuery {
   @Test
   public void testQueryMissingSortField() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard m = new MockMetacard(Library.getTampaRecord());
     m.setTitle("Tampa");
 
     List<Metacard> list = Arrays.asList(m, new MockMetacard(Library.getFlagstaffRecord()));
 
-    create(list, provider);
+    create(list);
 
-    Filter txtFilter = getFilterBuilder().attribute("id").like().text("*");
+    Filter txtFilter = filterBuilder.attribute("id").like().text("*");
 
     QueryImpl query = new QueryImpl(txtFilter);
 
@@ -223,9 +208,9 @@ public class SolrProviderQuery {
      * an automated test that creates a fresh cache, that would be a better test
      */
 
-    deleteAll(provider);
+    deleteAll();
 
-    Filter txtFilter = getFilterBuilder().attribute("id").like().text("*");
+    Filter txtFilter = filterBuilder.attribute("id").like().text("*");
 
     QueryImpl query = new QueryImpl(txtFilter);
 
@@ -243,20 +228,19 @@ public class SolrProviderQuery {
   @Test
   public void testTwoQueriesWithOneMissingField() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard m = new MockMetacard(Library.getTampaRecord());
     m.setTitle("Tampa");
 
     List<Metacard> list = Arrays.asList(m, new MockMetacard(Library.getFlagstaffRecord()));
 
-    create(list, provider);
+    create(list);
 
     Filter filter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().attribute(Metacard.TITLE).text("Tampa"),
-                getFilterBuilder().attribute("missingField").text("someText"));
+        filterBuilder.anyOf(
+            filterBuilder.attribute(Metacard.TITLE).text("Tampa"),
+            filterBuilder.attribute("missingField").text("someText"));
 
     SourceResponse sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
 
@@ -681,21 +665,21 @@ public class SolrProviderQuery {
   }
 
   private void createContextualMetacards() throws UnsupportedQueryException, IngestException {
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard m = new MockMetacard(Library.getTampaRecord());
     m.setTitle("Tampa");
 
     List<Metacard> list = Arrays.asList(new MockMetacard(Library.getFlagstaffRecord()), m);
 
-    assertEquals(2, create(list, provider).getCreatedMetacards().size());
+    assertEquals(2, create(list).getCreatedMetacards().size());
   }
 
   /** Testing attributes are properly indexed. */
   @Test
   public void testContextualXmlAttributes() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -705,33 +689,29 @@ public class SolrProviderQuery {
 
     list.add(metacard1);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.METADATA).is().like().text(soughtWord), provider);
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.METADATA).is().like().text(soughtWord));
   }
 
   @Test
   public void testContextualXmlTagsNotIndexed() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
-    create(Collections.singletonList(new MockMetacard(Library.getFlagstaffRecord())), provider);
+    create(Collections.singletonList(new MockMetacard(Library.getFlagstaffRecord())));
 
     String xmlTag = "lastBuildDate";
 
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.METADATA).is().like().text(xmlTag));
     queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.METADATA).is().like().text(xmlTag), provider);
-    queryAndVerifyCount(
-        0,
-        getFilterBuilder().attribute(Metacard.METADATA).is().like().text(xmlTag + "*"),
-        provider);
+        0, filterBuilder.attribute(Metacard.METADATA).is().like().text(xmlTag + "*"));
   }
 
   /** Testing {@link Metacard#ANY_TEXT} */
   @Test
   public void testContextualAnyText() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -749,16 +729,15 @@ public class SolrProviderQuery {
 
     list.add(metacard3);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.ANY_TEXT).is().like().text(soughtWord), provider);
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.ANY_TEXT).is().like().text(soughtWord));
   }
 
   @Test
   public void testQueryExcludedAttributes() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -773,10 +752,10 @@ public class SolrProviderQuery {
     MockMetacard metacard3 = new MockMetacard(Library.getShowLowRecord());
     list.add(metacard3);
 
-    create(list, provider);
+    create(list);
 
     QueryImpl query =
-        new QueryImpl(getFilterBuilder().attribute(Metacard.ANY_TEXT).is().like().text(soughtWord));
+        new QueryImpl(filterBuilder.attribute(Metacard.ANY_TEXT).is().like().text(soughtWord));
     Map<String, Serializable> properties = new HashMap<>();
     properties.put(
         SolrMetacardClientImpl.EXCLUDE_ATTRIBUTES,
@@ -790,7 +769,7 @@ public class SolrProviderQuery {
   @Test
   public void testWhitespaceTokenizedFieldWithWildcardSearch() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -809,40 +788,32 @@ public class SolrProviderQuery {
 
     list.add(metacard1);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.TITLE).is().like().text(searchPhrase1), provider);
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.TITLE).is().like().text(searchPhrase2), provider);
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.TITLE).is().like().text(searchPhrase3), provider);
-    queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.TITLE).is().like().text(searchPhrase4), provider);
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.TITLE).is().like().text(searchPhrase1));
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.TITLE).is().like().text(searchPhrase2));
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.TITLE).is().like().text(searchPhrase3));
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.TITLE).is().like().text(searchPhrase4));
     // Matching Phrase with wildcard
     queryAndVerifyCount(
-        1,
-        getFilterBuilder().attribute(Metacard.ANY_TEXT).is().like().text(searchPhrase5),
-        provider);
+        1, filterBuilder.attribute(Metacard.ANY_TEXT).is().like().text(searchPhrase5));
     // Non-Matching Phrase without wildcard
     queryAndVerifyCount(
-        0,
-        getFilterBuilder().attribute(Metacard.ANY_TEXT).is().like().text(searchPhrase6),
-        provider);
+        0, filterBuilder.attribute(Metacard.ANY_TEXT).is().like().text(searchPhrase6));
   }
 
   /** Testing case sensitive index. */
   @Test
   public void testContextualCaseSensitiveSimple() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
             new MockMetacard(Library.getFlagstaffRecord()),
             new MockMetacard(Library.getTampaRecord()));
 
-    create(list, provider);
+    create(list);
 
     QueryImpl query;
     SourceResponse sourceResponse;
@@ -852,7 +823,7 @@ public class SolrProviderQuery {
     // Find one
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -863,7 +834,7 @@ public class SolrProviderQuery {
     // Find the other
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -874,7 +845,7 @@ public class SolrProviderQuery {
     // Find nothing
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -885,7 +856,7 @@ public class SolrProviderQuery {
     // Find both
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -896,7 +867,7 @@ public class SolrProviderQuery {
     // Phrase
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -907,21 +878,21 @@ public class SolrProviderQuery {
     // NEGATIVE CASES
     query =
         new QueryImpl(
-            getFilterBuilder().attribute(Metacard.METADATA).is().like().caseSensitiveText("Tamp"));
+            filterBuilder.attribute(Metacard.METADATA).is().like().caseSensitiveText("Tamp"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(0, sourceResponse.getResults().size());
 
     query =
         new QueryImpl(
-            getFilterBuilder().attribute(Metacard.METADATA).is().like().caseSensitiveText("TAmpa"));
+            filterBuilder.attribute(Metacard.METADATA).is().like().caseSensitiveText("TAmpa"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(0, sourceResponse.getResults().size());
 
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.METADATA)
                 .is()
                 .like()
@@ -934,14 +905,14 @@ public class SolrProviderQuery {
   @Test
   public void testContextualCaseSensitiveWildcardWithPunctuation() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
             new MockMetacard(Library.getFlagstaffRecord()),
             new MockMetacard(Library.getTampaRecord()));
 
-    create(list, provider);
+    create(list);
 
     QueryImpl query;
     SourceResponse sourceResponse;
@@ -949,7 +920,7 @@ public class SolrProviderQuery {
     // WILDCARD CASE SENSITIVE CONTEXTUAL QUERY
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.ANY_TEXT)
                 .is()
                 .like()
@@ -959,7 +930,7 @@ public class SolrProviderQuery {
 
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.ANY_TEXT)
                 .is()
                 .like()
@@ -969,11 +940,7 @@ public class SolrProviderQuery {
 
     query =
         new QueryImpl(
-            getFilterBuilder()
-                .attribute(Metacard.ANY_TEXT)
-                .is()
-                .like()
-                .caseSensitiveText("10160*"));
+            filterBuilder.attribute(Metacard.ANY_TEXT).is().like().caseSensitiveText("10160*"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(1, sourceResponse.getResults().size());
@@ -981,7 +948,7 @@ public class SolrProviderQuery {
     // NEGATIVE CASES
     query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.ANY_TEXT)
                 .is()
                 .like()
@@ -993,7 +960,7 @@ public class SolrProviderQuery {
 
   @Test
   public void testContextualFuzzy() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
@@ -1001,20 +968,17 @@ public class SolrProviderQuery {
             new MockMetacard(Library.getTampaRecord()));
 
     // CREATE
-    create(list, provider);
+    create(list);
 
     // CONTEXTUAL QUERY - FUZZY
     Filter filter =
-        getFilterBuilder()
-            .attribute(Metacard.METADATA)
-            .like()
-            .fuzzyText(Library.FLAGSTAFF_QUERY_PHRASE);
+        filterBuilder.attribute(Metacard.METADATA).like().fuzzyText(Library.FLAGSTAFF_QUERY_PHRASE);
     SourceResponse sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertEquals(
         "Expected one hit for fuzzy term 'Flagstaff'", ONE_HIT, sourceResponse.getResults().size());
 
     // CONTEXTUAL QUERY - FUZZY PHRASE
-    filter = getFilterBuilder().attribute(Metacard.METADATA).like().fuzzyText("Flagstaff Chamber");
+    filter = filterBuilder.attribute(Metacard.METADATA).like().fuzzyText("Flagstaff Chamber");
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertEquals(
         "Expected one hit for fuzzy term 'Flagstaff Chamber'",
@@ -1022,8 +986,7 @@ public class SolrProviderQuery {
         sourceResponse.getResults().size());
 
     // CONTEXTUAL QUERY - FUZZY PHRASE, multiple spaces
-    filter =
-        getFilterBuilder().attribute(Metacard.METADATA).like().fuzzyText("Flagstaff    Chamber");
+    filter = filterBuilder.attribute(Metacard.METADATA).like().fuzzyText("Flagstaff    Chamber");
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertEquals(
         "Expected one hit for fuzzy term 'Flagstaff    Chamber'",
@@ -1031,12 +994,12 @@ public class SolrProviderQuery {
         sourceResponse.getResults().size());
 
     // CONTEXTUAL QUERY - FUZZY PHRASE, upper case with insertion
-    filter = getFilterBuilder().attribute(Metacard.METADATA).like().fuzzyText("FLGD");
+    filter = filterBuilder.attribute(Metacard.METADATA).like().fuzzyText("FLGD");
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertEquals("Expected two hits for fuzzy term 'FLGD'", 2, sourceResponse.getResults().size());
 
     // CONTEXTUAL QUERY - FUZZY PHRASE, second word missing
-    filter = getFilterBuilder().attribute(Metacard.METADATA).like().fuzzyText("Flagstaff Igloo");
+    filter = filterBuilder.attribute(Metacard.METADATA).like().fuzzyText("Flagstaff Igloo");
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertEquals(
         "Expected zero hits for fuzzy term 'Flagstaff Igloo'",
@@ -1047,7 +1010,7 @@ public class SolrProviderQuery {
     // Possible matches are:
     // Tampa record has word 'company'
     // Flagstaff has word 'camp'
-    filter = getFilterBuilder().attribute(Metacard.METADATA).like().fuzzyText("comp");
+    filter = filterBuilder.attribute(Metacard.METADATA).like().fuzzyText("comp");
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
     assertThat(
         "Expected to find any hits for fuzzy 'comp'",
@@ -1055,7 +1018,7 @@ public class SolrProviderQuery {
         is(greaterThanOrEqualTo(1)));
 
     // CONTEXTUAL QUERY - FUZZY - Bad fuzzy field
-    filter = getFilterBuilder().attribute(Metacard.CREATED).like().fuzzyText(new Date().toString());
+    filter = filterBuilder.attribute(Metacard.CREATED).like().fuzzyText(new Date().toString());
     try {
       provider.query(new QueryRequestImpl(new QueryImpl(filter)));
       fail("Should not be allowed to run a fuzzy on a date field.");
@@ -1067,21 +1030,21 @@ public class SolrProviderQuery {
   @Test
   public void testContextualWildcard() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
             new MockMetacard(Library.getFlagstaffRecord()),
             new MockMetacard(Library.getTampaRecord()));
 
-    create(list, provider);
+    create(list);
 
     QueryImpl query;
     SourceResponse sourceResponse;
 
     query =
         new QueryImpl(
-            getFilterBuilder().attribute(Metacard.METADATA).is().like().text("Flag*ff Chamber"));
+            filterBuilder.attribute(Metacard.METADATA).is().like().text("Flag*ff Chamber"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(1, sourceResponse.getResults().size());
@@ -1090,36 +1053,32 @@ public class SolrProviderQuery {
     // Either roll this in yourself or wait for it to come in with Solr
     query =
         new QueryImpl(
-            getFilterBuilder().attribute(Metacard.METADATA).is().like().text("Flag*ff Pulliam"));
+            filterBuilder.attribute(Metacard.METADATA).is().like().text("Flag*ff Pulliam"));
     query.setStartIndex(1);
     provider.query(new QueryRequestImpl(query));
     // assertEquals(0, sourceResponse.getResults().size());
 
-    query =
-        new QueryImpl(getFilterBuilder().attribute(Metacard.METADATA).is().like().text("*rport"));
+    query = new QueryImpl(filterBuilder.attribute(Metacard.METADATA).is().like().text("*rport"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(2, sourceResponse.getResults().size());
 
-    query =
-        new QueryImpl(getFilterBuilder().attribute(Metacard.METADATA).is().like().text("*rpor*"));
+    query = new QueryImpl(filterBuilder.attribute(Metacard.METADATA).is().like().text("*rpor*"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(2, sourceResponse.getResults().size());
 
-    query = new QueryImpl(getFilterBuilder().attribute(Metacard.METADATA).is().like().text("*"));
+    query = new QueryImpl(filterBuilder.attribute(Metacard.METADATA).is().like().text("*"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(2, sourceResponse.getResults().size());
 
-    query =
-        new QueryImpl(getFilterBuilder().attribute(Metacard.METADATA).is().like().text("airpo*t"));
+    query = new QueryImpl(filterBuilder.attribute(Metacard.METADATA).is().like().text("airpo*t"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(2, sourceResponse.getResults().size());
 
-    query =
-        new QueryImpl(getFilterBuilder().attribute(Metacard.METADATA).is().like().text("Airpo*t"));
+    query = new QueryImpl(filterBuilder.attribute(Metacard.METADATA).is().like().text("Airpo*t"));
     query.setStartIndex(1);
     sourceResponse = provider.query(new QueryRequestImpl(query));
     assertEquals(2, sourceResponse.getResults().size());
@@ -1127,7 +1086,7 @@ public class SolrProviderQuery {
 
   @Test
   public void testPropertyIsLike() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -1146,27 +1105,22 @@ public class SolrProviderQuery {
 
     list.add(metacard3);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(
-        3, getFilterBuilder().attribute(Metacard.TITLE).is().like().text("Mary"), provider);
-    queryAndVerifyCount(
-        2, getFilterBuilder().attribute(Metacard.TITLE).is().like().text("little"), provider);
-    queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.TITLE).is().like().text("gary"), provider);
+    queryAndVerifyCount(3, filterBuilder.attribute(Metacard.TITLE).is().like().text("Mary"));
+    queryAndVerifyCount(2, filterBuilder.attribute(Metacard.TITLE).is().like().text("little"));
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.TITLE).is().like().text("gary"));
 
     /* EMPTY ATTRIBUTE */
 
-    queryAndVerifyCount(
-        3, getFilterBuilder().attribute(Metacard.DESCRIPTION).is().equalTo().text(""), provider);
+    queryAndVerifyCount(3, filterBuilder.attribute(Metacard.DESCRIPTION).is().equalTo().text(""));
 
-    queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text(""), provider);
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text(""));
   }
 
   @Test
   public void testPropertyIsEqualTo() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -1190,51 +1144,41 @@ public class SolrProviderQuery {
 
     list.add(metacard3);
 
-    create(list, provider);
+    create(list);
+
+    queryAndVerifyCount(1, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text("Mary"));
+
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text("Mar"));
+
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text("Mary had"));
 
     queryAndVerifyCount(
-        1, getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text("Mary"), provider);
-
-    queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text("Mar"), provider);
-
-    queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text("Mary had"), provider);
-
-    queryAndVerifyCount(
-        1,
-        getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text("Mary had a little"),
-        provider);
+        1, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text("Mary had a little"));
 
     queryAndVerifyCount(
         1,
-        getFilterBuilder()
+        filterBuilder
             .attribute(Metacard.TITLE)
             .is()
             .equalTo()
-            .text("Mary had a little l!@#$%^&*()_mb"),
-        provider);
+            .text("Mary had a little l!@#$%^&*()_mb"));
 
     /* DATES */
 
     queryAndVerifyCount(
-        1,
-        getFilterBuilder().attribute(Metacard.EFFECTIVE).is().equalTo().date(exactEffectiveDate),
-        provider);
+        1, filterBuilder.attribute(Metacard.EFFECTIVE).is().equalTo().date(exactEffectiveDate));
 
     /* EMPTY ATTRIBUTE */
 
-    queryAndVerifyCount(
-        3, getFilterBuilder().attribute(Metacard.DESCRIPTION).is().equalTo().text(""), provider);
+    queryAndVerifyCount(3, filterBuilder.attribute(Metacard.DESCRIPTION).is().equalTo().text(""));
 
-    queryAndVerifyCount(
-        0, getFilterBuilder().attribute(Metacard.TITLE).is().equalTo().text(""), provider);
+    queryAndVerifyCount(0, filterBuilder.attribute(Metacard.TITLE).is().equalTo().text(""));
   }
 
   @Test
   public void testPropertyIsInProximityToAnyText() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -1247,22 +1191,18 @@ public class SolrProviderQuery {
     list.add(metacard);
     list.add(metacard1);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(
-        1, getFilterBuilder().proximity(Metacard.ANY_TEXT, 3, "Mary ham"), provider);
-    queryAndVerifyCount(
-        0, getFilterBuilder().proximity(Metacard.ANY_TEXT, 2, "Mary ham"), provider);
-    queryAndVerifyCount(
-        2, getFilterBuilder().proximity(Metacard.ANY_TEXT, 2, "Mary little"), provider);
-    queryAndVerifyCount(
-        0, getFilterBuilder().proximity(Metacard.ANY_TEXT, 1, "Mary little"), provider);
+    queryAndVerifyCount(1, filterBuilder.proximity(Metacard.ANY_TEXT, 3, "Mary ham"));
+    queryAndVerifyCount(0, filterBuilder.proximity(Metacard.ANY_TEXT, 2, "Mary ham"));
+    queryAndVerifyCount(2, filterBuilder.proximity(Metacard.ANY_TEXT, 2, "Mary little"));
+    queryAndVerifyCount(0, filterBuilder.proximity(Metacard.ANY_TEXT, 1, "Mary little"));
   }
 
   @Test
   public void testPropertyIsInProximityTo() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -1275,17 +1215,17 @@ public class SolrProviderQuery {
     list.add(metacard);
     list.add(metacard1);
 
-    create(list, provider);
+    create(list);
 
-    queryAndVerifyCount(1, getFilterBuilder().proximity(Core.TITLE, 3, "Mary ham"), provider);
-    queryAndVerifyCount(0, getFilterBuilder().proximity(Core.TITLE, 2, "Mary ham"), provider);
-    queryAndVerifyCount(2, getFilterBuilder().proximity(Core.TITLE, 2, "Mary little"), provider);
-    queryAndVerifyCount(0, getFilterBuilder().proximity(Core.TITLE, 1, "Mary little"), provider);
+    queryAndVerifyCount(1, filterBuilder.proximity(Core.TITLE, 3, "Mary ham"));
+    queryAndVerifyCount(0, filterBuilder.proximity(Core.TITLE, 2, "Mary ham"));
+    queryAndVerifyCount(2, filterBuilder.proximity(Core.TITLE, 2, "Mary little"));
+    queryAndVerifyCount(0, filterBuilder.proximity(Core.TITLE, 1, "Mary little"));
   }
 
   @Test(expected = UnsupportedQueryException.class)
   public void testPropertyIsEqualToCaseSensitive() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     FilterFactory filterFactory = new FilterFactoryImpl();
     Filter filter =
@@ -1293,14 +1233,14 @@ public class SolrProviderQuery {
             filterFactory.property(Metacard.TITLE), filterFactory.literal("Mary"), false);
 
     // Expect an exception
-    queryAndVerifyCount(0, filter, provider);
+    queryAndVerifyCount(0, filter);
   }
 
   /** Tests the offset aka start index (startIndex) functionality. */
   @Test
   public void testStartIndex() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list =
         Arrays.asList(
@@ -1315,12 +1255,12 @@ public class SolrProviderQuery {
             new MockMetacard(Library.getFlagstaffRecord()));
 
     // CREATE
-    create(list, provider);
+    create(list);
 
     // CONTEXTUAL QUERY
     QueryImpl query =
         new QueryImpl(
-            getFilterBuilder()
+            filterBuilder
                 .attribute(Metacard.TITLE)
                 .is()
                 .equalTo()
@@ -1464,7 +1404,7 @@ public class SolrProviderQuery {
   @Test
   public void testFacetedResponse() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> metacards = new ArrayList<>();
 
@@ -1474,10 +1414,10 @@ public class SolrProviderQuery {
       metacards.add(metacard);
     }
 
-    create(metacards, provider);
+    create(metacards);
 
     Filter filter =
-        getFilterBuilder().attribute(Metacard.DESCRIPTION).is().like().fuzzyText("Description");
+        filterBuilder.attribute(Metacard.DESCRIPTION).is().like().fuzzyText("Description");
 
     Response response =
         provider.query(
@@ -1517,7 +1457,7 @@ public class SolrProviderQuery {
 
   @Test
   public void testNumericalFields() throws Exception {
-    deleteAll(provider);
+    deleteAll();
 
     /* SETUP */
     String doubleField = "hertz";
@@ -1548,7 +1488,7 @@ public class SolrProviderQuery {
     customMetacard1.setAttribute(longField, longFieldValue);
     customMetacard1.setAttribute(shortField, shortFieldValue);
 
-    create(Collections.singletonList(customMetacard1), provider);
+    create(Collections.singletonList(customMetacard1));
 
     // searching double field with int value
     greaterThanQueryAssertion(doubleField, intFieldValue, 1);
@@ -1569,7 +1509,7 @@ public class SolrProviderQuery {
   @Test()
   public void testNumericalOperations() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     /* SETUP */
     String doubleField = "hertz";
@@ -1608,7 +1548,7 @@ public class SolrProviderQuery {
     customMetacard2.setAttribute(longField, longFieldValue + 10L);
     customMetacard2.setAttribute(shortField, (shortFieldValue + 1));
 
-    create(Arrays.asList(customMetacard1, customMetacard2), provider);
+    create(Arrays.asList(customMetacard1, customMetacard2));
 
     // on exact DOUBLE
     greaterThanQueryAssertion(doubleField, doubleFieldValue, 1);
@@ -1667,15 +1607,15 @@ public class SolrProviderQuery {
     Filter filter = null;
 
     if (fieldValue instanceof Double) {
-      filter = getFilterBuilder().attribute(fieldName).greaterThan().number((Double) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThan().number((Double) fieldValue);
     } else if (fieldValue instanceof Integer) {
-      filter = getFilterBuilder().attribute(fieldName).greaterThan().number((Integer) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThan().number((Integer) fieldValue);
     } else if (fieldValue instanceof Short) {
-      filter = getFilterBuilder().attribute(fieldName).greaterThan().number((Short) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThan().number((Short) fieldValue);
     } else if (fieldValue instanceof Long) {
-      filter = getFilterBuilder().attribute(fieldName).greaterThan().number((Long) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThan().number((Long) fieldValue);
     } else if (fieldValue instanceof Float) {
-      filter = getFilterBuilder().attribute(fieldName).greaterThan().number((Float) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThan().number((Float) fieldValue);
     }
 
     SourceResponse response = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
@@ -1690,25 +1630,16 @@ public class SolrProviderQuery {
 
     if (fieldValue instanceof Double) {
       filter =
-          getFilterBuilder()
-              .attribute(fieldName)
-              .greaterThanOrEqualTo()
-              .number((Double) fieldValue);
+          filterBuilder.attribute(fieldName).greaterThanOrEqualTo().number((Double) fieldValue);
     } else if (fieldValue instanceof Integer) {
       filter =
-          getFilterBuilder()
-              .attribute(fieldName)
-              .greaterThanOrEqualTo()
-              .number((Integer) fieldValue);
+          filterBuilder.attribute(fieldName).greaterThanOrEqualTo().number((Integer) fieldValue);
     } else if (fieldValue instanceof Short) {
-      filter =
-          getFilterBuilder().attribute(fieldName).greaterThanOrEqualTo().number((Short) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThanOrEqualTo().number((Short) fieldValue);
     } else if (fieldValue instanceof Long) {
-      filter =
-          getFilterBuilder().attribute(fieldName).greaterThanOrEqualTo().number((Long) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThanOrEqualTo().number((Long) fieldValue);
     } else if (fieldValue instanceof Float) {
-      filter =
-          getFilterBuilder().attribute(fieldName).greaterThanOrEqualTo().number((Float) fieldValue);
+      filter = filterBuilder.attribute(fieldName).greaterThanOrEqualTo().number((Float) fieldValue);
     }
 
     SourceResponse response = provider.query(new QueryRequestImpl(new QueryImpl(filter)));

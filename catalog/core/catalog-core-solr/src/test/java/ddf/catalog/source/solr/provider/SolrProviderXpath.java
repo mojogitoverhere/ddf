@@ -13,10 +13,6 @@
  */
 package ddf.catalog.source.solr.provider;
 
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.ONE_HIT;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.getFilterBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -28,30 +24,20 @@ import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
-import ddf.catalog.source.solr.SolrCatalogProvider;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.util.Arrays;
 import java.util.List;
 import org.codice.solr.factory.impl.ConfigurationStore;
 import org.joda.time.DateTime;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.filter.Filter;
 
-public class SolrProviderXpath {
-
-  private static SolrCatalogProvider provider;
-
-  @BeforeClass
-  public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-  }
+public class SolrProviderXpath extends SolrProviderTestBase {
 
   @Test
   public void testXpathCompoundContextualQuery() throws Exception {
 
     ConfigurationStore.getInstance().setDisableTextPath(false);
-    deleteAll(provider);
+    deleteAll();
 
     String nonexistentXpath = "/this/xpath[does/not/@ex:exist]";
 
@@ -61,22 +47,21 @@ public class SolrProviderXpath {
     MockMetacard flagstaff = new MockMetacard(Library.getFlagstaffRecord());
     flagstaff.setLocation(Library.FLAGSTAFF_AIRPORT_POINT_WKT);
 
-    create(Arrays.asList(tampa, flagstaff), provider);
+    create(Arrays.asList(tampa, flagstaff));
 
     /* XPath AND temporal AND spatial. */
 
     Filter filter =
-        getFilterBuilder()
-            .allOf(
-                getFilterBuilder().xpath("/rss/channel[item/link]").exists(),
-                getFilterBuilder()
-                    .attribute(Metacard.MODIFIED)
-                    .before()
-                    .date(new DateTime().plus(1).toDate()),
-                getFilterBuilder()
-                    .attribute(Metacard.GEOGRAPHY)
-                    .intersecting()
-                    .wkt(Library.FLAGSTAFF_AIRPORT_POINT_WKT));
+        filterBuilder.allOf(
+            filterBuilder.xpath("/rss/channel[item/link]").exists(),
+            filterBuilder
+                .attribute(Metacard.MODIFIED)
+                .before()
+                .date(new DateTime().plus(1).toDate()),
+            filterBuilder
+                .attribute(Metacard.GEOGRAPHY)
+                .intersecting()
+                .wkt(Library.FLAGSTAFF_AIRPORT_POINT_WKT));
 
     SourceResponse sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
 
@@ -85,20 +70,18 @@ public class SolrProviderXpath {
     /* temporal AND (Bad XPath OR XPath) */
 
     filter =
-        getFilterBuilder()
-            .allOf(
-                getFilterBuilder()
-                    .attribute(Metacard.MODIFIED)
-                    .before()
-                    .date(new DateTime().plus(1).toDate()),
-                getFilterBuilder()
-                    .anyOf(
-                        getFilterBuilder().xpath(nonexistentXpath).exists(),
-                        getFilterBuilder()
-                            .xpath("//channel/image/title")
-                            .is()
-                            .like()
-                            .text(Library.FLAGSTAFF_QUERY_PHRASE)));
+        filterBuilder.allOf(
+            filterBuilder
+                .attribute(Metacard.MODIFIED)
+                .before()
+                .date(new DateTime().plus(1).toDate()),
+            filterBuilder.anyOf(
+                filterBuilder.xpath(nonexistentXpath).exists(),
+                filterBuilder
+                    .xpath("//channel/image/title")
+                    .is()
+                    .like()
+                    .text(Library.FLAGSTAFF_QUERY_PHRASE)));
 
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
 
@@ -107,16 +90,14 @@ public class SolrProviderXpath {
     /* Bad XPath OR (spatial AND XPath) */
 
     filter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(nonexistentXpath).is().like().text("any phrase"),
-                getFilterBuilder()
-                    .allOf(
-                        getFilterBuilder()
-                            .attribute(Metacard.GEOGRAPHY)
-                            .intersecting()
-                            .wkt(Library.TAMPA_AIRPORT_POINT_WKT),
-                        getFilterBuilder().xpath("/rss//item/enclosure/@url").exists()));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(nonexistentXpath).is().like().text("any phrase"),
+            filterBuilder.allOf(
+                filterBuilder
+                    .attribute(Metacard.GEOGRAPHY)
+                    .intersecting()
+                    .wkt(Library.TAMPA_AIRPORT_POINT_WKT),
+                filterBuilder.xpath("/rss//item/enclosure/@url").exists()));
 
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
 
@@ -126,20 +107,18 @@ public class SolrProviderXpath {
     /* spatial AND (Bad XPath OR Bad XPath) */
 
     filter =
-        getFilterBuilder()
-            .allOf(
-                getFilterBuilder()
-                    .attribute(Metacard.GEOGRAPHY)
-                    .intersecting()
-                    .wkt(Library.FLAGSTAFF_AIRPORT_POINT_WKT),
-                getFilterBuilder()
-                    .anyOf(
-                        getFilterBuilder().xpath(nonexistentXpath).exists(),
-                        getFilterBuilder()
-                            .xpath("//also/does/not[@exist]")
-                            .is()
-                            .like()
-                            .text(Library.FLAGSTAFF_QUERY_PHRASE)));
+        filterBuilder.allOf(
+            filterBuilder
+                .attribute(Metacard.GEOGRAPHY)
+                .intersecting()
+                .wkt(Library.FLAGSTAFF_AIRPORT_POINT_WKT),
+            filterBuilder.anyOf(
+                filterBuilder.xpath(nonexistentXpath).exists(),
+                filterBuilder
+                    .xpath("//also/does/not[@exist]")
+                    .is()
+                    .like()
+                    .text(Library.FLAGSTAFF_QUERY_PHRASE)));
 
     sourceResponse = provider.query(new QueryRequestImpl(new QueryImpl(filter)));
 
@@ -150,7 +129,7 @@ public class SolrProviderXpath {
   public void testXpathNestedXpathQuery() throws Exception {
 
     ConfigurationStore.getInstance().setDisableTextPath(false);
-    deleteAll(provider);
+    deleteAll();
 
     String explicitXpath1 = "//rss/channel/itunes:explicit";
     String explicitXpath2 = "//rss/channel/ITunes:explicit";
@@ -166,37 +145,34 @@ public class SolrProviderXpath {
     MockMetacard flagstaff = new MockMetacard(Library.getFlagstaffRecord());
     flagstaff.setLocation(Library.FLAGSTAFF_AIRPORT_POINT_WKT);
 
-    create(Arrays.asList(tampa, flagstaff), provider);
+    create(Arrays.asList(tampa, flagstaff));
 
     /* XPath */
 
-    Filter existsFilter = getFilterBuilder().xpath(existsXpath).exists();
+    Filter existsFilter = filterBuilder.xpath(existsXpath).exists();
     Filter notFilter =
-        getFilterBuilder().not(getFilterBuilder().xpath(existsXpath).is().like().text("en-us"));
-    Filter firstPart = getFilterBuilder().allOf(existsFilter, notFilter);
+        filterBuilder.not(filterBuilder.xpath(existsXpath).is().like().text("en-us"));
+    Filter firstPart = filterBuilder.allOf(existsFilter, notFilter);
 
     Filter anyGroupFilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(explicitXpath1).is().like().text("no"),
-                getFilterBuilder().xpath(explicitXpath2).is().like().text("no"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(explicitXpath1).is().like().text("no"),
+            filterBuilder.xpath(explicitXpath2).is().like().text("no"));
 
     Filter anyABfilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(updateXpath1).is().like().text("hourly"),
-                getFilterBuilder().xpath(updateFreq1).is().like().text("1"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(updateXpath1).is().like().text("hourly"),
+            filterBuilder.xpath(updateFreq1).is().like().text("1"));
     Filter anyACfilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(updateXpath2).is().like().text("hourly"),
-                getFilterBuilder().xpath(updateFreq2).is().like().text("1"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(updateXpath2).is().like().text("hourly"),
+            filterBuilder.xpath(updateFreq2).is().like().text("1"));
 
-    Filter allABACFilter = getFilterBuilder().allOf(anyABfilter, anyACfilter);
+    Filter allABACFilter = filterBuilder.allOf(anyABfilter, anyACfilter);
 
-    Filter secondPart = getFilterBuilder().anyOf(anyGroupFilter, allABACFilter);
+    Filter secondPart = filterBuilder.anyOf(anyGroupFilter, allABACFilter);
 
-    Filter totalFilter = getFilterBuilder().allOf(firstPart, secondPart);
+    Filter totalFilter = filterBuilder.allOf(firstPart, secondPart);
 
     SourceResponse sourceResponse =
         provider.query(new QueryRequestImpl(new QueryImpl(totalFilter)));
@@ -208,7 +184,7 @@ public class SolrProviderXpath {
   public void testXpathNestedNegativeXpathQuery() throws Exception {
 
     ConfigurationStore.getInstance().setDisableTextPath(false);
-    deleteAll(provider);
+    deleteAll();
 
     String explicitXpath1 = "//rss/channel/itunes:explicit";
     String explicitXpath2 = "//rss/channel/ITunes:explicit";
@@ -224,37 +200,34 @@ public class SolrProviderXpath {
     MockMetacard flagstaff = new MockMetacard(Library.getFlagstaffRecord());
     flagstaff.setLocation(Library.FLAGSTAFF_AIRPORT_POINT_WKT);
 
-    create(Arrays.asList(tampa, flagstaff), provider);
+    create(Arrays.asList(tampa, flagstaff));
 
     /* XPath */
 
-    Filter existsFilter = getFilterBuilder().xpath(existsXpath).exists();
+    Filter existsFilter = filterBuilder.xpath(existsXpath).exists();
     Filter notFilter =
-        getFilterBuilder().not(getFilterBuilder().xpath(existsXpath).is().like().text("en-us"));
-    Filter firstPart = getFilterBuilder().allOf(existsFilter, notFilter);
+        filterBuilder.not(filterBuilder.xpath(existsXpath).is().like().text("en-us"));
+    Filter firstPart = filterBuilder.allOf(existsFilter, notFilter);
 
     Filter anyGroupFilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(explicitXpath1).is().like().text("yes"),
-                getFilterBuilder().xpath(explicitXpath2).is().like().text("yes"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(explicitXpath1).is().like().text("yes"),
+            filterBuilder.xpath(explicitXpath2).is().like().text("yes"));
 
     Filter anyABfilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(updateXpath1).is().like().text("daily"),
-                getFilterBuilder().xpath(updateFreq1).is().like().text("2"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(updateXpath1).is().like().text("daily"),
+            filterBuilder.xpath(updateFreq1).is().like().text("2"));
     Filter anyACfilter =
-        getFilterBuilder()
-            .anyOf(
-                getFilterBuilder().xpath(updateXpath2).is().like().text("daily"),
-                getFilterBuilder().xpath(updateFreq2).is().like().text("2"));
+        filterBuilder.anyOf(
+            filterBuilder.xpath(updateXpath2).is().like().text("daily"),
+            filterBuilder.xpath(updateFreq2).is().like().text("2"));
 
-    Filter allABACFilter = getFilterBuilder().allOf(anyABfilter, anyACfilter);
+    Filter allABACFilter = filterBuilder.allOf(anyABfilter, anyACfilter);
 
-    Filter secondPart = getFilterBuilder().anyOf(anyGroupFilter, allABACFilter);
+    Filter secondPart = filterBuilder.anyOf(anyGroupFilter, allABACFilter);
 
-    Filter totalFilter = getFilterBuilder().allOf(firstPart, secondPart);
+    Filter totalFilter = filterBuilder.allOf(firstPart, secondPart);
 
     SourceResponse sourceResponse =
         provider.query(new QueryRequestImpl(new QueryImpl(totalFilter)));
@@ -347,7 +320,7 @@ public class SolrProviderXpath {
   }
 
   private SourceResponse queryXpathExists(String xpath) throws UnsupportedQueryException {
-    Filter filter = getFilterBuilder().xpath(xpath).exists();
+    Filter filter = filterBuilder.xpath(xpath).exists();
     return provider.query(new QueryRequestImpl(new QueryImpl(filter)));
   }
 
@@ -381,9 +354,9 @@ public class SolrProviderXpath {
       String xpath, String searchPhrase, boolean isCaseSensitive) throws UnsupportedQueryException {
     Filter filter;
     if (isCaseSensitive) {
-      filter = getFilterBuilder().xpath(xpath).is().like().caseSensitiveText(searchPhrase);
+      filter = filterBuilder.xpath(xpath).is().like().caseSensitiveText(searchPhrase);
     } else {
-      filter = getFilterBuilder().xpath(xpath).is().like().text(searchPhrase);
+      filter = filterBuilder.xpath(xpath).is().like().text(searchPhrase);
     }
     return provider.query(new QueryRequestImpl(new QueryImpl(filter)));
   }
@@ -419,11 +392,7 @@ public class SolrProviderXpath {
     prepareXPath(true);
 
     assertNotFilter(
-        getFilterBuilder()
-            .xpath("//comment")
-            .is()
-            .like()
-            .fuzzyText("Hurry, my lawn is going wild!"));
+        filterBuilder.xpath("//comment").is().like().fuzzyText("Hurry, my lawn is going wild!"));
   }
 
   private void assertNotFilter(Filter filter) throws UnsupportedQueryException {
@@ -435,13 +404,13 @@ public class SolrProviderXpath {
       throws IngestException, UnsupportedQueryException {
     ConfigurationStore.getInstance().setDisableTextPath(isXpathDisabled);
 
-    deleteAll(provider);
+    deleteAll();
 
     MetacardImpl flagstaffMetacard = new MockMetacard(Library.getFlagstaffRecord());
     MetacardImpl poMetacard = new MockMetacard(Library.getPurchaseOrderRecord());
     List<Metacard> list = Arrays.asList(flagstaffMetacard, poMetacard);
 
     // CREATE
-    create(list, provider);
+    create(list);
   }
 }

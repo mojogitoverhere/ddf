@@ -13,9 +13,6 @@
  */
 package ddf.catalog.source.solr.provider;
 
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.getFilterBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -35,8 +32,6 @@ import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
-import ddf.catalog.source.solr.SolrCatalogProvider;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.beans.XMLEncoder;
 import java.io.BufferedOutputStream;
 import java.util.Date;
@@ -45,10 +40,9 @@ import java.util.Set;
 import javax.swing.border.BevelBorder;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SolrProviderExtensibleMetacards {
+public class SolrProviderExtensibleMetacards extends SolrProviderTestBase {
 
   private Set<AttributeDescriptor> descriptionDescriptors = new HashSet<>();
   private static final String DESCRIPTION_FIELD = "description";
@@ -89,20 +83,13 @@ public class SolrProviderExtensibleMetacards {
   private String objectField = "payload";
   private BevelBorder objectFieldValue = new BevelBorder(BevelBorder.RAISED);
 
-  private static SolrCatalogProvider provider;
-
-  @BeforeClass
-  public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-  }
-
   @Before
   public void setup() throws IngestException, UnsupportedQueryException {
-    deleteAll(provider);
+    deleteAll();
 
-    create(createDescriptionMetacard(), provider);
-    create(createAuthor(), provider);
-    create(createTypesMetacard(), provider);
+    create(createDescriptionMetacard());
+    create(createAuthor());
+    create(createTypesMetacard());
   }
 
   private Metacard createAuthor() {
@@ -175,7 +162,7 @@ public class SolrProviderExtensibleMetacards {
 
   @Test
   public void queryById() throws UnsupportedQueryException {
-    Query query = new QueryImpl(getFilterBuilder().attribute("id").like().text("*"));
+    Query query = new QueryImpl(filterBuilder.attribute("id").like().text("*"));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -193,7 +180,7 @@ public class SolrProviderExtensibleMetacards {
 
   @Test
   public void queryTitleWithWildcard() throws UnsupportedQueryException {
-    Query query = new QueryImpl(getFilterBuilder().attribute(DESCRIPTION_FIELD).like().text("*"));
+    Query query = new QueryImpl(filterBuilder.attribute(DESCRIPTION_FIELD).like().text("*"));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -212,8 +199,7 @@ public class SolrProviderExtensibleMetacards {
   @Test
   public void queryTitleEquals() throws UnsupportedQueryException {
     Query query =
-        new QueryImpl(
-            getFilterBuilder().attribute(DESCRIPTION_FIELD).equalTo().text(DESCRIPTION_VALUE));
+        new QueryImpl(filterBuilder.attribute(DESCRIPTION_FIELD).equalTo().text(DESCRIPTION_VALUE));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -224,7 +210,7 @@ public class SolrProviderExtensibleMetacards {
 
   @Test
   public void queryForMissingTerm() throws UnsupportedQueryException {
-    Query query = new QueryImpl(getFilterBuilder().attribute(DESCRIPTION_FIELD).like().text("no"));
+    Query query = new QueryImpl(filterBuilder.attribute(DESCRIPTION_FIELD).like().text("no"));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -236,7 +222,7 @@ public class SolrProviderExtensibleMetacards {
   @Test
   public void queryAuthorType() throws UnsupportedQueryException {
     Query query =
-        new QueryImpl(getFilterBuilder().attribute(AUTHOR_FIELD).like().caseSensitiveText("doe"));
+        new QueryImpl(filterBuilder.attribute(AUTHOR_FIELD).like().caseSensitiveText("doe"));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -255,7 +241,7 @@ public class SolrProviderExtensibleMetacards {
 
   @Test
   public void queryMissingAuthorTerm() throws UnsupportedQueryException {
-    Query query = new QueryImpl(getFilterBuilder().attribute(AUTHOR_FIELD).like().text("author"));
+    Query query = new QueryImpl(filterBuilder.attribute(AUTHOR_FIELD).like().text("author"));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -268,7 +254,7 @@ public class SolrProviderExtensibleMetacards {
   public void queryDouble() throws UnsupportedQueryException {
     Query query =
         new QueryImpl(
-            getFilterBuilder().attribute(doubleField).greaterThan().number(doubleFieldValue - 1.0));
+            filterBuilder.attribute(doubleField).greaterThan().number(doubleFieldValue - 1.0));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -280,8 +266,7 @@ public class SolrProviderExtensibleMetacards {
   @Test
   public void queryInteger() throws UnsupportedQueryException {
     Query query =
-        new QueryImpl(
-            getFilterBuilder().attribute(intField).greaterThan().number(intFieldValue - 1));
+        new QueryImpl(filterBuilder.attribute(intField).greaterThan().number(intFieldValue - 1));
 
     QueryRequest request = new QueryRequestImpl(query);
 
@@ -327,10 +312,7 @@ public class SolrProviderExtensibleMetacards {
   public void queryShort() throws UnsupportedQueryException {
     Query query =
         new QueryImpl(
-            getFilterBuilder()
-                .attribute(shortField)
-                .greaterThanOrEqualTo()
-                .number(shortFieldValue));
+            filterBuilder.attribute(shortField).greaterThanOrEqualTo().number(shortFieldValue));
 
     QueryRequest request = new QueryRequestImpl(query);
 

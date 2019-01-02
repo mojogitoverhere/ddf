@@ -13,8 +13,6 @@
  */
 package ddf.catalog.source.solr.provider;
 
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertEquals;
@@ -22,17 +20,14 @@ import static org.junit.Assert.assertEquals;
 import ddf.catalog.data.ContentType;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.ContentTypeImpl;
-import ddf.catalog.source.solr.SolrCatalogProvider;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SolrProviderContentTypes {
+public class SolrProviderContentTypes extends SolrProviderTestBase {
 
   private static final String SAMPLE_CONTENT_TYPE_1 = "contentType1";
 
@@ -50,17 +45,10 @@ public class SolrProviderContentTypes {
 
   private static final String SAMPLE_CONTENT_VERSION_4 = "vers+4";
 
-  private static SolrCatalogProvider provider;
-
-  @BeforeClass
-  public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-  }
-
   @Test
   public void testGetContentTypesSimple() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard1 = new MockMetacard(Library.getFlagstaffRecord());
     MockMetacard metacard2 = new MockMetacard(Library.getShowLowRecord());
@@ -73,7 +61,7 @@ public class SolrProviderContentTypes {
 
     List<Metacard> list = Arrays.asList(metacard1, metacard2, metacard3);
 
-    create(list, provider);
+    create(list);
 
     Set<ContentType> contentTypes = provider.getContentTypes();
     assertEquals(3, contentTypes.size());
@@ -97,7 +85,7 @@ public class SolrProviderContentTypes {
   @Test
   public void testGetContentTypesComplicated() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> list = new ArrayList<>();
 
@@ -145,7 +133,7 @@ public class SolrProviderContentTypes {
     metacard2.setContentTypeVersion(SAMPLE_CONTENT_VERSION_4);
     list.add(metacard2);
 
-    create(list, provider);
+    create(list);
 
     Set<ContentType> contentTypes = provider.getContentTypes();
     assertEquals(7, contentTypes.size());
@@ -183,7 +171,7 @@ public class SolrProviderContentTypes {
   @Test
   public void testGetContentTypesOne() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard1 = new MockMetacard(Library.getFlagstaffRecord());
 
@@ -191,7 +179,7 @@ public class SolrProviderContentTypes {
 
     List<Metacard> list = Collections.singletonList(metacard1);
 
-    create(list, provider);
+    create(list);
 
     Set<ContentType> contentTypes = provider.getContentTypes();
     assertEquals(1, contentTypes.size());
@@ -206,7 +194,7 @@ public class SolrProviderContentTypes {
   @Test
   public void testGetContentTypesOneNoVersion() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard1 = new MockMetacard(Library.getFlagstaffRecord());
 
@@ -215,7 +203,7 @@ public class SolrProviderContentTypes {
 
     List<Metacard> list = Collections.singletonList(metacard1);
 
-    create(list, provider);
+    create(list);
 
     Set<ContentType> contentTypes = provider.getContentTypes();
     assertEquals(1, contentTypes.size());
@@ -227,7 +215,7 @@ public class SolrProviderContentTypes {
   @Test
   public void testGetContentTypesVersionsAndNullVersions() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard1 = new MockMetacard(Library.getFlagstaffRecord());
     MockMetacard metacard2 = new MockMetacard(Library.getShowLowRecord());
@@ -241,7 +229,7 @@ public class SolrProviderContentTypes {
 
     List<Metacard> list = Arrays.asList(metacard1, metacard2, metacard3);
 
-    create(list, provider);
+    create(list);
 
     Set<ContentType> contentTypes = provider.getContentTypes();
     assertEquals(3, contentTypes.size());
@@ -262,7 +250,7 @@ public class SolrProviderContentTypes {
   @Test
   public void testGetContentTypesNone() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     assertEquals(0, provider.getContentTypes().size());
   }

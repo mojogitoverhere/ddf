@@ -13,10 +13,6 @@
  */
 package ddf.catalog.source.solr.provider;
 
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.delete;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.getFilterBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -38,9 +34,7 @@ import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
-import ddf.catalog.source.solr.SolrCatalogProvider;
 import ddf.catalog.source.solr.SolrMetacardClientImpl;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,32 +44,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.codice.solr.factory.impl.ConfigurationStore;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.filter.Filter;
 
-public class SolrProviderDelete {
+public class SolrProviderDelete extends SolrProviderTestBase {
 
-  private static SolrCatalogProvider provider;
-
-  @BeforeClass
-  public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-  }
   /** Testing that if records are properly deleted. */
   @Test
   public void testDeleteOperation() throws IngestException, UnsupportedQueryException {
 
     // Single Deletion
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
-    CreateResponse createResponse = create(metacard, provider);
+    CreateResponse createResponse = create(metacard);
 
-    DeleteResponse deleteResponse =
-        delete(createResponse.getCreatedMetacards().get(0).getId(), provider);
+    DeleteResponse deleteResponse = delete(createResponse.getCreatedMetacards().get(0).getId());
 
     Metacard deletedMetacard = deleteResponse.getDeletedMetacards().get(0);
 
@@ -101,14 +87,14 @@ public class SolrProviderDelete {
 
   private void addAndDeleteMetacards(int metacardCount)
       throws IngestException, UnsupportedQueryException {
-    deleteAll(provider);
+    deleteAll();
 
     List<Metacard> metacards = new ArrayList<>();
     for (int i = 0; i < metacardCount; i++) {
       metacards.add(new MockMetacard(Library.getFlagstaffRecord()));
     }
 
-    CreateResponse createResponse = create(metacards, provider);
+    CreateResponse createResponse = create(metacards);
     assertThat(createResponse.getCreatedMetacards().size(), is(metacards.size()));
 
     List<String> ids = new ArrayList<>();
@@ -116,7 +102,7 @@ public class SolrProviderDelete {
       ids.add(mc.getId());
     }
 
-    DeleteResponse deleteResponse = delete(ids.toArray(new String[metacardCount]), provider);
+    DeleteResponse deleteResponse = delete(ids.toArray(new String[metacardCount]));
     List<Metacard> deletedMetacards = deleteResponse.getDeletedMetacards();
     assertThat(deletedMetacards.size(), is(metacards.size()));
 
@@ -129,7 +115,7 @@ public class SolrProviderDelete {
   @Test(expected = IngestException.class)
   public void testDeleteNull() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     provider.delete(null);
 
@@ -142,9 +128,9 @@ public class SolrProviderDelete {
 
     // Single Deletion
 
-    deleteAll(provider);
+    deleteAll();
 
-    DeleteResponse deleteResponse = delete("no_such_record", provider);
+    DeleteResponse deleteResponse = delete("no_such_record");
 
     assertThat(deleteResponse.getDeletedMetacards().size(), equalTo(0));
   }
@@ -153,11 +139,11 @@ public class SolrProviderDelete {
   @Test
   public void testDeleteAlternativeAttribute() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
-    CreateResponse createResponse = create(metacard, provider);
+    CreateResponse createResponse = create(metacard);
 
     DeleteResponse deleteResponse =
         provider.delete(
@@ -205,8 +191,7 @@ public class SolrProviderDelete {
 
     // verify it is really not in SOLR
 
-    Filter filter =
-        getFilterBuilder().attribute(Metacard.TITLE).like().text(MockMetacard.DEFAULT_TITLE);
+    Filter filter = filterBuilder.attribute(Metacard.TITLE).like().text(MockMetacard.DEFAULT_TITLE);
 
     QueryImpl query = new QueryImpl(filter);
 
@@ -256,16 +241,15 @@ public class SolrProviderDelete {
 
   @Test
   public void testDeletePendingNrtIndex() throws Exception {
-    deleteAll(provider);
+    deleteAll();
     ConfigurationStore.getInstance().setForceAutoCommit(false);
 
     try {
       MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
-      CreateResponse createResponse = create(metacard, provider);
+      CreateResponse createResponse = create(metacard);
 
-      DeleteResponse deleteResponse =
-          delete(createResponse.getCreatedMetacards().get(0).getId(), provider);
+      DeleteResponse deleteResponse = delete(createResponse.getCreatedMetacards().get(0).getId());
 
       Metacard deletedMetacard = deleteResponse.getDeletedMetacards().get(0);
 

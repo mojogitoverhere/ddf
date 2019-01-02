@@ -14,12 +14,6 @@
 package ddf.catalog.source.solr.provider;
 
 import static ddf.catalog.source.solr.SolrProviderTest.MASKED_ID;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.DEFAULT_TEST_ESCAPE;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.DEFAULT_TEST_SINGLE_WILDCARD;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.DEFAULT_TEST_WILDCARD;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.create;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.deleteAll;
-import static ddf.catalog.source.solr.provider.SolrProviderTestUtil.getFilterBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -43,7 +37,6 @@ import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.source.solr.SolrCatalogProvider;
-import ddf.catalog.source.solr.SolrProviderTest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,24 +49,16 @@ import java.util.UUID;
 import org.codice.solr.factory.impl.ConfigurationStore;
 import org.geotools.filter.FilterFactoryImpl;
 import org.joda.time.DateTime;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 
-public class SolrProviderCreate {
-
-  private static SolrCatalogProvider provider;
-
-  @BeforeClass
-  public static void setUp() {
-    provider = SolrProviderTest.getProvider();
-  }
+public class SolrProviderCreate extends SolrProviderTestBase {
 
   @Test
   public void testCreatedDates() throws Exception {
 
-    deleteAll(provider);
+    deleteAll();
 
     /* ALL NULL */
     MockMetacard mockMetacard = new MockMetacard(Library.getFlagstaffRecord());
@@ -83,7 +68,7 @@ public class SolrProviderCreate {
     mockMetacard.setModifiedDate(null);
     List<Metacard> list = Collections.singletonList(mockMetacard);
 
-    CreateResponse createResponse = create(list, provider);
+    CreateResponse createResponse = create(list);
 
     assertEquals(1, createResponse.getCreatedMetacards().size());
 
@@ -119,7 +104,7 @@ public class SolrProviderCreate {
   @Test
   public void testCreateMultivaluedAttribute() throws UnsupportedQueryException, IngestException {
 
-    deleteAll(provider);
+    deleteAll();
 
     FilterFactory filterFactory = new FilterFactoryImpl();
 
@@ -129,7 +114,7 @@ public class SolrProviderCreate {
     a.add("sample-validator2");
     AttributeImpl attribute = new AttributeImpl(Validation.VALIDATION_WARNINGS, a);
     metacard.setAttribute(attribute);
-    create(metacard, provider);
+    create(metacard);
 
     Filter filter =
         filterFactory.like(
@@ -161,7 +146,7 @@ public class SolrProviderCreate {
   @Test(expected = IngestException.class)
   public void testCreateNull() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     provider.create(null);
 
@@ -171,7 +156,7 @@ public class SolrProviderCreate {
   @Test
   public void testCreateNullList() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     CreateResponse response =
         provider.create(
@@ -218,11 +203,11 @@ public class SolrProviderCreate {
   @Test
   public void testCreateOperation() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
-    create(metacard, provider);
+    create(metacard);
 
     FilterFactory filterFactory = new FilterFactoryImpl();
 
@@ -301,7 +286,7 @@ public class SolrProviderCreate {
   public void testCreateOperationWithSourceIdNoId()
       throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
@@ -313,13 +298,13 @@ public class SolrProviderCreate {
     metacard.setEffectiveDate(oneDayAgo);
     metacard.setModifiedDate(oneDayAgo);
 
-    create(metacard, provider);
+    create(metacard);
   }
 
   @Test
   public void testCreateOperationWithSourceId() throws IngestException, UnsupportedQueryException {
 
-    deleteAll(provider);
+    deleteAll();
 
     MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
@@ -333,7 +318,7 @@ public class SolrProviderCreate {
     metacard.setEffectiveDate(oneDayAgo);
     metacard.setModifiedDate(oneDayAgo);
 
-    CreateResponse createResponse = create(metacard, provider);
+    CreateResponse createResponse = create(metacard);
 
     Metacard createdMetacard = createResponse.getCreatedMetacards().get(0);
 
@@ -399,20 +384,20 @@ public class SolrProviderCreate {
 
   @Test
   public void testCreatePendingNrtIndex() throws Exception {
-    deleteAll(provider);
+    deleteAll();
     ConfigurationStore.getInstance().setForceAutoCommit(false);
 
     try {
       MockMetacard metacard = new MockMetacard(Library.getFlagstaffRecord());
 
-      CreateResponse response = create(metacard, provider);
+      CreateResponse response = create(metacard);
 
       String createdId = response.getCreatedMetacards().get(0).getId();
 
       Filter titleFilter =
-          getFilterBuilder().attribute(Metacard.TITLE).like().text(MockMetacard.DEFAULT_TITLE);
+          filterBuilder.attribute(Metacard.TITLE).like().text(MockMetacard.DEFAULT_TITLE);
 
-      Filter idFilter = getFilterBuilder().attribute(Metacard.ID).equalTo().text(createdId);
+      Filter idFilter = filterBuilder.attribute(Metacard.ID).equalTo().text(createdId);
 
       SourceResponse titleResponse =
           provider.query(new QueryRequestImpl(new QueryImpl(titleFilter)));

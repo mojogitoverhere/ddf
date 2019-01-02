@@ -77,6 +77,8 @@ public class SolrProviderTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    LOGGER.info("RUNNING one-time setup.");
+
     ConfigurationStore store = ConfigurationStore.getInstance();
     store.setForceAutoCommit(true);
     String solrDataPath = Paths.get("target/surefire/solr").toString();

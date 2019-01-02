@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -152,10 +151,6 @@ public class SolrFilterDelegate extends FilterDelegate<SolrQuery> {
   private boolean isSortedByDistance = false;
 
   private String sortedDistancePoint;
-
-  private boolean isIdQuery = false;
-
-  private final Set<String> ids = new HashSet<>();
 
   public SolrFilterDelegate(DynamicSchemaResolver resolver) {
     this.resolver = resolver;
@@ -332,11 +327,6 @@ public class SolrFilterDelegate extends FilterDelegate<SolrQuery> {
 
     if (literal.isEmpty()) {
       return new SolrQuery("-" + mappedPropertyName + ":[\"\" TO *]");
-    }
-
-    if (Metacard.ID.equals(propertyName)) {
-      isIdQuery = true;
-      ids.add(literal);
     }
 
     String searchPhrase = QUOTE + escapeSpecialCharacters(literal) + QUOTE;
@@ -1080,13 +1070,5 @@ public class SolrFilterDelegate extends FilterDelegate<SolrQuery> {
 
   public String getSortedDistancePoint() {
     return sortedDistancePoint;
-  }
-
-  public boolean isIdQuery() {
-    return isIdQuery;
-  }
-
-  public Set<String> getIds() {
-    return Collections.unmodifiableSet(ids);
   }
 }
