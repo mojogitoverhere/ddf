@@ -666,7 +666,7 @@ public class DynamicSchemaResolver {
     try {
       cachedMetacardType = METACARD_TYPE_MAPPER.readValue(bytes, MetacardType.class);
     } catch (IOException e) {
-      LOGGER.info(
+      LOGGER.debug(
           "IO exception loading cached metacard type as JSON, attempting Java deserialization", e);
 
       cachedMetacardType = metacardTypeFromJavaBytes(bytes);
