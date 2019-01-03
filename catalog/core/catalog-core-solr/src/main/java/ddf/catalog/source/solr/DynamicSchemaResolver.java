@@ -652,6 +652,7 @@ public class DynamicSchemaResolver {
 
   @SuppressWarnings(
       "squid:S2093" /* try-with-resource will throw IOException with InputStream and we do not care to get that exception */)
+  /** getMetacardType supports both Java Serialization (Solr 6) and JSON Serialization (Solr 7) */
   public MetacardType getMetacardType(SolrDocument doc) throws MetacardCreationException {
     String mTypeFieldName = doc.getFirstValue(SchemaFields.METACARD_TYPE_FIELD_NAME).toString();
 
@@ -665,8 +666,10 @@ public class DynamicSchemaResolver {
     try {
       cachedMetacardType = METACARD_TYPE_MAPPER.readValue(bytes, MetacardType.class);
     } catch (IOException e) {
-      LOGGER.info("IO exception loading cached metacard type", e);
-      throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE);
+      LOGGER.info(
+          "IO exception loading cached metacard type as JSON, attempting Java deserialization", e);
+
+      cachedMetacardType = metacardTypeFromJavaBytes(bytes);
     }
 
     metacardTypeNameToSerialCache.put(mTypeFieldName, bytes);
@@ -674,6 +677,29 @@ public class DynamicSchemaResolver {
     addToFieldsCache(cachedMetacardType.getAttributeDescriptors());
 
     return cachedMetacardType;
+  }
+
+  /**
+   * @return The {@link MetacardType} of a given set of bytes.
+   * @throws MetacardCreationException If an IO exception occurs or a class not found exception.
+   */
+  static MetacardType metacardTypeFromJavaBytes(byte[] bytes) throws MetacardCreationException {
+    ByteArrayInputStream bytearrayInputStream = null;
+    ObjectInputStream objectInputStream = null;
+    try {
+      bytearrayInputStream = new ByteArrayInputStream(bytes);
+      objectInputStream = new ObjectInputStream(bytearrayInputStream);
+      return (MetacardType) objectInputStream.readObject();
+    } catch (IOException e) {
+      LOGGER.info("IO exception loading cached metacard type as Java", e);
+      throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE);
+    } catch (ClassNotFoundException e) {
+      LOGGER.info("Class not found exception when loading metacard type", e);
+      throw new MetacardCreationException(COULD_NOT_READ_METACARD_TYPE_MESSAGE);
+    } finally {
+      IOUtils.closeQuietly(bytearrayInputStream);
+      IOUtils.closeQuietly(objectInputStream);
+    }
   }
 
   public String getCaseSensitiveField(String mappedPropertyName) {
