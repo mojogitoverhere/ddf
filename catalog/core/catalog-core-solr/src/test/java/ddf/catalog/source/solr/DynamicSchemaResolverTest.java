@@ -35,9 +35,12 @@ import ddf.catalog.data.MetacardType;
 import ddf.catalog.data.impl.AttributeDescriptorImpl;
 import ddf.catalog.data.impl.AttributeImpl;
 import ddf.catalog.data.impl.BasicTypes;
+import ddf.catalog.data.impl.MetacardTypeImpl;
 import ddf.catalog.data.impl.types.CoreAttributes;
 import ddf.catalog.source.solr.json.MetacardTypeMapperFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.BufferOverflowException;
 import java.util.ArrayList;
@@ -264,6 +267,21 @@ public class DynamicSchemaResolverTest {
         resolver.fieldsCache.size(), equalTo(INITIAL_FIELDS_CACHE_COUNT + additionalFields.size()));
     assertThat(resolver.fieldsCache, hasItem(someExtraField));
     assertThat(resolver.fieldsCache, hasItem(anotherExtraField));
+  }
+
+  @Test
+  public void testGetMetacardTypeFromJsonSerialization()
+      throws IOException, MetacardCreationException {
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream out = new ObjectOutputStream(baos);
+    MetacardType metacardType = new MetacardTypeImpl("myMetacardType", Collections.emptyList());
+    out.writeObject(metacardType);
+
+    byte[] bytes = baos.toByteArray();
+
+    final MetacardType actualMetacardType = DynamicSchemaResolver.metacardTypeFromJavaBytes(bytes);
+    assertThat(actualMetacardType.getName(), is("myMetacardType"));
   }
 
   private MetacardType deserializeMetacardType(byte[] serializedMetacardType) throws IOException {
