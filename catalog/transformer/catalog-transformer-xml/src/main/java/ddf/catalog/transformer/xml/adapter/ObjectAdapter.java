@@ -17,19 +17,13 @@ import ddf.catalog.data.Attribute;
 import ddf.catalog.data.impl.AttributeImpl;
 import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transformer.xml.binding.ObjectElement;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ObjectAdapter extends XmlAdapter<ObjectElement, Attribute> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ObjectAdapter.class);
 
   public static ObjectElement marshalFrom(Attribute attribute) throws CatalogTransformerException {
 
@@ -48,7 +42,7 @@ public class ObjectAdapter extends XmlAdapter<ObjectElement, Attribute> {
               "Could not transform Metacard to XML.  Could not serialize Attribute Object value.",
               e);
         }
-        element.getValue().add(baos.toByteArray());
+        ((ObjectElement) element).getValue().add(baos.toByteArray());
       }
     }
     return element;
@@ -56,21 +50,11 @@ public class ObjectAdapter extends XmlAdapter<ObjectElement, Attribute> {
 
   public static Attribute unmarshalFrom(ObjectElement element) {
     AttributeImpl attribute = null;
-    String elementName = element.getName();
-
-    for (byte[] value : element.getValue()) {
-      Serializable unmarshalledValue = value;
-      try (ObjectInputStream objectInputStream =
-          new ObjectInputStream(new ByteArrayInputStream(value))) {
-        unmarshalledValue = (Serializable) objectInputStream.readObject();
-      } catch (IOException | ClassNotFoundException | RuntimeException e) {
-        LOGGER.debug("Could not unmarshal Metacard object for attribute: {}", elementName, e);
-      }
-
+    for (Serializable value : element.getValue()) {
       if (attribute == null) {
-        attribute = new AttributeImpl(elementName, unmarshalledValue);
+        attribute = new AttributeImpl(element.getName(), value);
       } else {
-        attribute.addValue(unmarshalledValue);
+        attribute.addValue(value);
       }
     }
     return attribute;
