@@ -119,8 +119,10 @@ module.exports = Backbone.AssociatedModel.extend({
     polygon: undefined,
     multipolygon: undefined,
     polygonBufferWidth: 0,
+    polyType: undefined,
     polygonBufferUnits: 'meters',
     hasKeyword: false,
+    keywordValue: undefined,
     utmUpsUpperLeftEasting: undefined,
     utmUpsUpperLeftNorthing: undefined,
     utmUpsUpperLeftHemisphere: 'Northern',
@@ -556,7 +558,7 @@ module.exports = Backbone.AssociatedModel.extend({
       result = converter.USNGtoLL(usng, true)
     } catch (err) {}
 
-    if (!isNaN(result.lat) && !isNaN(result.lon)) {
+    if (isNaN(result.lat) || isNaN(result.lon)) {
       this.set(result)
 
       var utmUps = this.LLtoUtmUps(result.lat, result.lon)
