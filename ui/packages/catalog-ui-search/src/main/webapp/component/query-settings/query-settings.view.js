@@ -146,9 +146,6 @@ module.exports = plugin(
         value: sources ? sources : [],
         federation: this.model.get('federation'),
       })
-      if (this.getExtensions() !== undefined) {
-        return
-      }
       this.settingsSrc.show(
         new QuerySrcView({
           model: this._srcDropdownModel,
