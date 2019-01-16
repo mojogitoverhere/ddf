@@ -272,7 +272,7 @@ module.exports = function OpenlayersMap(
     },
     getBoundingBox: function() {
       const extent = map.getView().calculateExtent(map.getSize())
-      var longitudeEast =
+      let longitudeEast =
         extent[2] -
         Math.sign(extent[2]) *
           (360 * Math.floor((Math.abs(extent[2]) + 180) / 360))
