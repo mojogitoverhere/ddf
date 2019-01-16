@@ -11,7 +11,7 @@ class Keyword extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      value: props.value !== undefined ? props.value : '',
+      value: typeof props.value === "string" ? props.value : '',
       loading: false,
       error: null,
       polyType: null,
@@ -55,7 +55,7 @@ class Keyword extends React.Component {
           this.props.setState({
             hasKeyword: true,
             locationType: 'latlon',
-            multipolygon: polygon,
+            polygon: polygon,
             polyType: 'multipolygon',
             keywordValue: this.state.value,
           })
@@ -83,7 +83,6 @@ class Keyword extends React.Component {
   render() {
     const suggester = this.props.suggester || (input => this.suggester(input))
     const {
-      multipolygon,
       polygon,
       cursor,
       polygonBufferWidth,
@@ -115,10 +114,10 @@ class Keyword extends React.Component {
           />
         ) : null}
         {!loading &&
-        multipolygon !== undefined &&
+        polygon !== undefined &&
         polyType === 'multipolygon' ? (
           <MultiPolygon
-            multipolygon={multipolygon}
+            polygon={polygon}
             cursor={cursor}
             polygonBufferWidth={polygonBufferWidth}
             polygonBufferUnits={polygonBufferUnits}
