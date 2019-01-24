@@ -849,6 +849,7 @@ public class MetacardApplication implements SparkApplication {
     return Stream.of(offlineArguments.get("ids"))
         .filter(List.class::isInstance)
         .map(List.class::cast)
+        .flatMap(Collection::stream)
         .filter(String.class::isInstance)
         .map(String.class::cast)
         .collect(Collectors.toList());
