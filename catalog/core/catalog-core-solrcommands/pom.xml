@@ -104,8 +104,8 @@
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -181,7 +181,8 @@
                             httpcore,
                             httpmime,
                             commons-io,
-                            commons-lang,
+                            commons-lang3,
+                            commons-collections4,
                             lucene-core,
                             joda-time,
                             platform-util
