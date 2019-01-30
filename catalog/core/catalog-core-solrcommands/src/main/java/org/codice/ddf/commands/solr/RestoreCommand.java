@@ -122,8 +122,6 @@ public class RestoreCommand extends SolrCommands {
       }
 
       URI restoreUri = uriBuilder.build();
-      // TODO TROY
-      LOGGER.error("Sending request to {}", restoreUri);
 
       HttpWrapper httpClient = getHttpClient();
 
