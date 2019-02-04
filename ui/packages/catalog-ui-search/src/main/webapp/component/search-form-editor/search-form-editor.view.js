@@ -107,7 +107,11 @@ module.exports = Marionette.LayoutView.extend({
         collection = SearchFormsSharingCollection.getCollection()
         this.model = collection.get(id)
       }
-      this.model.set(this.model.transformToQueryStructure())
+      if (this.model) {
+        this.model.set(this.model.transformToQueryStructure())
+      } else {
+        return
+      }
     }
     this.map.show(
       new MapView({
