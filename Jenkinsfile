@@ -26,6 +26,8 @@ pipeline {
         DISABLE_DOWNLOAD_PROGRESS_OPTS = '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn '
         LINUX_MVN_RANDOM = '-Djava.security.egd=file:/dev/./urandom'
         COVERAGE_EXCLUSIONS = '**/test/**,**/itests/**,**/*Test*,**/sdk/**,**/*.js,**/node_modules/**,**/jaxb/,**/wsdl/,**/nces/sws/**,**/*.adoc,**/*.txt,**/*.xml'
+        GITHUB_USERNAME = 'connexta'
+        GITHUB_REPONAME = 'ddf-yorktown'
     }
     stages {
         stage('Setup') {
@@ -56,9 +58,6 @@ pipeline {
                         postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
                     }
                 }
-                //Replace URLs in yarn.lock files with respective references cached in nexus3. See https://trello.com/c/FzHhuDoJ
-                //Note: this is only affecting the primary linux-large agent. Not the linux-small agent that's initialized in the NSP stage in parallel with OWASP
-                sh "${WORKSPACE}/replace-yarn-lock-urls.sh"
             }
         }
         stage('Full Build') {
@@ -97,72 +96,86 @@ pipeline {
                 }
             }
         }
-        stage('Security Analysis') {
-            parallel {
-                stage('owasp') {
-                    steps{
-                        withMaven(maven: 'M35', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'gsr_maven_global_settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
-                            sh 'mvn package -e -q -Powasp -DskipTests=true -DskipStatic=true $DISABLE_DOWNLOAD_PROGRESS_OPTS'
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
-                                    def jsonBlob = getGithubStatusJsonBlob("success", "${BUILD_URL}display/redirect", "OWASP Succeeded!", "CX Jenkins/OWASP")
-                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
-                                }
-                            }
-                        }
-                        failure {
-                            //TODO: This zip approach still isn't quite working. Need to figure out why since whenever it's run and fails locally, the files are there
-                            //Might be related to PRs using gib to build PRs, so switching to a non incremental OWASP scan might help
-                            catchError{ zip zipFile: 'OWASP_Reports.zip', archive: true, glob: "target/OWASP_Reports/*" }
-                            script {
-                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
-                                    def jsonBlob = getGithubStatusJsonBlob("failure", "${BUILD_URL}display/redirect", "OWASP Failed!", "CX Jenkins/OWASP")
-                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
-                                }
-                            }
-                        }
-                    }
+//        stage('Security Analysis') {
+//            parallel {
+//                stage('owasp') {
+//                    steps{
+//                        withMaven(maven: 'M35', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'gsr_maven_global_settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
+//                            sh 'mvn package -e -q -Powasp -DskipTests=true -DskipStatic=true $DISABLE_DOWNLOAD_PROGRESS_OPTS'
+//                        }
+//                    }
+//                    post {
+//                        success {
+//                            script {
+//                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
+//                                    def jsonBlob = getGithubStatusJsonBlob("success", "${BUILD_URL}display/redirect", "OWASP Succeeded!", "CX Jenkins/OWASP")
+//                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
+//                                }
+//                            }
+//                        }
+//                        failure {
+//                            //TODO: This zip approach still isn't quite working. Need to figure out why since whenever it's run and fails locally, the files are there
+//                            //Might be related to PRs using gib to build PRs, so switching to a non incremental OWASP scan might help
+//                            catchError{ zip zipFile: 'OWASP_Reports.zip', archive: true, glob: "target/OWASP_Reports/*" }
+//                            script {
+//                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
+//                                    def jsonBlob = getGithubStatusJsonBlob("failure", "${BUILD_URL}display/redirect", "OWASP Failed!", "CX Jenkins/OWASP")
+//                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//                stage('nodeJsSecurity') {
+//                    agent { label 'linux-small' }
+//                    steps {
+//                        script {
+//                            def packageFiles = findFiles(glob: '**/package.json')
+//                            for (int i = 0; i < packageFiles.size(); i++) {
+//                                dir(packageFiles[i].path.split('package.json')[0]) {
+//                                    def packageFile = readJSON file: 'package.json'
+//                                    if (packageFile.scripts =~ /.*webpack.*/ || packageFile.containsKey("browserify")) {
+//                                        nodejs(configId: 'npmrc-default', nodeJSInstallationName: 'nodejs') {
+//                                            echo "Scanning ${packageFiles[i].path}"
+//                                            sh 'nsp check'
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    post {
+//                        success {
+//                            script {
+//                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
+//                                    def jsonBlob = getGithubStatusJsonBlob("success", "${BUILD_URL}display/redirect", "NSP Succeeded!", "CX Jenkins/NSP")
+//                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
+//                                }
+//                            }
+//                        }
+//                        failure {
+//                            script {
+//                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
+//                                    def jsonBlob = getGithubStatusJsonBlob("failure", "${BUILD_URL}display/redirect", "NSP Failed!", "CX Jenkins/NSP")
+//                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        stage('Deploy') {
+            when {
+                allOf {
+                    expression { env.CHANGE_ID == null }
+                    expression { env.BRANCH_NAME ==~ /\d*\.x/ }
+                    environment name: 'JENKINS_ENV', value: 'prod'
                 }
-                stage('nodeJsSecurity') {
-                    agent { label 'linux-small' }
-                    steps {
-                        script {
-                            def packageFiles = findFiles(glob: '**/package.json')
-                            for (int i = 0; i < packageFiles.size(); i++) {
-                                dir(packageFiles[i].path.split('package.json')[0]) {
-                                    def packageFile = readJSON file: 'package.json'
-                                    if (packageFile.scripts =~ /.*webpack.*/ || packageFile.containsKey("browserify")) {
-                                        nodejs(configId: 'npmrc-default', nodeJSInstallationName: 'nodejs') {
-                                            echo "Scanning ${packageFiles[i].path}"
-                                            sh 'nsp check'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    post {
-                        success {
-                            script {
-                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
-                                    def jsonBlob = getGithubStatusJsonBlob("success", "${BUILD_URL}display/redirect", "NSP Succeeded!", "CX Jenkins/NSP")
-                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
-                                }
-                            }
-                        }
-                        failure {
-                            script {
-                                withCredentials([usernameColonPassword(credentialsId: 'cxbot', variable: 'GITHUB_TOKEN')]) {
-                                    def jsonBlob = getGithubStatusJsonBlob("failure", "${BUILD_URL}display/redirect", "NSP Failed!", "CX Jenkins/NSP")
-                                    postStatusToHash("${jsonBlob}", "${GITHUB_USERNAME}", "${GITHUB_REPONAME}", "${env.PR_COMMIT}", "${GITHUB_TOKEN}")
-                                }
-                            }
-                        }
-                    }
+            }
+            steps{
+                withMaven(maven: 'M3', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'gsr-di2e-mirror-settings', mavenSettingsConfig: 'gsr-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
+                    sh 'mvn deploy -B -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 -nsu $DISABLE_DOWNLOAD_PROGRESS_OPTS'
                 }
             }
         }
