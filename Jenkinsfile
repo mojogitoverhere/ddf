@@ -64,7 +64,7 @@ pipeline {
             //Uncomment this if enabling incremental builds
             //when { expression { env.CHANGE_ID == null } }
             steps {
-                timeout(time: 3, unit: 'HOURS') {
+                timeout(time: 4, unit: 'HOURS') {
                     withMaven(maven: 'M35', globalMavenSettingsConfig: 'gsr_maven_global_settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
                         sh '''
                             unset JAVA_TOOL_OPTIONS
