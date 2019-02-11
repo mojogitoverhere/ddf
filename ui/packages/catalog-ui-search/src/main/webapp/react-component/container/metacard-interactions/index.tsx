@@ -187,11 +187,13 @@ const handleHide = (context: Props) => {
 }
 
 const handleExpand = (context: Props) => {
-  const id = context.model
+  let id = context.model
     .first()
     .get('metacard')
     .get('properties')
     .get('id')
+
+  id = encodeURIComponent(id)
 
   wreqr.vent.trigger('router:navigate', {
     fragment: 'metacards/' + id,
