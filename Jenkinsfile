@@ -175,7 +175,7 @@ pipeline {
             }
             steps{
                 withMaven(maven: 'M3', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'gsr-di2e-mirror-settings', mavenSettingsConfig: 'gsr-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
-                    sh 'mvn deploy -B -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 -nsu $DISABLE_DOWNLOAD_PROGRESS_OPTS -pl "!distribution/docker"'
+                    sh 'mvn deploy -B -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 -nsu $DISABLE_DOWNLOAD_PROGRESS_OPTS -pl \\!distribution/docker'
                 }
             }
         }
