@@ -59,8 +59,8 @@ class MapSettings extends React.Component<{}, State> {
 
     return (
       <Dropdown content={mapSettings}>
-        <Span className="interaction-text">Settings</Span>
         <Span className="interaction-icon fa fa-cog" />
+        <Span className="interaction-text">Settings</Span>
       </Dropdown>
     )
   }

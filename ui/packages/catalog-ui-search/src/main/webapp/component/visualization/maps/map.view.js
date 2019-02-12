@@ -271,7 +271,7 @@ module.exports = Marionette.LayoutView.extend({
 
     userPreferences.set('mapHome', boundingBox)
   },
-  addPanZoom: function() {
+  addPanZoom: function(toolbarActions) {
     const self = this
     const PanZoomView = Marionette.ItemView.extend({
       template() {
@@ -280,46 +280,39 @@ module.exports = Marionette.LayoutView.extend({
         )
       },
     })
-    this.$el
-      .find('.cesium-viewer-toolbar')
+    toolbarActions
       .append('<div class="toolbar-panzoom is-button"></div>')
     this.addRegion('toolbarPanZoom', '.toolbar-panzoom')
     this.toolbarPanZoom.show(new PanZoomView())
   },
-  addHome: function() {
+  addHome: function(toolbarActions) {
     // TODO combine home and save buttons into a "split button dropdown" once this is refactored to React: DDF-4327
-    this.$el
-      .find('.cesium-viewer-toolbar')
-      .append(
+    toolbarActions.append(
         '<div class="is-button zoomToHome">' +
-          '<span>Home </span>' +
-          '<span class="fa fa-home"></span></div>' +
+          '<span class="icon fa fa-home"></span>' +
+          '<span>Home</span></div>' +
           '<div class="is-button saveAsHome">' +
-          '<span title="Save Current View as Home Location">Set Home </span>' +
-          '<span class="cf cf-map-marker"/>' +
+          '<span class="icon cf cf-map-marker"/>' +
+          '<span title="Save Current View as Home Location">Set Home</span>' +
           '</div>'
       )
   },
-  addClustering: function() {
-    this.$el
-      .find('.cesium-viewer-toolbar')
-      .append(
-        '<div class="is-button cluster cluster-button">' +
-          '<span> Cluster </span>' +
+  addClustering: function(toolbarActions) {
+    toolbarActions.append(
+      '<div class="is-button cluster cluster-button">' +
+          '<span class="icon fa fa-cubes"/>' +
+          '<span>Cluster</span>' +
           '<span class="fa fa-toggle-on is-clustering"/>' +
-          '<span class="fa fa-cubes"/>' +
           '</div>'
       )
   },
-  addSettings: function() {
+  addSettings: function(toolbarActions) {
     const MapSettingsView = Marionette.ItemView.extend({
       template() {
         return <MapSettings />
       },
     })
-    this.$el
-      .find('.cesium-viewer-toolbar')
-      .append('<div class="toolbar-settings is-button"></div>')
+    toolbarActions.append('<div class="toolbar-settings is-button"></div>')
     this.addRegion('toolbarSettings', '.toolbar-settings')
     this.toolbarSettings.show(new MapSettingsView())
   },
@@ -396,18 +389,23 @@ module.exports = Marionette.LayoutView.extend({
     )
     this.setupCollections()
     this.setupListeners()
-    this.addPanZoom()
-    this.addHome()
-    this.addClustering()
-    this.addLayers()
-    this.addSettings()
+    this.addToolbarActions()
     this.endLoading()
     this.zoomToHome()
   },
-  addLayers: function() {
-    this.$el
-      .find('.cesium-viewer-toolbar')
-      .append('<div class="toolbar-layers is-button"></div>')
+  addToolbarActions: function() {
+    const toolbar = this.$el.find('.cesium-viewer-toolbar')
+    this.addPanZoom(toolbar)
+
+    toolbar.append('<div class="toolbar-actions"></div>')
+    const toolbarActions = this.$el.find('.toolbar-actions')
+    this.addHome(toolbarActions)
+    this.addClustering(toolbarActions)
+    this.addLayers(toolbarActions)
+    this.addSettings(toolbarActions)
+  },
+  addLayers: function(toolbarActions) {
+    toolbarActions.append('<div class="toolbar-layers is-button"></div>')
     this.addRegion('toolbarLayers', '.toolbar-layers')
     this.toolbarLayers.show(
       new LayersDropdown({
