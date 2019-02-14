@@ -81,11 +81,11 @@ public class RestoreCommandTest extends SolrCommandTest {
   public static void beforeClass() throws Exception {
     setDdfHome();
     setDdfEtc();
-    createDefaultMiniSolrCloudCluster();
   }
 
   @Before
   public void before() throws Exception {
+    createDefaultMiniSolrCloudCluster();
     cipherSuites = System.getProperty("https.cipherSuites");
     System.setProperty(
         "https.cipherSuites",
