@@ -82,7 +82,6 @@ export class Sharing extends React.Component<Props, State> {
   }
 
   save = () => {
-    debugger
     const groups = this.state.items.filter(e => e.category === Category.Group)
     const users = this.state.items.filter(
       e => e.value !== '' && e.category === Category.User
