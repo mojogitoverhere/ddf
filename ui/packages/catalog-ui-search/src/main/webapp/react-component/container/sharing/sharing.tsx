@@ -18,13 +18,20 @@ const user = require('component/singletons/user-instance')
 const common = require('js/Common')
 const announcement = require('component/announcement')
 
+type Attribute = {
+  attribute: string
+  values: string[]
+}
+
 type Props = {
   id: number
   lightbox: any
+  onUpdate?: (attributes: Attribute[]) => void
 }
 
 type State = {
   items: Item[]
+  previousWorkspace: any
 }
 
 export enum Category {
@@ -46,6 +53,7 @@ export class Sharing extends React.Component<Props, State> {
 
     this.state = {
       items: [],
+      previousWorkspace: undefined,
     }
   }
   componentDidMount = () => {
@@ -71,7 +79,10 @@ export class Sharing extends React.Component<Props, State> {
             visible: user.getRoles().indexOf(e.value) > -1, // only display the groups the current user has
           } as Item
         })
-        this.setState({ items: groups.concat(individuals) })
+        this.setState({
+          items: groups.concat(individuals),
+          previousWorkspace: metacard,
+        })
         this.add()
       })
   }
@@ -104,7 +115,46 @@ export class Sharing extends React.Component<Props, State> {
         values: users.filter(e => e.access === Access.Share).map(e => e.value),
       },
     ]
+    this.attemptSave(attributes)
+  }
 
+  attemptSave = (attributes: any) => {
+    fetch('/search/catalog/internal/metacard/' + this.props.id)
+      .then(res => res.json())
+      .then(data => {
+        // Only allow a user to save if the previous workspace state is the same as the latest workspace state
+        // so that changes made by other users are not clobbered.
+        // NOTE: This is a temporary workaround.
+        if (
+          JSON.stringify(data.metacards[0]) ===
+          JSON.stringify(this.state.previousWorkspace)
+        ) {
+          this.doSave(attributes)
+        } else {
+          announcement.announce(
+            {
+              title: 'The workspace settings could not be updated',
+              message:
+                'The workspace has been modified by another user. Please refresh the page and reattempt your changes.',
+              type: 'error',
+            },
+            1500
+          )
+        }
+      })
+      .catch(function() {
+        announcement.announce(
+          {
+            title: 'Error',
+            message: 'Save failed',
+            type: 'error',
+          },
+          1500
+        )
+      })
+  }
+
+  doSave = (attributes: any) => {
     fetch(`/search/catalog/internal/metacards`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -119,10 +169,13 @@ export class Sharing extends React.Component<Props, State> {
         if (res.status !== 200) {
           throw new Error()
         }
-
         return res.json()
       })
       .then(() => {
+        if (this.props.onUpdate) {
+          this.props.onUpdate(attributes)
+        }
+
         this.props.lightbox.close()
         announcement.announce(
           {
