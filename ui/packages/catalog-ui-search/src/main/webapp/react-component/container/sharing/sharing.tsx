@@ -190,7 +190,6 @@ export class Sharing extends React.Component<Props, State> {
           fetch('/search/catalog/internal/metacard/' + this.props.id)
             .then(res => res.json())
             .then(data => {
-              console.log(data)
               this.setState({
                 previousWorkspace: data.metacards[0],
               })
