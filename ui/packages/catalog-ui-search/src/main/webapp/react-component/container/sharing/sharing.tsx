@@ -133,9 +133,9 @@ export class Sharing extends React.Component<Props, State> {
         } else {
           announcement.announce(
             {
-              title: 'The workspace settings could not be updated',
+              title: 'The settings could not be updated',
               message:
-                'The workspace has been modified by another user. Please refresh the page and reattempt your changes.',
+                'This item has been modified by another user. Please refresh the page and reattempt your changes.',
               type: 'error',
             },
             1500
@@ -185,6 +185,16 @@ export class Sharing extends React.Component<Props, State> {
           },
           1500
         )
+
+        setTimeout(() => {
+          fetch('/search/catalog/internal/metacard/' + this.props.id)
+            .then(res => res.json())
+            .then(data => {
+              this.setState({
+                previousWorkspace: data.metacards[0],
+              })
+            })
+        }, 1500)
       })
       .catch(function() {
         announcement.announce(
