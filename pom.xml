@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ddf</groupId>
     <artifactId>ddf</artifactId>
-    <version>2.14.1155-SNAPSHOT</version>
+    <version>2.14.0.1155</version>
     <packaging>pom</packaging>
     <name>DDF Reactor</name>
     <description>Distributed Data Framework (DDF) Parent</description>
@@ -318,7 +318,7 @@
         <url>https://github.com/codice/ddf</url>
         <connection>scm:git:https://github.com/codice/ddf.git</connection>
         <developerConnection>scm:git:https://github.com/codice/ddf.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>11.5.5</tag>
     </scm>
     <dependencyManagement>
         <dependencies>
