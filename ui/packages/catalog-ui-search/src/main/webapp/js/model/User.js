@@ -224,7 +224,7 @@ User.Preferences = Backbone.AssociatedModel.extend({
         withoutSet: true,
         customErrorHandling: true,
         success: function() {
-          this.lastSaved = currentPrefs
+          this.lastSaved = Common.duplicate(currentPrefs)
         }.bind(this),
         error: function() {
           announcement.announce({
