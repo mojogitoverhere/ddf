@@ -46,6 +46,7 @@ export type Item = {
   visible: boolean
   category: Category
   access: Access
+  isNew: boolean
 }
 
 export class Sharing extends React.Component<Props, State> {
@@ -68,6 +69,7 @@ export class Sharing extends React.Component<Props, State> {
           id: common.generateUUID(),
           category: Category.User,
           visible: e.value !== res.owner, // hide owner
+          isNew: false,
         } as Item
       })
       const groups = security.getGroups(user.getRoles()).map((e: Entry) => {
@@ -76,6 +78,7 @@ export class Sharing extends React.Component<Props, State> {
           id: common.generateUUID(),
           category: Category.Group,
           visible: user.getRoles().indexOf(e.value) > -1, // only display the groups the current user has
+          isNew: false,
         } as Item
       })
       this.setState({
@@ -86,10 +89,23 @@ export class Sharing extends React.Component<Props, State> {
     })
   }
 
+  disableInputForItems = () => {
+    const items = this.state.items.filter(item => item.value).map(item => ({
+      ...item,
+      isNew: false,
+    }))
+    this.setState({
+      ...this.state,
+      items,
+    })
+  }
+
   save = () => {
+    const loadingView = new LoadingView()
+
     const groups = this.state.items.filter(e => e.category === Category.Group)
     const users = this.state.items.filter(
-      e => e.value !== '' && e.category === Category.User
+      e => e.value && e.category === Category.User
     )
 
     const attributes = [
@@ -115,11 +131,11 @@ export class Sharing extends React.Component<Props, State> {
       },
     ]
 
-    const loadingView = new LoadingView()
     this.attemptSave(attributes)
       .then(() => {
         this.showSaveSuccessful()
         this.props.lightbox.close()
+        this.disableInputForItems()
       })
       .catch(err => {
         if (err.message === 'Need to refresh') {
@@ -222,6 +238,7 @@ export class Sharing extends React.Component<Props, State> {
       visible: true,
       category: Category.User,
       access: Access.Read,
+      isNew: true,
     })
     this.setState({
       items: this.state.items,
