@@ -16,7 +16,7 @@ pipeline {
         timestamps()
     }
     triggers {
-        cron(BRANCH_NAME == "12.x" ? "H H(6-8) * * *" : "")
+        cron(BRANCH_NAME == "12.x" ? "H H(2-4) * * *" : "")
     }
     environment {
         DOCS = 'distribution/docs'
