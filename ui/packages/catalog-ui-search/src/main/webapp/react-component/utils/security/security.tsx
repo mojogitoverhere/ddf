@@ -38,6 +38,7 @@ export class Restrictions {
   static readonly IndividualsRead = 'security.access-individuals-read'
   static readonly IndividualsWrite = 'security.access-individuals'
   static readonly AccessAdministrators = 'security.access-administrators'
+  static readonly SuperUserGroups = ['system-user'] // this list should be read from the backend
 
   // remove this ugly function when everything is typescript
   static from(obj: any): Restrictions {
@@ -111,6 +112,10 @@ export class Security {
   }
 
   private getGroupAccess(group: string) {
+    if (Restrictions.SuperUserGroups.indexOf(group) > -1) {
+      return Access.Share
+    }
+
     if (this.res.accessGroups.indexOf(group) > -1) {
       return Access.Write
     }
@@ -146,18 +151,24 @@ export class Security {
   }
 
   getGroups(forceIncludeGroups: string[]): Entry[] {
-    return _.union(
-      forceIncludeGroups,
-      this.res.accessGroups,
-      this.res.accessGroupsRead
+    return (
+      _.union(
+        forceIncludeGroups,
+        this.res.accessGroups,
+        this.res.accessGroupsRead
+      )
+        // SuperUserGroups always have Access.Share - don't even display them to the user
+        .filter(
+          (group: string) => Restrictions.SuperUserGroups.indexOf(group) == -1
+        )
+        .map((group: string) => {
+          return {
+            value: group,
+            access: this.getGroupAccess(group),
+          } as Entry
+        })
+        .sort(Security.compareFn)
     )
-      .map((group: string) => {
-        return {
-          value: group,
-          access: this.getGroupAccess(group),
-        } as Entry
-      })
-      .sort(Security.compareFn)
   }
 
   getIndividuals(): Entry[] {

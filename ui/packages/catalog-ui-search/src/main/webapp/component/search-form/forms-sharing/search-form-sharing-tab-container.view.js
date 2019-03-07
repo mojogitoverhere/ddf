@@ -42,7 +42,6 @@ module.exports = Marionette.LayoutView.extend({
         model: this.model,
         filter: child =>
           child.get('createdBy') !== user.getEmail() &&
-          user.canRead(child) &&
           child.get('createdBy') !== 'system',
       })
     )
