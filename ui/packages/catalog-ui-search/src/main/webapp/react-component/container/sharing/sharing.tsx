@@ -32,7 +32,7 @@ type Props = {
 
 type State = {
   items: Item[]
-  previousWorkspace: any
+  previousMetacard: any
 }
 
 export enum Category {
@@ -55,11 +55,11 @@ export class Sharing extends React.Component<Props, State> {
 
     this.state = {
       items: [],
-      previousWorkspace: undefined,
+      previousMetacard: undefined,
     }
   }
   componentDidMount = () => {
-    this.fetchWorkspace(this.props.id).then(data => {
+    this.fetchMetacard(this.props.id).then(data => {
       const metacard = data
       const res = Restrictions.from(metacard)
       const security = new Security(res)
@@ -83,7 +83,7 @@ export class Sharing extends React.Component<Props, State> {
       })
       this.setState({
         items: groups.concat(individuals),
-        previousWorkspace: metacard,
+        previousMetacard: metacard,
       })
       this.add()
     })
@@ -149,20 +149,20 @@ export class Sharing extends React.Component<Props, State> {
       })
   }
 
-  // NOTE: Fetching the latest workspace and checking the modified dates is a temporary solution
+  // NOTE: Fetching the latest metacard and checking the modified dates is a temporary solution
   // and should be removed when support for optimistic concurrency is added
   // https://github.com/codice/ddf/issues/4467
   attemptSave = async (attributes: any) => {
-    const currWorkspace = await this.fetchWorkspace(this.props.id)
+    const currMetacard = await this.fetchMetacard(this.props.id)
     if (
-      currWorkspace['metacard.modified'] ===
-      this.state.previousWorkspace['metacard.modified']
+      currMetacard['metacard.modified'] ===
+      this.state.previousMetacard['metacard.modified']
     ) {
       await this.doSave(attributes)
-      const newWorkspace = await this.fetchWorkspace(this.props.id)
+      const newMetacard = await this.fetchMetacard(this.props.id)
       this.setState({
         items: [...this.state.items],
-        previousWorkspace: newWorkspace,
+        previousMetacard: newMetacard,
       })
     } else {
       throw new Error('Need to refresh')
@@ -191,10 +191,10 @@ export class Sharing extends React.Component<Props, State> {
     return await res.json()
   }
 
-  fetchWorkspace = async (id: number) => {
+  fetchMetacard = async (id: number) => {
     const res = await fetch('/search/catalog/internal/metacard/' + id)
-    const workspace = await res.json()
-    return workspace.metacards[0]
+    const metacard = await res.json()
+    return metacard.metacards[0]
   }
 
   showSaveFailed() {
@@ -211,9 +211,9 @@ export class Sharing extends React.Component<Props, State> {
   showNeedToRefresh() {
     announcement.announce(
       {
-        title: 'The workspace settings could not be updated',
+        title: 'The sharing settings could not be updated',
         message:
-          'The workspace has been modified by another user. Please refresh the page and reattempt your changes.',
+          'The sharing settings have been modified by another user. Please refresh the page and reattempt your changes.',
         type: 'error',
       },
       1500
