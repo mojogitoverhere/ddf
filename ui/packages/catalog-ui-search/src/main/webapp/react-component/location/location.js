@@ -170,7 +170,6 @@ module.exports = ({ state, setState, options }) => (
     setState={setState}
     cursor={key => value => {
       isDms = false
-      let temp = ''
       let validateCoords = ddValidators[key]
       if (validateCoords === undefined) {
         validateCoords = dmsValidators[key]
@@ -182,6 +181,7 @@ module.exports = ({ state, setState, options }) => (
           inValidInput = value
           inValidKey = readableNames[key]
           defaultCoord = getNegOrPosLatLon(key, value)
+          value = defaultCoord
           setState(key, value)
           return
         }
