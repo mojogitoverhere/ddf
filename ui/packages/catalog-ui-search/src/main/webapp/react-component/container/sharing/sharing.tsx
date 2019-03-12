@@ -17,6 +17,7 @@ import { Restrictions, Access, Security, Entry } from '../../utils/security'
 const user = require('component/singletons/user-instance')
 const common = require('js/Common')
 const announcement = require('component/announcement')
+const LoadingView = require('../../../component/loading/loading.view')
 
 type Attribute = {
   attribute: string
@@ -31,6 +32,7 @@ type Props = {
 
 type State = {
   items: Item[]
+  previousMetacard: any
 }
 
 export enum Category {
@@ -44,6 +46,7 @@ export type Item = {
   visible: boolean
   category: Category
   access: Access
+  isNew: boolean
 }
 
 export class Sharing extends React.Component<Props, State> {
@@ -52,40 +55,57 @@ export class Sharing extends React.Component<Props, State> {
 
     this.state = {
       items: [],
+      previousMetacard: undefined,
     }
   }
   componentDidMount = () => {
-    fetch(`/search/catalog/internal/metacard/${this.props.id}`)
-      .then(response => response.json())
-      .then(data => {
-        const metacard = data.metacards[0]
-        const res = Restrictions.from(metacard)
-        const security = new Security(res)
-        const individuals = security.getIndividuals().map((e: Entry) => {
-          return {
-            ...e,
-            id: common.generateUUID(),
-            category: Category.User,
-            visible: e.value !== res.owner, // hide owner
-          } as Item
-        })
-        const groups = security.getGroups(user.getRoles()).map((e: Entry) => {
-          return {
-            ...e,
-            id: common.generateUUID(),
-            category: Category.Group,
-            visible: user.getRoles().indexOf(e.value) > -1, // only display the groups the current user has
-          } as Item
-        })
-        this.setState({ items: groups.concat(individuals) })
-        this.add()
+    this.fetchMetacard(this.props.id).then(data => {
+      const metacard = data
+      const res = Restrictions.from(metacard)
+      const security = new Security(res)
+      const individuals = security.getIndividuals().map((e: Entry) => {
+        return {
+          ...e,
+          id: common.generateUUID(),
+          category: Category.User,
+          visible: e.value !== res.owner, // hide owner
+          isNew: false,
+        } as Item
       })
+      const groups = security.getGroups(user.getRoles()).map((e: Entry) => {
+        return {
+          ...e,
+          id: common.generateUUID(),
+          category: Category.Group,
+          visible: user.getRoles().indexOf(e.value) > -1, // only display the groups the current user has
+          isNew: false,
+        } as Item
+      })
+      this.setState({
+        items: groups.concat(individuals),
+        previousMetacard: metacard,
+      })
+      this.add()
+    })
+  }
+
+  disableInputForItems = () => {
+    const items = this.state.items.filter(item => item.value).map(item => ({
+      ...item,
+      isNew: false,
+    }))
+    this.setState({
+      ...this.state,
+      items,
+    })
   }
 
   save = () => {
+    const loadingView = new LoadingView()
+
     const groups = this.state.items.filter(e => e.category === Category.Group)
     const users = this.state.items.filter(
-      e => e.value !== '' && e.category === Category.User
+      e => e.value && e.category === Category.User
     )
 
     const attributes = [
@@ -111,7 +131,46 @@ export class Sharing extends React.Component<Props, State> {
       },
     ]
 
-    fetch(`/search/catalog/internal/metacards`, {
+    this.attemptSave(attributes)
+      .then(() => {
+        this.showSaveSuccessful()
+        this.props.lightbox.close()
+        this.disableInputForItems()
+      })
+      .catch(err => {
+        if (err.message === 'Need to refresh') {
+          this.showNeedToRefresh()
+        } else {
+          this.showSaveFailed()
+        }
+      })
+      .then(() => {
+        loadingView.remove()
+      })
+  }
+
+  // NOTE: Fetching the latest metacard and checking the modified dates is a temporary solution
+  // and should be removed when support for optimistic concurrency is added
+  // https://github.com/codice/ddf/issues/4467
+  attemptSave = async (attributes: any) => {
+    const currMetacard = await this.fetchMetacard(this.props.id)
+    if (
+      currMetacard['metacard.modified'] ===
+      this.state.previousMetacard['metacard.modified']
+    ) {
+      await this.doSave(attributes)
+      const newMetacard = await this.fetchMetacard(this.props.id)
+      this.setState({
+        items: [...this.state.items],
+        previousMetacard: newMetacard,
+      })
+    } else {
+      throw new Error('Need to refresh')
+    }
+  }
+
+  doSave = async (attributes: any) => {
+    const res = await fetch(`/search/catalog/internal/metacards`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify([
@@ -121,37 +180,55 @@ export class Sharing extends React.Component<Props, State> {
         },
       ]),
     })
-      .then(res => {
-        if (res.status !== 200) {
-          throw new Error()
-        }
-        return res.json()
-      })
-      .then(() => {
-        if (this.props.onUpdate) {
-          this.props.onUpdate(attributes)
-        }
 
-        this.props.lightbox.close()
-        announcement.announce(
-          {
-            title: 'Success!',
-            message: 'Sharing saved',
-            type: 'success',
-          },
-          1500
-        )
-      })
-      .catch(function() {
-        announcement.announce(
-          {
-            title: 'Error',
-            message: 'Save failed',
-            type: 'error',
-          },
-          1500
-        )
-      })
+    if (res.status !== 200) {
+      throw new Error()
+    }
+
+    if (this.props.onUpdate) {
+      this.props.onUpdate(attributes)
+    }
+    return await res.json()
+  }
+
+  fetchMetacard = async (id: number) => {
+    const res = await fetch('/search/catalog/internal/metacard/' + id)
+    const metacard = await res.json()
+    return metacard.metacards[0]
+  }
+
+  showSaveFailed() {
+    announcement.announce(
+      {
+        title: 'Error',
+        message: 'Save failed',
+        type: 'error',
+      },
+      1500
+    )
+  }
+
+  showNeedToRefresh() {
+    announcement.announce(
+      {
+        title: 'The sharing settings could not be updated',
+        message:
+          'The sharing settings have been modified by another user. Please refresh the page and reattempt your changes.',
+        type: 'error',
+      },
+      1500
+    )
+  }
+
+  showSaveSuccessful() {
+    announcement.announce(
+      {
+        title: 'Success!',
+        message: 'Sharing saved',
+        type: 'success',
+      },
+      1500
+    )
   }
 
   add = () => {
@@ -161,6 +238,7 @@ export class Sharing extends React.Component<Props, State> {
       visible: true,
       category: Category.User,
       access: Access.Read,
+      isNew: true,
     })
     this.setState({
       items: this.state.items,

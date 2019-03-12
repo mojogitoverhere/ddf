@@ -120,7 +120,7 @@ const render = (props: Props) => {
                         : 'fa fa-users'
                     }
                   />
-                  {item.category === Category.User ? (
+                  {item.category === Category.User && item.isNew === true ? (
                     <EditableLabelText
                       value={item.value}
                       placeholder="user@example.com"
