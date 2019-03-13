@@ -210,10 +210,17 @@ module.exports = Marionette.LayoutView.extend({
     ])
   },
   handleAttributeUpdate: function() {
+    const previousAttributeType =
+      metacardDefinitions.metacardTypes[this.model.get('type')].type
     this.model.set(
       'type',
       this.filterAttribute.currentView.model.get('value')[0]
     )
+    const currentAttributeType =
+      metacardDefinitions.metacardTypes[this.model.get('type')].type
+    if (currentAttributeType !== previousAttributeType) {
+      this.model.set('value', [''])
+    }
   },
   delete: function() {
     this.model.destroy()
