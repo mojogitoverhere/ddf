@@ -13,23 +13,32 @@
  */
 package org.codice.ddf.spatial.ogc.wfs.v110.catalog.source;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import ddf.catalog.data.AttributeType;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.BasicTypes;
+import ddf.catalog.data.types.Core;
+import io.restassured.path.xml.XmlPath;
+import io.restassured.path.xml.config.XmlPathConfig;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,6 +56,7 @@ import net.opengis.filter.v_1_1_0.FilterType;
 import net.opengis.filter.v_1_1_0.UnaryLogicOpType;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureAttributeDescriptor;
 import org.codice.ddf.spatial.ogc.wfs.catalog.common.FeatureMetacardType;
+import org.codice.ddf.spatial.ogc.wfs.catalog.mapper.MetacardMapper;
 import org.codice.ddf.spatial.ogc.wfs.v110.catalog.common.Wfs11Constants.SPATIAL_OPERATORS;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.joda.time.DateTime;
@@ -76,8 +86,6 @@ public class WfsFilterDelegateTest {
   private static final String UNLITERAL = "Unliteral";
 
   private static final List<String> SUPPORTED_GEO = Arrays.asList("Intersects", "BBox", "Within");
-
-  private static final String SRS_NAME = "EPSG:4326";
 
   private static final String POLYGON = "POLYGON ((30 -10, 30 30, 10 30, 10 -10, 30 -10))";
 
@@ -314,10 +322,14 @@ public class WfsFilterDelegateTest {
 
   private List<String> mockProps;
 
+  private MetacardMapper metacardMapper;
+
   @Before
   public void setUp() {
     mockProps = new ArrayList<>();
     when(featureMetacardType.getGmlProperties()).thenReturn(mockGmlProps);
+
+    metacardMapper = mock(MetacardMapper.class);
   }
 
   @Test
@@ -328,8 +340,8 @@ public class WfsFilterDelegateTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testWFSFilterDelegateNullSchema() {
-    new WfsFilterDelegate(null, null);
+  public void testWfsFilterDelegateNullFeatureMetacardType() {
+    new WfsFilterDelegate(null, metacardMapper, emptyList());
   }
 
   @Test
@@ -406,13 +418,6 @@ public class WfsFilterDelegateTest {
     assertThat(filter.isSetComparisonOps(), is(true));
     assertThat(filter.getComparisonOps(), notNullValue());
     assertThat(filter.getComparisonOps(), is(instanceOf(JAXBElement.class)));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testPropertyIsEqualToStringStringBooleanAnyTextNullMetacardType() {
-
-    WfsFilterDelegate delegate = new WfsFilterDelegate(null, SUPPORTED_GEO);
-    delegate.propertyIsEqualTo(Metacard.ANY_TEXT, LITERAL, true);
   }
 
   @Test
@@ -1068,6 +1073,59 @@ public class WfsFilterDelegateTest {
     assertXMLEqual(propertyIsEqualToXmlBoolean, marshal(filter));
   }
 
+  @Test
+  public void testPropertyIsDuring() throws JAXBException, IOException, SAXException {
+    whenPropertiesDateType();
+    final WfsFilterDelegate delegate = createDelegate();
+    final FilterType filter = delegate.during(MOCK_PROPERTY, date, endDate);
+    assertXMLEqual(propertyBetweenXmlDate, marshal(filter));
+  }
+
+  @Test
+  public void testPropertyIsBefore() throws JAXBException, IOException, SAXException {
+    whenPropertiesDateType();
+    final WfsFilterDelegate delegate = createDelegate();
+    final FilterType filter = delegate.before(MOCK_PROPERTY, date);
+    assertXMLEqual(propertyLessThanXmlDate, marshal(filter));
+  }
+
+  @Test
+  public void testPropertyIsAfter() throws JAXBException, IOException, SAXException {
+    whenPropertiesDateType();
+    final WfsFilterDelegate delegate = createDelegate();
+    final FilterType filter = delegate.after(MOCK_PROPERTY, date);
+    assertXMLEqual(propertyGreaterThanXmlDate, marshal(filter));
+  }
+
+  @Test
+  public void testPropertyIsRelative() throws JAXBException {
+    whenPropertiesDateType();
+    final WfsFilterDelegate delegate = createDelegate();
+    final FilterType filter = delegate.relative(MOCK_PROPERTY, 100_000L);
+    final String xml = marshal(filter);
+    final XmlPathConfig config =
+        new XmlPathConfig().declaredNamespace("ogc", "http://www.opengis.net/ogc");
+
+    final XmlPath xmlPath = new XmlPath(xml).using(config);
+    final String lowerBoundary =
+        xmlPath.getString("ogc:Filter.ogc:PropertyIsBetween.ogc:LowerBoundary.ogc:Literal");
+    assertThat(
+        "There was no lower boundary in the filter XML.",
+        lowerBoundary,
+        not(isEmptyOrNullString()));
+
+    final String upperBoundary =
+        xmlPath.getString("ogc:Filter.ogc:PropertyIsBetween.ogc:UpperBoundary.ogc:Literal");
+    assertThat(
+        "There was no upper boundary in the filter XML.",
+        upperBoundary,
+        not(isEmptyOrNullString()));
+
+    final long start = OffsetDateTime.parse(lowerBoundary).toInstant().toEpochMilli();
+    final long end = OffsetDateTime.parse(upperBoundary).toInstant().toEpochMilli();
+    assertThat("The dates were not 100 seconds apart.", end - start, is(100_000L));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testBlacklistedGeoProperty() {
     WfsFilterDelegate delegate = setupFilterDelegate(SPATIAL_OPERATORS.BBOX.getValue());
@@ -1305,7 +1363,8 @@ public class WfsFilterDelegateTest {
     whenGeom(MOCK_GEOM, MOCK_GEOM2, true, true);
 
     List<String> supportedGeo = Collections.singletonList(SPATIAL_OPERATORS.INTERSECTS.getValue());
-    WfsFilterDelegate delegate = new WfsFilterDelegate(featureMetacardType, supportedGeo);
+    WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, supportedGeo);
 
     FilterType filter = delegate.intersects(Metacard.ANY_GEO, POLYGON);
     assertThat(filter, notNullValue());
@@ -1329,7 +1388,8 @@ public class WfsFilterDelegateTest {
     whenGeom(MOCK_GEOM, MOCK_GEOM2, false, false);
 
     List<String> supportedGeo = Collections.singletonList(SPATIAL_OPERATORS.INTERSECTS.getValue());
-    WfsFilterDelegate delegate = new WfsFilterDelegate(featureMetacardType, supportedGeo);
+    WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, supportedGeo);
 
     FilterType filter = delegate.intersects(Metacard.ANY_GEO, POLYGON);
     assertThat(filter, nullValue());
@@ -1356,19 +1416,134 @@ public class WfsFilterDelegateTest {
     WfsFilterDelegate delegate =
         new WfsFilterDelegate(
             featureMetacardType,
+            metacardMapper,
             Collections.singletonList(SPATIAL_OPERATORS.INTERSECTS.getValue()));
     FilterType filter = delegate.intersects(Metacard.ANY_GEO, POLYGON);
 
     assertThat(filter, nullValue());
   }
 
+  @Test
+  public void testPropertyIsFilterWithMetacardAttributeMappedToFeatureProperty() throws Exception {
+    whenPropertiesStringType();
+
+    doReturn(MOCK_PROPERTY).when(metacardMapper).getFeatureProperty(Core.TITLE);
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    final FilterType filter = delegate.propertyIsEqualTo(Core.TITLE, LITERAL, true);
+    assertXMLEqual(propertyIsEqualToXmlLiteral, marshal(filter));
+  }
+
+  @Test
+  public void testPropertyIsFilterCannotMapToFeatureProperty() {
+    whenPropertiesStringType();
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    final FilterType filter = delegate.propertyIsEqualTo(Core.TITLE, LITERAL, true);
+    assertThat("The filter should have been null.", filter, is(nullValue()));
+  }
+
   @Test(expected = IllegalArgumentException.class)
-  public void testGeoFilterNullMetacardType() {
-    List<String> supportedGeo = Collections.singletonList(SPATIAL_OPERATORS.BEYOND.getValue());
+  public void testPropertyIsFilterFeaturePropertyIsNotQueryable() {
+    whenPropertiesStringType();
 
-    WfsFilterDelegate delegate = new WfsFilterDelegate(null, supportedGeo);
+    doReturn(MOCK_PROPERTY).when(metacardMapper).getFeatureProperty(Core.TITLE);
 
-    delegate.beyond(Metacard.ANY_GEO, POLYGON, DISTANCE);
+    when(featureMetacardType.getAttributeDescriptor(MOCK_PROPERTY))
+        .thenReturn(
+            new FeatureAttributeDescriptor(
+                MOCK_PROPERTY, MOCK_PROPERTY, false, true, true, true, BasicTypes.STRING_TYPE));
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    delegate.propertyIsEqualTo(Core.TITLE, LITERAL, true);
+  }
+
+  @Test
+  public void testPropertyIsBetweenFilterWithMetacardAttributeMappedToFeatureProperty()
+      throws Exception {
+    whenPropertiesDateType();
+
+    doReturn(MOCK_PROPERTY).when(metacardMapper).getFeatureProperty(Core.CREATED);
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    final FilterType filter = delegate.propertyIsBetween(Core.CREATED, date, endDate);
+    assertXMLEqual(propertyBetweenXmlDate, marshal(filter));
+  }
+
+  @Test
+  public void testPropertyIsBetweenFilterCannotMapToFeatureProperty() {
+    whenPropertiesDateType();
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    final FilterType filter = delegate.propertyIsBetween(Core.CREATED, date, endDate);
+    assertThat("The filter should have been null.", filter, is(nullValue()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPropertyIsBetweenFilterFeaturePropertyIsNotQueryable() {
+    whenPropertiesDateType();
+
+    doReturn(MOCK_PROPERTY).when(metacardMapper).getFeatureProperty(Core.CREATED);
+
+    when(featureMetacardType.getAttributeDescriptor(MOCK_PROPERTY))
+        .thenReturn(
+            new FeatureAttributeDescriptor(
+                MOCK_PROPERTY, MOCK_PROPERTY, false, true, true, true, BasicTypes.DATE_TYPE));
+
+    final WfsFilterDelegate delegate =
+        new WfsFilterDelegate(featureMetacardType, metacardMapper, emptyList());
+
+    delegate.propertyIsBetween(Core.CREATED, date, endDate);
+  }
+
+  @Test
+  public void testGeospatialFilterWithMetacardAttributeMappedToFeatureProperty() {
+    doReturn(MOCK_GEOM).when(metacardMapper).getFeatureProperty(Core.LOCATION);
+
+    final WfsFilterDelegate delegate = setupFilterDelegate(SPATIAL_OPERATORS.DWITHIN.getValue());
+
+    final FilterType filter = delegate.dwithin(Core.LOCATION, POINT, DISTANCE);
+    assertThat("The filter is not spatial.", filter.isSetSpatialOps(), is(true));
+    assertThat(filter.getSpatialOps().getValue(), is(instanceOf(DistanceBufferType.class)));
+
+    final DistanceBufferType distanceBufferType =
+        (DistanceBufferType) filter.getSpatialOps().getValue();
+    assertThat(
+        String.format("'%s' was not mapped to '%s' in the query.", Core.LOCATION, MOCK_GEOM),
+        distanceBufferType.getPropertyName().getContent(),
+        is(singletonList(MOCK_GEOM)));
+  }
+
+  @Test
+  public void testGeospatialFilterCannotMapToFeatureProperty() {
+    final WfsFilterDelegate delegate = setupFilterDelegate(SPATIAL_OPERATORS.DWITHIN.getValue());
+
+    final FilterType filter = delegate.dwithin(Core.LOCATION, POINT, DISTANCE);
+    assertThat("The filter should have been null.", filter, is(nullValue()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGeospatialFilterFeaturePropertyIsNotQueryable() {
+    doReturn(MOCK_GEOM).when(metacardMapper).getFeatureProperty(Core.LOCATION);
+
+    final WfsFilterDelegate delegate = setupFilterDelegate(SPATIAL_OPERATORS.DWITHIN.getValue());
+
+    when(featureMetacardType.getAttributeDescriptor(MOCK_GEOM))
+        .thenReturn(
+            new FeatureAttributeDescriptor(
+                MOCK_GEOM, MOCK_GEOM, false, false, false, false, BasicTypes.STRING_TYPE));
+
+    delegate.dwithin(Core.LOCATION, POINT, DISTANCE);
   }
 
   private JAXBElement<FilterType> getFilterTypeJaxbElement(FilterType filterType) {
@@ -1534,7 +1709,7 @@ public class WfsFilterDelegateTest {
   }
 
   private WfsFilterDelegate createDelegate() {
-    return new WfsFilterDelegate(featureMetacardType, SUPPORTED_GEO);
+    return new WfsFilterDelegate(featureMetacardType, metacardMapper, SUPPORTED_GEO);
   }
 
   private WfsFilterDelegate createIntegerDelegate() {
@@ -1579,7 +1754,7 @@ public class WfsFilterDelegateTest {
                 MOCK_GEOM, MOCK_GEOM, true, false, false, false, BasicTypes.STRING_TYPE));
 
     List<String> supportedGeo = Collections.singletonList(spatialOpType);
-    return new WfsFilterDelegate(featureMetacardType, supportedGeo);
+    return new WfsFilterDelegate(featureMetacardType, metacardMapper, supportedGeo);
   }
 
   private void whenTextualStringType() {
