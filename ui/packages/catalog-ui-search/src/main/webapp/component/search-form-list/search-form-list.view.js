@@ -99,7 +99,10 @@ module.exports = Marionette.ItemView.extend({
     if (currentQuery.get('type') === 'custom') {
       currentQuery.trigger('change:type')
     }
-    user.getQuerySettings().set('type', 'custom')
+    user.getQuerySettings().set({
+      type: 'custom',
+      template: selectedForm.toJSON(),
+    })
     user.savePreferences()
     this.triggerCloseDropdown()
   },
