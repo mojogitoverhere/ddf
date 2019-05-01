@@ -65,7 +65,7 @@ pipeline {
             //when { expression { env.CHANGE_ID == null } }
             steps {
                 timeout(time: 4, unit: 'HOURS') {
-                    withMaven(maven: 'M35', globalMavenSettingsConfig: 'gsr_maven_global_settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
+                    withMaven(maven: 'M35', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
                         sh '''
                             unset JAVA_TOOL_OPTIONS
                             mvn clean install -e $DISABLE_DOWNLOAD_PROGRESS_OPTS -DkeepRuntimeFolder=true
@@ -174,7 +174,7 @@ pipeline {
                 }
             }
             steps{
-                withMaven(maven: 'M3', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'gsr-di2e-mirror-settings', mavenSettingsConfig: 'gsr-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
+                withMaven(maven: 'M3', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
                     sh 'mvn deploy -B -DskipStatic=true -DskipTests=true -DretryFailedDeploymentCount=10 -nsu $DISABLE_DOWNLOAD_PROGRESS_OPTS -P \\!docker'
                 }
             }
