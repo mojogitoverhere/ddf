@@ -68,7 +68,7 @@ pipeline {
                     withMaven(maven: 'M35', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true)]) {
                         sh '''
                             unset JAVA_TOOL_OPTIONS
-                            mvn clean install -e $DISABLE_DOWNLOAD_PROGRESS_OPTS -DkeepRuntimeFolder=true
+                            mvn clean install -DskipITs -e $DISABLE_DOWNLOAD_PROGRESS_OPTS -DkeepRuntimeFolder=true
                         '''
                     }
                 }
