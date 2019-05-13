@@ -50,6 +50,7 @@ module.exports = Backbone.AssociatedModel.extend({
       key: 'sharedSearchForms',
       collectionType: Backbone.Collection.extend({
         model: SearchForm,
+        url: './internal/forms/query',
         initialize: function() {},
       }),
     },
