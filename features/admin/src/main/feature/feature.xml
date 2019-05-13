@@ -37,7 +37,6 @@
         <feature>platform-configuration</feature>
         <feature>spring</feature>
         <feature>cxf-jaxrs</feature>
-        <bundle>mvn:ddf.metrics.reporting/metrics-reporting/${project.version}</bundle>
     </feature>
 
     <feature name="metrics-services" version="${project.version}"
@@ -47,7 +46,6 @@
         <feature>platform-configuration</feature>
         <feature>spring</feature>
         <feature>apache-commons</feature>
-        <bundle>mvn:ddf.metrics.interceptor/metrics-interceptor/${project.version}</bundle>
     </feature>
 
     <feature name="platform-alerts" version="${project.version}"

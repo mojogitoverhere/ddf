@@ -189,17 +189,7 @@
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>
-            <artifactId>catalog-core-metricsplugin</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-backupplugin</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.core</groupId>
-            <artifactId>catalog-core-sourcemetricsplugin</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

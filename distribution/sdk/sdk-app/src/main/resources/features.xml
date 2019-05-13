@@ -16,11 +16,6 @@
           xmlns="http://karaf.apache.org/xmlns/features/v1.3.0"
           xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.3.0 http://karaf.apache.org/xmlns/features/v1.3.0">
 
-    <feature name="sdk-metrics" version="${project.version}"
-             description="SDK sample metrics.">
-        <bundle>mvn:ddf.distribution/sample-metrics/${project.version}</bundle>
-    </feature>
-
     <feature name="sdk-soap" version="${project.version}"
              description="SDK sample soap endpoint.">
         <bundle>mvn:ddf.distribution/sample-soap-endpoint/${project.version}</bundle>

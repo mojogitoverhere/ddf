@@ -262,7 +262,6 @@
         <org.geotools.version>19.1</org.geotools.version>
         <!-- Note: The swissbox version needs to match the version used by pax-exam . -->
         <org.ops4j.pax.swissbox.version>1.8.2</org.ops4j.pax.swissbox.version>
-        <org.rrd4j.version>3.3.1</org.rrd4j.version>
         <org.slf4j.version>1.7.1</org.slf4j.version>
         <osgi.version>5.0.0</osgi.version>
         <owasp-html-sanitizer.version>20171016.1</owasp-html-sanitizer.version>
@@ -325,11 +324,6 @@
                 <artifactId>org.apache.servicemix.bundles.jsr305</artifactId>
                 <version>${jsr305.version}</version>
                 <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.rrd4j</groupId>
-                <artifactId>rrd4j</artifactId>
-                <version>${org.rrd4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-fileupload</groupId>

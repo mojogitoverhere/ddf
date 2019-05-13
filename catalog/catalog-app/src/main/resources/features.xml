@@ -120,10 +120,6 @@
         <bundle>mvn:ddf.catalog.core/catalog-core-downloadaction/${project.version}</bundle>
     </feature>
 
-    <feature name="catalog-metrics" version="${project.version}">
-        <bundle>mvn:ddf.catalog.core/catalog-core-metricsplugin/${project.version}</bundle>
-        <bundle>mvn:ddf.catalog.core/catalog-core-sourcemetricsplugin/${project.version}</bundle>
-    </feature>
 
     <feature name="catalog-core-backupplugin" version="${project.version}"
              description="Catalog post ingest plug-in to backup metacards to a file system.">
@@ -615,7 +611,6 @@
         <feature>catalog-core-content</feature>
         <feature>catalog-core-directorymonitor</feature>
         <feature>catalog-core-downloadaction</feature>
-        <feature>catalog-metrics</feature>
         <feature>catalog-schematron-plugin</feature>
         <feature>catalog-rest</feature>
         <feature>catalog-confluence-source</feature>

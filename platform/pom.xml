@@ -359,7 +359,6 @@
         <module>solr</module>
         <module>persistence</module>
         <module>mime</module>
-        <module>metrics</module>
         <module>platform-scheduler</module>
         <module>security</module>
         <module>platform-commands</module>
