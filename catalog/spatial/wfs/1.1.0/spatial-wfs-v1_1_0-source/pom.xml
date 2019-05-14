@@ -156,7 +156,7 @@
         <dependency>
             <groupId>org.jvnet.jaxb2_commons</groupId>
             <artifactId>jaxb2-basics-runtime</artifactId>
-            <version>0.11.0</version>
+            <version>${jvnet.jaxb2.version}</version>
         </dependency>
         <dependency>
             <groupId>ddf.jaxb</groupId>
@@ -217,7 +217,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Embed-Dependency>
-                            jaxb2-basics-runtime;version="0.11.0",
+                            jaxb2-basics-runtime;version="0.10.0",
                             spatial-wfs-common,
                             spatial-wfs-v1_1_0-common,
                             spatial-wfs-source,

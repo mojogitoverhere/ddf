@@ -28,6 +28,6 @@
         <module>spatial-wfs-v1_1_0-source</module>
     </modules>
     <properties>
-        <org.jvnet.ogc.wfs.1.1.0.version>2.6.1</org.jvnet.ogc.wfs.1.1.0.version>
+        <org.jvnet.ogc.wfs.1.1.0.version>2.5.4</org.jvnet.ogc.wfs.1.1.0.version>
     </properties>
 </project>
