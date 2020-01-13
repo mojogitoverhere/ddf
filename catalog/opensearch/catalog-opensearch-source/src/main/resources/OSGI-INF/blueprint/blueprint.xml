@@ -42,6 +42,7 @@
         <interfaces>
             <value>ddf.catalog.source.FederatedSource</value>
             <value>ddf.catalog.source.OAuthFederatedSource</value>
+            <value>ddf.catalog.source.SourceAttributeRestriction</value>
         </interfaces>
 
         <cm:managed-component class="org.codice.ddf.opensearch.source.OpenSearchSource"

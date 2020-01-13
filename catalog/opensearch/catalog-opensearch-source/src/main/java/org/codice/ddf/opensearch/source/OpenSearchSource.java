@@ -14,6 +14,7 @@
 package org.codice.ddf.opensearch.source;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.rometools.rome.feed.synd.SyndCategory;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -41,6 +42,8 @@ import ddf.catalog.resource.ResourceNotSupportedException;
 import ddf.catalog.resource.ResourceReader;
 import ddf.catalog.service.ConfiguredService;
 import ddf.catalog.source.OAuthFederatedSource;
+import ddf.catalog.source.Source;
+import ddf.catalog.source.SourceAttributeRestriction;
 import ddf.catalog.source.SourceMonitor;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.CatalogTransformerException;
@@ -107,7 +110,8 @@ import org.slf4j.LoggerFactory;
  * Federated site that talks via OpenSearch to the DDF platform. Communication is usually performed
  * via https which requires a keystore and trust store to be provided.
  */
-public class OpenSearchSource implements OAuthFederatedSource, ConfiguredService {
+public class OpenSearchSource
+    implements OAuthFederatedSource, ConfiguredService, SourceAttributeRestriction {
 
   private static final String COULD_NOT_RETRIEVE_RESOURCE_MESSAGE = "Could not retrieve resource";
 
@@ -1154,6 +1158,16 @@ public class OpenSearchSource implements OAuthFederatedSource, ConfiguredService
       }
     }
     return metacards;
+  }
+
+  @Override
+  public Source getSource() {
+    return this;
+  }
+
+  @Override
+  public Set<String> getSupportedAttributes() {
+    return ImmutableSet.of(Core.TITLE, Core.LOCATION);
   }
 
   protected static class SpatialSearch {
