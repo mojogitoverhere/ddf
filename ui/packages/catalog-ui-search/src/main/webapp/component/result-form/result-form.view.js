@@ -29,7 +29,9 @@ const properties = require('../../js/properties.js')
 module.exports = Marionette.LayoutView.extend({
   template,
   tagName: CustomElements.register('result-form'),
-  modelEvents: {},
+  modelEvents: {
+    'change:showValidationIssues': 'setupAttributeSpecific'
+  },
   events: {
     'click .editor-edit': 'edit',
     'click .editor-cancel': 'cancel',
@@ -42,10 +44,46 @@ module.exports = Marionette.LayoutView.extend({
     basicAttributeSpecific: '.basic-type-specific',
   },
   filter: undefined,
-  onBeforeShow() {
+  initialize() {
     this.model = this.model._cloneOf
       ? store.getQueryById(this.model._cloneOf)
       : this.model
+      // console.log('DESCRIPTORS', this.model.get('descriptors'))
+    this.model.set({'showValidationIssues': false});
+
+    this.setupAttributeSpecific.bind(this)
+
+
+    // let excludedList = metacardDefinitions.getMetacardStartingTypes()
+    // const allowedValues = _.filter(
+    //   metacardDefinitions.sortedMetacardTypes,
+    //   type => !metacardDefinitions.isHiddenTypeExceptThumbnail(type.id)
+    // )
+    //   .filter(type => !properties.isHidden(type.id))
+    //   .filter(type => !excludedList.hasOwnProperty(type.id))
+    //   .map(metacardType => ({
+    //     label: metacardType.alias || metacardType.id,
+    //     value: metacardType.id,
+    //   }))
+  
+    //     this.attributesModel = new Property({
+    //       readOnly: this.model.get('readOnly'),
+    //       enumFiltering: true,
+    //       showValidationIssues: this.model.get('showValidationIssues'),
+    //       enumMulti: true,
+    //       enum: allowedValues,
+    //       values: this.model.get('descriptors'),
+    //       value:
+    //         [this.model.get('descriptors')].length > 0
+    //           ? [this.model.get('descriptors')]
+    //           : [[allowedValues[0] && allowedValues[0].label]],
+    //       id: 'Attributes',
+    //     })
+  },
+  onBeforeShow() {
+    // this.model = this.model._cloneOf
+    //   ? store.getQueryById(this.model._cloneOf)
+    //   : this.model
     this.setupTitleInput()
     this.setupDescription()
     this.setupAttributeSpecific()
@@ -63,12 +101,33 @@ module.exports = Marionette.LayoutView.extend({
         label: metacardType.alias || metacardType.id,
         value: metacardType.id,
       }))
+      console.log('descriptors', this.model.get('descriptors'))
+      console.log('value', this.model.get('value'))
+      console.log('values', this.model.get('values'))
+      console.log('showValidationIssues', this.model.get('showValidationIssues'))
+
+
+      // let propertyModel = new Property({
+      //     readOnly: this.model.get('readOnly'),
+      //     enumFiltering: true,
+      //     showValidationIssues: this.model.get('showValidationIssues'),
+      //     enumMulti: true,
+      //     enum: allowedValues,
+      //     values: this.model.get('descriptors'),
+      //     value:
+      //       [this.model.get('descriptors')].length > 0
+      //         ? [this.model.get('descriptors')]
+      //         : [[allowedValues[0] && allowedValues[0].label]],
+      //     id: 'Attributes',
+      //   })
+      //   console.log('property model', propertyModel)
+
     this.basicAttributeSpecific.show(
       new PropertyView({
         model: new Property({
           readOnly: this.model.get('readOnly'),
           enumFiltering: true,
-          showValidationIssues: true,
+          showValidationIssues: this.model.get('showValidationIssues'),
           enumMulti: true,
           enum: allowedValues,
           values: this.model.get('descriptors'),
@@ -77,6 +136,9 @@ module.exports = Marionette.LayoutView.extend({
               ? [this.model.get('descriptors')]
               : [[allowedValues[0] && allowedValues[0].label]],
           id: 'Attributes',
+          // validate: () => {return "Please select at least one attribute"},
+          // validation: () => {return "Please select at least one attribute"},
+          // required: true,
         }),
       })
     )
@@ -126,29 +188,33 @@ module.exports = Marionette.LayoutView.extend({
     const titleEmpty = title === ''
     const attributesEmpty = descriptors.length < 1
     if (titleEmpty || attributesEmpty) {
-      const $titleValidationElement = this.basicTitle.currentView.$el.find(
-        '> .property-label .property-validation'
-      )
-      const $attributeValidationElement = this.basicAttributeSpecific.currentView.$el.find(
-        '> .property-label .property-validation'
-      )
-      if (titleEmpty) {
-        if (!attributesEmpty) {
-          $attributeValidationElement.addClass('is-hidden')
-        }
-        this.showWarningSymbol(
-          $titleValidationElement,
-          'Name field cannot be blank'
-        )
-      }
+      // const $titleValidationElement = this.basicTitle.currentView.$el.find(
+      //   '> .property-label .property-validation'
+      // )
+      // const $attributeValidationElement = this.basicAttributeSpecific.currentView.$el.find(
+      //   '> .property-label .property-validation'
+      // )
+      // if (titleEmpty) {
+      //   if (!attributesEmpty) {
+      //     $attributeValidationElement.addClass('is-hidden')
+      //   }
+      //   this.showWarningSymbol(
+      //     $titleValidationElement,
+      //     'Title field cannot be blank'
+      //   )
+      // }
       if (attributesEmpty) {
-        if (!titleEmpty) {
-          $titleValidationElement.addClass('is-hidden')
-        }
-        this.showWarningSymbol(
-          $attributeValidationElement,
-          'Select at least one attribute'
-        )
+        // if (!titleEmpty) {
+        //   $titleValidationElement.addClass('is-hidden')
+        // }
+        // console.log('show validation issues')
+        this.model.set('showValidationIssues', true)
+        // this.setupAttributeSpecific()
+        // this.basicAttributeSpecific.currentView.model.set('showValidationIssues', true);
+        // this.showWarningSymbol(
+        //   $attributeValidationElement,
+        //   'Select at least one attribute'
+        // )
       }
       Loading.endLoading(view)
       return
