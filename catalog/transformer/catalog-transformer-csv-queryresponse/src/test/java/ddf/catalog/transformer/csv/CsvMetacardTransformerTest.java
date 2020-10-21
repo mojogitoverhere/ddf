@@ -18,6 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import ddf.catalog.data.Attribute;
 import ddf.catalog.data.AttributeDescriptor;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.codice.ddf.catalog.ui.alias.AttributeAliases;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,9 +67,11 @@ public class CsvMetacardTransformerTest {
 
   @Before
   public void setUp() {
-    this.transformer = new CsvMetacardTransformer();
+    AttributeAliases aliases = getAliases();
+    this.transformer = new CsvMetacardTransformer(aliases);
     this.arguments = new HashMap<>();
-    arguments.put("columnOrder", "stringAtt,intAtt,doubleAtt");
+    // This ordering should be different than {@code ATTRIBUTES} for testing
+    arguments.put("columnOrder", "intAtt,stringAtt,doubleAtt");
     normalMC = buildMetacard();
   }
 
@@ -86,13 +90,17 @@ public class CsvMetacardTransformerTest {
     assertThat(binaryContent.getMimeType().toString(), is("text/csv"));
 
     List<String> attributes = Arrays.asList(new String(binaryContent.getByteArray()).split("\r\n"));
-    List<String> attNames = Arrays.asList(attributes.get(0).split(","));
-    List<String> attValues = Arrays.asList(attributes.get(1).split(","));
+    List<String> csvAttNames = Arrays.asList(attributes.get(0).split(","));
+    List<String> csvAttValues = Arrays.asList(attributes.get(1).split(","));
 
-    for (int i = 0; i < attNames.size(); i++) {
-      String attributeValue = attValues.get(i);
-      assertThat(VALUES.contains(attributeValue), is(true));
-    }
+    // Verify columnOrder and aliases are respected
+    assertThat(csvAttNames.get(0), is("Int Att"));
+    assertThat(csvAttNames.get(1), is("String Att"));
+    assertThat(csvAttNames.get(2), is("doubleAtt")); // "doubleAtt" has no alias
+
+    assertThat(csvAttValues.get(0), is("101"));
+    assertThat(csvAttValues.get(1), is("stringVal"));
+    assertThat(csvAttValues.get(2), is("3.14159"));
   }
 
   private Metacard buildMetacard() {
@@ -102,5 +110,29 @@ public class CsvMetacardTransformerTest {
       metacard.setAttribute(attribute);
     }
     return metacard;
+  }
+
+  private AttributeAliases getAliases() {
+    return new AttributeAliases() {
+
+      // Intentionally leaving out "doubleAtt"
+      ImmutableMap<String, String> aliases =
+          ImmutableMap.of("stringAtt", "String Att", "intAtt", "Int Att");
+
+      @Override
+      public boolean hasAlias(String attributeName) {
+        return aliases.containsKey(attributeName);
+      }
+
+      @Override
+      public String getAlias(String attributeName) {
+        return aliases.get(attributeName);
+      }
+
+      @Override
+      public ImmutableMap<String, String> getAliasMap() {
+        return aliases;
+      }
+    };
   }
 }

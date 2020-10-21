@@ -24,6 +24,11 @@
     <name>DDF :: Catalog :: Transformer :: QueryResponse :: CSV</name>
     <dependencies>
         <dependency>
+            <groupId>ddf.ui</groupId>
+            <artifactId>catalog-ui-search</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-api</artifactId>
         </dependency>
@@ -72,6 +77,9 @@
                             catalog-transformer-csv-common,
                             platform-util
                         </Embed-Dependency>
+<!--                        <Import-Package>-->
+<!--                          *-->
+<!--                        </Import-Package>-->
                     </instructions>
                 </configuration>
             </plugin>

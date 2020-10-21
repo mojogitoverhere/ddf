@@ -18,7 +18,10 @@
           class="ddf.catalog.transformer.csv.CsvQueryResponseTransformer">
     </bean>
 
+    <reference id="aliases" interface="org.codice.ddf.catalog.ui.alias.AttributeAliases" />
+
     <bean id="csvMetacardTransformer" class="ddf.catalog.transformer.csv.CsvMetacardTransformer">
+        <argument ref="aliases" />
     </bean>
 
     <service ref="CsvQueryResponseTransformer"

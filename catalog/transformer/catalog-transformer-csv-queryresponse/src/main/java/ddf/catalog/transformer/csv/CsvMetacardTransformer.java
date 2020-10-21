@@ -19,23 +19,31 @@ import static ddf.catalog.transformer.csv.common.CsvTransformer.writeMetacardsTo
 import ddf.catalog.data.AttributeDescriptor;
 import ddf.catalog.data.BinaryContent;
 import ddf.catalog.data.Metacard;
+import ddf.catalog.data.MetacardType;
 import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.MetacardTransformer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.collections.CollectionUtils;
+import org.codice.ddf.catalog.ui.alias.AttributeAliases;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CsvMetacardTransformer implements MetacardTransformer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CsvMetacardTransformer.class);
+
+  private final AttributeAliases aliases;
+
+  public CsvMetacardTransformer(AttributeAliases aliases) {
+    this.aliases = aliases;
+  }
 
   @Override
   public BinaryContent transform(Metacard metacard, Map<String, Serializable> arguments)
@@ -46,22 +54,28 @@ public class CsvMetacardTransformer implements MetacardTransformer {
       throw new CatalogTransformerException("Unable to transform null metacard");
     }
 
-    Map<String, String> aliases =
-        (Map<String, String>) arguments.getOrDefault("aliases", new HashMap<>());
-    String attributeString =
+    String columnOrderString =
         arguments.get("columnOrder") != null ? (String) arguments.get("columnOrder") : "";
-    List<String> attributes = Arrays.asList((attributeString).split(","));
-    List<AttributeDescriptor> allAttributes =
-        new ArrayList<AttributeDescriptor>(metacard.getMetacardType().getAttributeDescriptors());
-    List<AttributeDescriptor> descriptors =
-        CollectionUtils.isEmpty(attributes)
-            ? allAttributes
-            : allAttributes
-                .stream()
-                .filter(attr -> attributes.contains(attr.getName()))
-                .collect(Collectors.toList());
+    List<String> columnOrder = Arrays.asList((columnOrderString).split(","));
+    Set<AttributeDescriptor> descriptors = metacard.getMetacardType().getAttributeDescriptors();
+    List<AttributeDescriptor> orderedDescriptors =
+        columnOrder.isEmpty()
+            ? new ArrayList<>(descriptors)
+            : getFilteredDescriptors(metacard, columnOrder);
+
     Appendable appendable =
-        writeMetacardsToCsv(Collections.singletonList(metacard), descriptors, aliases);
+        writeMetacardsToCsv(
+            Collections.singletonList(metacard), orderedDescriptors, aliases.getAliasMap());
     return createResponse(appendable);
+  }
+
+  private List<AttributeDescriptor> getFilteredDescriptors(
+      Metacard metacard, List<String> orderedAttributes) {
+    MetacardType metacardType = metacard.getMetacardType();
+    return orderedAttributes
+        .stream()
+        .map(metacardType::getAttributeDescriptor)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 }
